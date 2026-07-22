@@ -1,12 +1,18 @@
-# Graph Report - .  (2026-07-22)
+# Graph Report - insight-cdss  (2026-07-22)
 
 ## Corpus Check
-- Large corpus: 384 files · ~6,047,207 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
+- 384 files · ~6,096,809 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3360 nodes · 7011 edges · 253 communities (157 shown, 96 thin omitted)
-- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 854 edges (avg confidence: 0.54)
+- 4341 nodes · 8573 edges · 296 communities (218 shown, 78 thin omitted)
+- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 871 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `6bf0fba5`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Modules Treatment Plan
@@ -257,6 +263,44 @@
 - Modules Treatment Plan
 - Modules Treatment Plan
 - Pkg Clinical Graph
+- contract.json
+- properties
+- INSIGHT Authentication module
+- Add-New-Patient-1.1.0/app.js
+- properties
+- Authentication-1.1.0/contracts/schemas/1.0.0/auth-session.schema.json
+- gates
+- sessionCookie
+- security-policy.schema.json
+- required
+- Dashboard Module
+- TestAuditSeam
+- test/server.test.js
+- properties
+- roles
+- storage-adapter.test.mjs
+- public_file_response
+- supportedClinicalScope
+- id
+- user
+- DatabaseAdapter
+- compatibility
+- session
+- auth
+- auth-contract.schema.json
+- properties
+- writeMethods
+- report-parser-parity.test.mjs
+- test_tp13_ddi_failure.py
+- schemas
+- supportedClinicalScope
+- timeoutPolicy
+- ddi-engine.test.mjs
+- ui-source.test.mjs
+- test_frontend.mjs
+- ua-arch-analyze.js
+- ua-tour-analyze.js
+- ua-inline-validate.cjs
 
 ## God Nodes (most connected - your core abstractions)
 1. `DdiMedicationChecker` - 69 edges
@@ -287,17 +331,17 @@
 - 3-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 3-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/page.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 3-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/readiness.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
+- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
-- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
-- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
-- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/page.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/page.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
+- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
+- 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/page.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 4-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/readiness.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
-- 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
+- 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/dashboard.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/diagnosis_api.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 - 5-file cycle: `Modules/Diagnosis-1.2.0/diagnosis/__init__.py -> Modules/Diagnosis-1.2.0/diagnosis/app.py -> Modules/Diagnosis-1.2.0/diagnosis/api.py -> Modules/Diagnosis-1.2.0/diagnosis/page.py -> Modules/Diagnosis-1.2.0/diagnosis/deps.py -> Modules/Diagnosis-1.2.0/diagnosis/__init__.py`
 
@@ -316,46 +360,46 @@
 - **** — Modules\Severity-1.1.0\HANDOFF.md::severity-module, Modules\Severity-1.1.0\HANDOFF.md::severity-bands, Modules\Severity-1.1.0\HANDOFF.md::panss-questionnaire, Modules\Severity-1.1.0\HANDOFF.md::updateRealtimeCalculations, Modules\Severity-1.1.0\HANDOFF.md::clinician-control-disclaimer [INFERRED]
 - **** — Modules\Medical-History-1.0.0\MEDICAL_HISTORY_HANDOFF.md::medical-history-module, Modules\Medical-History-1.0.0\MEDICAL_HISTORY_HANDOFF.md::medical-history-submission-model, Modules\Medical-History-1.0.0\MEDICAL_HISTORY_HANDOFF.md::activation-code, Modules\Medical-History-1.0.0\MEDICAL_HISTORY_HANDOFF.md::medical-history-api-prefix [INFERRED]
 
-## Communities (253 total, 96 thin omitted)
+## Communities (296 total, 78 thin omitted)
 
 ### Community 0 - "Modules Treatment Plan"
 Cohesion: 0.06
-Nodes (46): payloads(), TP08ContractTests, context(), TP09EligibilityPolicyTests, _BnAdapter, _Circuit, ClinicalContext, ClinicalContextAssembler (+38 more)
+Nodes (44): payloads(), TP08ContractTests, context(), TP09EligibilityPolicyTests, _BnAdapter, _Circuit, ClinicalContext, ClinicalContextAssembler (+36 more)
 
 ### Community 1 - "Modules Add New"
-Cohesion: 0.05
-Nodes (59): date, auth_session_url(), AuthSessionError, _blocked_auth_session(), fetch_auth_identity(), _fetch_json(), forwarded_auth_headers(), _has_blocked_status() (+51 more)
+Cohesion: 0.14
+Nodes (25): csrf_error(), generate_csrf_token(), JSONResponse, Request, request_has_valid_csrf(), sign_csrf_token(), verify_csrf_token(), create_patient() (+17 more)
 
 ### Community 2 - "Modules Diagnosis 1"
-Cohesion: 0.06
-Nodes (62): Cursor, _http_selfcheck(), Run the REST-contract unittest cases under the bypass shim.      The inline ``as, ready(), _config_selfcheck(), Self-verify the adapter. Covers:     - every previously hard-coded default surfa, _demo(), Run the rule-suite unittest cases. Exit non-zero on failure.      Run: ``python (+54 more)
+Cohesion: 0.13
+Nodes (37): _check_auth(), _check_db(), _check_patient(), check_readiness(), Any, Patient-identity adapter configuration check. The adapter is     opt-in; "disabl, Return the module-local readiness snapshot. Pure: no HTTP, no     env mutation,, Probe the process-wide ``DiagnosisStore``. Imports the store from     ``deps`` a (+29 more)
 
 ### Community 3 - "Modules Treatment Plan"
-Cohesion: 0.12
-Nodes (38): BlockingPort, command(), context(), primary_plan(), RecordingPort, TP16FinalizationTests, ConcurrentPort, content_hash() (+30 more)
+Cohesion: 0.09
+Nodes (52): Settings, EditLedgerRouteTests, BlockingPort, command(), context(), primary_plan(), RecordingPort, TP16FinalizationTests (+44 more)
 
 ### Community 4 - "Modules Add New"
 Cohesion: 0.11
 Nodes (16): AddNewPatientBackendTest, AddNewPatientServer, auth_payload(), AuthBoundaryTest, AuthIdentityNormalizationTest, ConcurrencyTest, csrf_headers(), dob_days_ago() (+8 more)
 
 ### Community 5 - "Modules Treatment Plan"
-Cohesion: 0.10
-Nodes (26): LogRecord, Settings, ScaffoldTests, SecurityTests, EditLedgerRouteTests, TP20ObservabilityTests, create_app(), FastAPI (+18 more)
+Cohesion: 0.05
+Nodes (41): Logger, LogRecord, ScaffoldTests, SecurityTests, EditLedgerTests, ledger(), primary_plan(), TP20ObservabilityTests (+33 more)
 
 ### Community 6 - "Modules Diagnosis 1"
-Cohesion: 0.06
-Nodes (46): _problem(), Request, Reusable FastAPI transport adapter for the common module routes., API seam for the diagnosis module — the composed router.  The single ``router``, Standalone FastAPI app for the diagnosis module.  Usage:     python -m diagnosis, _build_session(), Authentication adapter for the diagnosis module.  Delegates trust to the central, FastAPI dependency factory. Returns a dependency that enforces     membership in (+38 more)
+Cohesion: 0.07
+Nodes (32): _problem(), Request, Reusable FastAPI transport adapter for the common module routes., API seam for the diagnosis module — the composed router.  The single ``router``, Standalone FastAPI app for the diagnosis module.  Usage:     python -m diagnosis, ready(), _AuthUnavailable, _fetch_session() (+24 more)
 
 ### Community 7 - "Modules Treatment Plan"
 Cohesion: 0.12
 Nodes (32): ConcurrentSnapshotProvider, final_plan(), finalized_ledger(), follow_up_delta(), Generator, hash_json(), prior_primary_plan(), snapshot() (+24 more)
 
 ### Community 8 - "Modules Treatment Plan"
-Cohesion: 0.10
-Nodes (27): _apply_pointer(), _canonical_json(), _editable_tokens(), EditCategory, EditLedgerError, _encode_token(), _etag(), _finding_for_pointer() (+19 more)
+Cohesion: 0.09
+Nodes (33): _apply_pointer(), _canonical_json(), _editable_tokens(), EditCategory, EditLedgerError, _encode_token(), _etag(), _finding_for_pointer() (+25 more)
 
 ### Community 9 - "Contracts Adapters Python"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (26): install_common_routes(), Mount common routes on an app; module handlers remain outside this adapter., install_common_routes(), FastAPI common route installer with built-in OpenAPI route disabled., FilesystemContractAdapter, Path, Production adapter that reads immutable contract artifacts from disk., Load common contract documents without importing module/domain code. (+18 more)
 
 ### Community 10 - "Modules Treatment Plan"
@@ -376,34 +420,34 @@ Nodes (44): additionalProperties, items, type, pattern, type, $ref, minLength, t
 
 ### Community 14 - "Modules Diagnosis 1"
 Cohesion: 0.08
-Nodes (37): _arm_with_csrf(), _client_for(), _exercise(), _free_port(), _Handler, main(), BaseHTTPRequestHandler, HTTPServer (+29 more)
+Nodes (39): _build_session(), _arm_with_csrf(), _client_for(), _exercise(), _free_port(), _Handler, main(), BaseHTTPRequestHandler (+31 more)
 
 ### Community 15 - "Modules Treatment Plan"
-Cohesion: 0.20
-Nodes (32): BnEvaluationBundle, BnModel, ModelEvaluation, _AppointmentOption, _bundled_policy(), EvidenceKind, EvidenceLink, _MedicationOption (+24 more)
+Cohesion: 0.18
+Nodes (33): BnEvaluationBundle, BnModel, ModelEvaluation, _AppointmentOption, _bundled_policy(), EvidenceKind, EvidenceLink, _MedicationOption (+25 more)
 
 ### Community 16 - "Insight Cross Module::Admin-1-Ari-Morgan"
 Cohesion: 0.05
 Nodes (42): Ari Morgan (Mock Admin), ADMIN Role, Authentication Module (Central), Follow-up Module, Mina Rahimi (Mock Psychiatrist), PSYCHIATRIST Role, Treatment Plan Module, Add New Patient Module (+34 more)
 
 ### Community 17 - "Modules Treatment Plan"
-Cohesion: 0.07
-Nodes (42): required, required, required, path, schemaVersion, version, required, required (+34 more)
+Cohesion: 0.06
+Nodes (48): required, required, required, required, action, path, recordedAt, schemaVersion (+40 more)
 
 ### Community 18 - "Modules Treatment Plan"
 Cohesion: 0.14
-Nodes (22): TP11SafetyPolicyTests, bundle(), evaluation(), facts(), TP12PrimaryPlanTests, MappingCoverage, _Definition, EmergencyEscalation (+14 more)
+Nodes (23): TP11SafetyPolicyTests, bundle(), evaluation(), facts(), TP12PrimaryPlanTests, TP13DdiCheckTests, MappingCoverage, _Definition (+15 more)
 
 ### Community 19 - "Modules Treatment Plan"
 Cohesion: 0.14
-Nodes (21): primary_plan(), RecordingDdiPort, TP13DdiCheckTests, FailingDdiPort, TP13CheckerFailureTests, no_interaction_response(), TP13MedicationSetBindingTests, TP13HttpAdapterTests (+13 more)
+Nodes (13): primary_plan(), RecordingDdiPort, no_interaction_response(), TP13MedicationSetBindingTests, TP13HttpAdapterTests, TP13PairCoverageTests, TP13ResponseBindingTests, TP13UnresolvedIdentityTests (+5 more)
 
 ### Community 20 - "Modules Treatment Plan"
 Cohesion: 0.14
 Nodes (24): evaluate_payloads(), main(), Any, Fail-closed TP-21 clinical validation and safety-case gate., cases(), hazards(), observations(), protocol() (+16 more)
 
 ### Community 21 - "Modules Diagnosis 1"
-Cohesion: 0.08
+Cohesion: 0.10
 Nodes (19): _build_patient(), _fetch_patient(), Patient, _PatientNotFound, _PatientUnavailable, Exception, Patient identity adapter for the diagnosis module.  Aligns the diagnosis module', The registry responded 404 — the code is not a known patient. (+11 more)
 
 ### Community 22 - "Contracts Schemas 1"
@@ -411,8 +455,8 @@ Cohesion: 0.05
 Nodes (36): $ref, $ref, additionalProperties, $ref, $ref, $id, $ref, action (+28 more)
 
 ### Community 23 - "Modules Diagnosis 1"
-Cohesion: 0.10
-Nodes (13): evaluate(), Evaluation, get_criteria(), meta_contract(), DSM-5-TR schizophrenia diagnostic criteria and evaluation engine.  Source: DSM-5, Pure function: given the clinician's checked criteria, return an     Evaluation., Return the criteria tree, grouped for the UI. Caller must not mutate., Rule contract the browser page consumes for its optimistic display.      The web (+5 more)
+Cohesion: 0.11
+Nodes (11): evaluate(), Evaluation, get_criteria(), meta_contract(), DSM-5-TR schizophrenia diagnostic criteria and evaluation engine.  Source: DSM-5, Pure function: given the clinician's checked criteria, return an     Evaluation., Return the criteria tree, grouped for the UI. Caller must not mutate., Rule contract the browser page consumes for its optimistic display.      The web (+3 more)
 
 ### Community 24 - "Modules Treatment Plan"
 Cohesion: 0.06
@@ -420,19 +464,19 @@ Nodes (33): jsdom, dependencies, react, react-dom, typescript, vite, @vitejs/plu
 
 ### Community 25 - "Modules Treatment Plan"
 Cohesion: 0.06
-Nodes (34): minLength, type, $ref, additionalProperties, properties, type, $ref, AuditProvenance (+26 more)
+Nodes (35): minLength, type, properties, minLength, pattern, type, $ref, minLength (+27 more)
 
 ### Community 26 - "Modules Treatment Plan"
 Cohesion: 0.06
-Nodes (34): $ref, additionalProperties, properties, type, $ref, ClinicalInputSnapshot, RecommendationRun, $ref (+26 more)
+Nodes (33): $ref, additionalProperties, properties, type, $ref, ClinicalInputSnapshot, RecommendationRun, additionalProperties (+25 more)
 
 ### Community 27 - "Contracts Schemas 1"
 Cohesion: 0.06
 Nodes (32): additionalProperties, $ref, $ref, type, $id, $ref, correlationId, interfaceVersion (+24 more)
 
 ### Community 28 - "Modules Treatment Plan"
-Cohesion: 0.06
-Nodes (33): $ref, $ref, PrimaryPlan, $ref, $ref, enum, type, pattern (+25 more)
+Cohesion: 0.10
+Nodes (21): $ref, PlanEdit, $ref, $ref, enum, type, pattern, type (+13 more)
 
 ### Community 29 - "Contracts Schemas 1"
 Cohesion: 0.06
@@ -443,36 +487,32 @@ Cohesion: 0.06
 Nodes (30): additionalProperties, $ref, $ref, $defs, SemVer, StableCode, UtcTimestamp, Uuid (+22 more)
 
 ### Community 31 - "Modules Bn Manager"
-Cohesion: 0.16
-Nodes (19): _Element, read_registry_schema(), Potential, Any, _compile_definition(), _compile_variable(), compile_xmlbif(), _node_kind() (+11 more)
+Cohesion: 0.29
+Nodes (15): _Element, _compile_definition(), _compile_variable(), compile_xmlbif(), _node_kind(), _parse_table(), _parse_xml_document(), _properties() (+7 more)
 
 ### Community 32 - "Modules Bn Manager"
-Cohesion: 0.22
-Nodes (19): ClinicalGraphModel, Node, ValidationMessage, expected_probability_value_count(), flatten_numbers(), parent_cardinality(), probability_rows(), Any (+11 more)
+Cohesion: 0.19
+Nodes (21): ClinicalGraphModel, Node, Potential, Any, ValidationMessage, expected_probability_value_count(), flatten_numbers(), parent_cardinality() (+13 more)
 
 ### Community 33 - "Modules Diagnosis 1"
 Cohesion: 0.12
 Nodes (28): Read ``static/index.html`` once per request (no build step)., _read_page(), main(), Embeddable module UI tests for the diagnosis module.  Issue: replace the standal, The previous shell baked a ``<button ... id="back-btn">Back to     dashboard</bu, The previous shell baked ``<header class="topbar"><h1>Insight</h1>...``     dire, When opts.embedded is true, the fn must NOT render the     ``<header class="dm-t, The host needs to mount AND unmount the module cleanly (a     dashboard that swa (+20 more)
 
 ### Community 34 - "Modules Diagnosis 1"
-Cohesion: 0.26
-Nodes (28): _clear_env(), main(), Settings-adapter tests for the diagnosis module.  Strategy:     - Exercise the `, When ``AUTH_BASE_URL`` is unset, ``auth.AUTH_BASE_URL`` defaults to     the sett, ``dashboard.MODULE_ID`` defaults to the settings-derived id; a     custom ``DIAG, ``app.py`` builds its CORS middleware from ``settings.cors_origins``     (no lon, ``__main__`` builds its ``--host`` / ``--port`` defaults from     ``settings`` (, Re-import ``diagnosis.config`` so ``_load`` re-runs against the     current env. (+20 more)
+Cohesion: 0.23
+Nodes (30): _config_selfcheck(), Self-verify the adapter. Covers:     - every previously hard-coded default surfa, _clear_env(), main(), Settings-adapter tests for the diagnosis module.  Strategy:     - Exercise the `, When ``AUTH_BASE_URL`` is unset, ``auth.AUTH_BASE_URL`` defaults to     the sett, ``dashboard.MODULE_ID`` defaults to the settings-derived id; a     custom ``DIAG, ``app.py`` builds its CORS middleware from ``settings.cors_origins``     (no lon (+22 more)
 
 ### Community 35 - "Modules Diagnosis 1"
 Cohesion: 0.15
 Nodes (26): _client(), _free_port(), _Handler, main(), _mint_bad_token(), _mint_valid_token(), BaseHTTPRequestHandler, HTTPServer (+18 more)
 
 ### Community 36 - "Modules Treatment Plan"
-Cohesion: 0.11
-Nodes (11): Logger, AuditEvent, MetricPoint, Observability, opaque_id(), Any, Record operational signals and security audit events through one deep interface., safe_correlation_id() (+3 more)
-
-### Community 37 - "Modules Bn Manager"
-Cohesion: 0.16
-Nodes (16): _as_dict(), _blocked_reason(), _collect_roles(), _first_text(), _is_active(), _is_expired(), _normalize_role(), Any (+8 more)
+Cohesion: 0.06
+Nodes (89): _active_admin_count(), active_disclaimer_version(), _canonical_uuid(), cfg(), cfg_bool(), cfg_int(), change_user_password(), _clock_skew_seconds() (+81 more)
 
 ### Community 38 - "Modules Bn Manager"
-Cohesion: 0.16
-Nodes (19): assert_csrf_token(), AuthenticationRestAdapter, CsrfError, Exception, Protocol, SessionAdapter, BnManagerSettings, get_settings() (+11 more)
+Cohesion: 0.10
+Nodes (27): assert_csrf_token(), AuthenticationRestAdapter, CsrfError, Any, Exception, Protocol, Request, session_from_payload() (+19 more)
 
 ### Community 39 - "Modules Dashboard 1"
 Cohesion: 0.17
@@ -491,19 +531,15 @@ Cohesion: 0.07
 Nodes (28): PlanContent, pattern, type, additionalProperties, properties, required, type, additionalProperties (+20 more)
 
 ### Community 43 - "Modules Treatment Plan"
-Cohesion: 0.16
-Nodes (7): FinalizationError, _hash_json(), _json_copy(), _jsonable(), Any, ValueError, SafetyPreview
-
-### Community 44 - "Modules Bn Manager"
-Cohesion: 0.11
-Nodes (10): get_registry_entry(), list_registry_entries(), ModelRegistryEntry, Path, read_owned_registry_file(), read_registry_model(), resolve_owned_registry_file(), AdminSessionAdapter (+2 more)
+Cohesion: 0.07
+Nodes (77): contract_payload(), _load_json(), openapi_document(), Path, Authentication discovery artifacts and runtime security metadata., schema(), _schema_path(), contract() (+69 more)
 
 ### Community 45 - "Modules Diagnosis 1"
 Cohesion: 0.10
 Nodes (26): mint(), Request, Signed double-submit CSRF for the diagnosis module's write routes.  PUT /diagnos, FastAPI dependency. Fail closed (403) on any mismatch.      Mirrors ``auth.requi, Test-only hook (mirrors ``auth.reset_auth_for_tests``). Pin a     known secret s, Attach an HMAC-SHA256 signature to ``raw``. Returns ``raw.sig``., Constant-time check that ``token`` was signed by this secret., Mint a fresh signed token. Callers set it as the CSRF cookie and     surface it (+18 more)
 
 ### Community 46 - "Modules Treatment Plan"
-Cohesion: 0.16
+Cohesion: 0.17
 Nodes (9): DdiFailure, DdiInteraction, DdiMedicationIdentity, _DdiPort, _InvalidDdiResponse, Any, Protocol, ValueError (+1 more)
 
 ### Community 47 - "Modules Diagnosis 1"
@@ -511,20 +547,20 @@ Cohesion: 0.20
 Nodes (21): _arm_with_csrf(), _AuthHandler, _client(), _free_port(), main(), _PatientHandler, BaseHTTPRequestHandler, HTTPServer (+13 more)
 
 ### Community 48 - "Modules Add New"
-Cohesion: 0.14
-Nodes (13): DatabaseAdapter, Any, Protocol, canonical_suicidality(), compute_age(), _find_patient_id_row(), intake_row(), json_list() (+5 more)
+Cohesion: 0.21
+Nodes (10): canonical_suicidality(), compute_age(), _find_patient_id_row(), intake_row(), json_list(), now_iso(), patient_row(), PatientRepository (+2 more)
 
 ### Community 49 - "Modules Treatment Plan"
 Cohesion: 0.08
 Nodes (24): compilerOptions, allowJs, allowSyntheticDefaultImports, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib (+16 more)
 
 ### Community 50 - "Modules Treatment Plan"
-Cohesion: 0.08
-Nodes (25): type, type, minLength, type, type, type, type, properties (+17 more)
+Cohesion: 0.09
+Nodes (23): type, type, minLength, type, type, type, properties, additionalProperties (+15 more)
 
 ### Community 51 - "Modules Treatment Plan"
 Cohesion: 0.08
-Nodes (24): enum, type, SafetyFinding, $ref, $ref, $ref, minLength, type (+16 more)
+Nodes (24): enum, type, $ref, $ref, $ref, minLength, type, category (+16 more)
 
 ### Community 52 - "Modules Diagnosis 1"
 Cohesion: 0.14
@@ -543,7 +579,7 @@ Cohesion: 0.09
 Nodes (22): minLength, type, minLength, type, instrument, interpretation, score, severity (+14 more)
 
 ### Community 56 - "Modules Treatment Plan"
-Cohesion: 0.16
+Cohesion: 0.18
 Nodes (11): TP22DeploymentTests, _bool(), ConfigurationError, ValueError, main(), migration_gate(), Settings, Container startup and migration readiness gate (TP-22). (+3 more)
 
 ### Community 57 - "Modules Treatment Plan"
@@ -575,20 +611,20 @@ Cohesion: 0.10
 Nodes (19): description, keywords, license, name, private, scripts, ingest, test (+11 more)
 
 ### Community 64 - "Modules Treatment Plan"
-Cohesion: 0.11
-Nodes (20): items, minLength, type, items, pattern, properties, type, minLength (+12 more)
+Cohesion: 0.08
+Nodes (24): enum, minLength, type, pattern, properties, minLength, type, behavior (+16 more)
 
 ### Community 65 - "Modules Treatment Plan"
 Cohesion: 0.20
 Nodes (8): Dialect, Migration, MigrationRunner, _postgres_immutable_trigger(), Any, Path, Dialect-aware, reversible migrations for the repository adapters., Apply or reverse the same ordered migration set on SQLite/PostgreSQL.
 
 ### Community 66 - "Modules Dashboard 1"
-Cohesion: 0.27
-Nodes (18): auth_session_url(), AuthSessionError, _blocked_auth_session(), fetch_auth_identity(), _fetch_json(), forwarded_auth_headers(), _has_blocked_status(), _has_truthy_flag() (+10 more)
+Cohesion: 0.21
+Nodes (13): auth_session_url(), AuthSessionError, fetch_auth_identity(), _fetch_json(), forwarded_auth_headers(), normalize_auth_identity(), _parse_expiry(), Any (+5 more)
 
 ### Community 67 - "Modules Treatment Plan"
-Cohesion: 0.11
-Nodes (19): status, const, enum, minimum, type, acknowledged, confirmed, editing (+11 more)
+Cohesion: 0.08
+Nodes (25): enum, type, properties, codeSystem, status, const, enum, minimum (+17 more)
 
 ### Community 68 - "Contracts Examples 1"
 Cohesion: 0.11
@@ -599,28 +635,28 @@ Cohesion: 0.11
 Nodes (17): additionalProperties, pattern, type, $id, version, properties, etag, updatedAt (+9 more)
 
 ### Community 70 - "Modules Treatment Plan"
-Cohesion: 0.11
-Nodes (18): minLength, type, FinalPlan, Version, $ref, $ref, additionalProperties, properties (+10 more)
+Cohesion: 0.07
+Nodes (29): minLength, type, $ref, $ref, FinalPlan, PrimaryPlan, $ref, $ref (+21 more)
 
 ### Community 71 - "Contracts Schemas 1"
 Cohesion: 0.12
 Nodes (16): additionalProperties, $ref, $ref, $id, correlationId, requestId, $ref, properties (+8 more)
 
 ### Community 72 - "Modules Treatment Plan"
-Cohesion: 0.12
-Nodes (16): $defs, Instant, PlanEdit, ProblemDetails, Uuid, $id, format, type (+8 more)
+Cohesion: 0.11
+Nodes (18): additionalProperties, type, $defs, AuditProvenance, Instant, Uuid, Version, $id (+10 more)
 
 ### Community 73 - "Modules Treatment Plan"
 Cohesion: 0.12
 Nodes (5): TP19MigrationTests, Protocol, Persistence seam used by the application and its tests., Repository, RuntimeRecord
 
 ### Community 74 - "Modules Treatment Plan"
-Cohesion: 0.26
-Nodes (8): PlanAlreadyExists, StoredPlanEdits, _dump(), Any, Connection, Path, SQLite adapter for the TP-15 append-only Plan Edit store seam., SQLitePlanEditStore
+Cohesion: 0.06
+Nodes (11): assert_auth_schema(), assert_safe_session(), AuthTestCase, Auth03SecurityTests, AuthDiscoveryTests, AuthUuidContractTests, AuthContractTests, AuthMigrationTests (+3 more)
 
 ### Community 75 - "Modules Treatment Plan"
-Cohesion: 0.14
-Nodes (16): required, required, action, code, correlationId, detail, recordedAt, requestId (+8 more)
+Cohesion: 0.17
+Nodes (13): ProblemDetails, required, code, correlationId, detail, requestId, status, title (+5 more)
 
 ### Community 76 - "Contracts Examples Manifest"
 Cohesion: 0.13
@@ -632,11 +668,11 @@ Nodes (15): items, type, uniqueItems, items, type, uniqueItems, additionalProper
 
 ### Community 79 - "Modules Treatment Plan"
 Cohesion: 0.13
-Nodes (15): minItems, type, FollowUpDelta, $ref, additionalProperties, properties, type, $ref (+7 more)
+Nodes (15): minItems, type, FollowUpDelta, $ref, $ref, additionalProperties, properties, type (+7 more)
 
 ### Community 80 - "Modules Treatment Plan"
-Cohesion: 0.13
-Nodes (15): pattern, type, SourceReference, minLength, type, contentHash, etag, resourceId (+7 more)
+Cohesion: 0.12
+Nodes (17): pattern, type, SourceReference, minLength, type, type, contentHash, etag (+9 more)
 
 ### Community 81 - "Modules/Add-New-Patient-1.1.0/Docs/Add-New..."
 Cohesion: 0.14
@@ -644,15 +680,15 @@ Nodes (14): Dashboard Launch Contract (Embed Module), Dashboard Module Route Dis
 
 ### Community 82 - "Contracts Schemas 1"
 Cohesion: 0.15
-Nodes (14): required, interfaceVersion, path, schemaVersion, required, auth, basePath, capabilities (+6 more)
+Nodes (14): required, auth, basePath, capabilities, compatibilityRoutes, dependencies, deprecated, interfaceVersion (+6 more)
 
 ### Community 83 - "Modules Severity 1"
 Cohesion: 0.14
 Nodes (13): express, author, dependencies, express, description, keywords, license, main (+5 more)
 
 ### Community 85 - "Modules Treatment Plan"
-Cohesion: 0.14
-Nodes (14): enum, type, module, required, add-new-patient, bn-manager, category, ddi-checker (+6 more)
+Cohesion: 0.13
+Nodes (15): SafetyFinding, enum, additionalProperties, required, type, add-new-patient, bn-manager, category (+7 more)
 
 ### Community 86 - "Contracts Schemas 1"
 Cohesion: 0.15
@@ -667,8 +703,8 @@ Cohesion: 0.19
 Nodes (10): _env_list(), _env_truthy(), _load(), Settings adapter for the diagnosis module.  Single source of truth for every pre, Stable id this module advertises to Dashboard discovery.          Derived from `, ``/modules/<id>`` href the Dashboard descriptor points at.          Stays aligne, Read the env once at import time. Pure; never raises on absence —     every fiel, Comma-separated list env var. Empty / unset -> ``default``.      A single ``*`` (+2 more)
 
 ### Community 90 - "Modules Treatment Plan"
-Cohesion: 0.15
-Nodes (13): minLength, pattern, type, enum, type, additionalProperties, properties, type (+5 more)
+Cohesion: 0.09
+Nodes (45): activateRevision(), addDrugToKb(), addInteraction(), checkNow(), clearStorageFailure(), currentResultsExport(), escapeHtml(), exportAudit() (+37 more)
 
 ### Community 91 - "Modules Treatment Plan"
 Cohesion: 0.15
@@ -683,8 +719,8 @@ Cohesion: 0.17
 Nodes (12): activation_sessions.json, Clozapine Contraindications (3 items), Drug Entity, MEDICAL_HISTORY_DATA_DIR, Medical History Module, medical_history_schema.json, Medical History Submission Model v2, Ponytail Deferrals (Medical History) (+4 more)
 
 ### Community 94 - "Modules Add New"
-Cohesion: 0.24
-Nodes (5): migrate_patients_to_identity_table(), now_iso(), Connection, SQLiteAdapter, AuthSessionNormalizationTest
+Cohesion: 0.36
+Nodes (4): migrate_patients_to_identity_table(), now_iso(), Connection, SQLiteAdapter
 
 ### Community 95 - "Modules Medical History"
 Cohesion: 0.17
@@ -695,8 +731,8 @@ Cohesion: 0.17
 Nodes (12): pattern, type, format, type, properties, action, id, recorded (+4 more)
 
 ### Community 97 - "Modules Treatment Plan"
-Cohesion: 0.17
-Nodes (12): type, type, approvals, clinicalValidation, maxItems, minItems, owners, regulatoryAssessment (+4 more)
+Cohesion: 0.20
+Nodes (10): type, clinicalValidation, maxItems, minItems, owners, regulatoryAssessment, type, type (+2 more)
 
 ### Community 98 - "Modules Treatment Plan"
 Cohesion: 0.27
@@ -712,11 +748,11 @@ Nodes (11): assessments.json, Clinician Control Disclaimer, DESIGN.md Contract, 
 
 ### Community 101 - "Contracts Schemas 1"
 Cohesion: 0.18
-Nodes (11): minLength, type, items, type, uniqueItems, declaration, populations, workflows (+3 more)
+Nodes (11): minLength, type, type, uniqueItems, declaration, populations, workflows, properties (+3 more)
 
 ### Community 102 - "Modules Treatment Plan"
-Cohesion: 0.18
-Nodes (11): required, id, status, behavior, case, decision, name, role (+3 more)
+Cohesion: 0.12
+Nodes (19): items, type, approvals, items, required, type, id, name (+11 more)
 
 ### Community 105 - "Modules\Treatment-Plan\Handoff.Md::Clinica..."
 Cohesion: 0.20
@@ -728,7 +764,7 @@ Nodes (9): CompletedProcess, build(), clinical_release_gates(), main(), Path, Cr
 
 ### Community 107 - "Contracts Schemas 1"
 Cohesion: 0.22
-Nodes (10): items, type, items, type, additionalProperties, type, compatibilityRoutes, dependencies (+2 more)
+Nodes (10): items, type, items, type, additionalProperties, type, items, compatibilityRoutes (+2 more)
 
 ### Community 108 - "Modules Treatment Plan"
 Cohesion: 0.20
@@ -739,8 +775,8 @@ Cohesion: 0.44
 Nodes (9): available_port(), hardened_run_command(), main(), Independent standalone, unified-route, TLS, and recovery verification., request(), verify_container(), verify_http(), verify_tls() (+1 more)
 
 ### Community 110 - "Modules Treatment Plan"
-Cohesion: 0.38
-Nodes (5): EditLedgerTests, ledger(), primary_plan(), PolicyBound, A trusted policy constraint for one exact JSON Pointer.
+Cohesion: 0.05
+Nodes (38): Add a New Protected Auth Route, Add a Pending-Disclaimer Route, Add Audit Logging, Admin account management, `audit_log`, Browser UI Flow, Common Change Recipes, Configuration (+30 more)
 
 ### Community 111 - "Modules\Medical-History-1.0.0\Medical Hist..."
 Cohesion: 0.22
@@ -784,7 +820,7 @@ Nodes (8): items, type, additionalProperties, properties, required, type, entity
 
 ### Community 121 - "Modules Treatment Plan"
 Cohesion: 0.39
-Nodes (8): required, role, enum, clinicalSafetyOfficer, privacy, product, psychiatrist, regulatory
+Nodes (8): psychiatrist, required, role, enum, clinicalSafetyOfficer, privacy, product, regulatory
 
 ### Community 122 - "Modules\Severity-1.1.0\Handoff.Md::Panss-Q..."
 Cohesion: 0.29
@@ -792,11 +828,11 @@ Nodes (6): PANSS Questionnaire (30 items), PANSS Severity Bands, Severity Fronte
 
 ### Community 123 - "Contracts Schemas 1"
 Cohesion: 0.29
-Nodes (7): supportedClinicalScope, additionalProperties, required, type, declaration, populations, workflows
+Nodes (7): declaration, populations, workflows, supportedClinicalScope, additionalProperties, required, type
 
 ### Community 124 - "Modules Diagnosis 1"
-Cohesion: 0.33
-Nodes (7): get_session(), init_session(), put_session(), Request, Session, Return criteria tree and the patient's current evaluation state.      404 if the, Persist the clinician's checked criteria and final decision.      Returns the ne
+Cohesion: 0.11
+Nodes (21): Cursor, _http_selfcheck(), Run the REST-contract unittest cases under the bypass shim.      The inline ``as, _demo(), Run the rule-suite unittest cases. Exit non-zero on failure.      Run: ``python, main(), Boot the diagnosis module as a standalone web app.      python -m diagnosis, _patient_selfcheck() (+13 more)
 
 ### Community 125 - "Modules Treatment Plan"
 Cohesion: 0.29
@@ -816,7 +852,7 @@ Nodes (6): DDI Checker Module, Medication Knowledge (owned by DDI Checker), DdiM
 
 ### Community 129 - "Contracts Schemas 1"
 Cohesion: 0.33
-Nodes (6): additionalProperties, required, type, auth, required, schemes
+Nodes (6): additionalProperties, required, type, required, schemes, auth
 
 ### Community 130 - "Modules Treatment Plan"
 Cohesion: 0.33
@@ -831,8 +867,8 @@ Cohesion: 0.40
 Nodes (5): items, type, uniqueItems, $ref, capabilities
 
 ### Community 134 - "Modules Diagnosis 1"
-Cohesion: 0.40
-Nodes (5): _AuthUnavailable, _fetch_session(), Exception, The auth service is unreachable or returned a non-JSON body., Call the Insight auth service. Returns the parsed JSON.      Raises ``_AuthUnava
+Cohesion: 0.15
+Nodes (28): acceptDisclaimer(), activateDevRole(), api, app, buttonMeta(), clearUrl(), escapeHtml(), fmtDate() (+20 more)
 
 ### Community 135 - "Modules Treatment Plan"
 Cohesion: 0.40
@@ -847,8 +883,8 @@ Cohesion: 0.40
 Nodes (4): $id, $schema, title, type
 
 ### Community 138 - "Modules Treatment Plan"
-Cohesion: 0.40
-Nodes (5): enum, behavior, informational_only, reject_generation, safety_escalation
+Cohesion: 0.15
+Nodes (29): activateMedicalHistory(), ANTIPSYCHOTIC_OPTIONS, CLOZAPINE_CONTRAINDICATION_OPTIONS, COMORBIDITY_OPTIONS, crypto, ensureDataFiles(), ensureJsonFile(), fs (+21 more)
 
 ### Community 141 - "Modules\Treatment-Plan\Contracts\Identifie..."
 Cohesion: 0.67
@@ -918,28 +954,258 @@ Nodes (3): Disposable Lifecycle Prototype, reduce(state, action) -> new_state, P
 Cohesion: 0.67
 Nodes (3): BN Evidence Mapping v1.0.0, BN Models (treatment-setting, pharmacotherapy, involuntary-treatment, clozapine-suicide-risk), MappingCoverage Report
 
+### Community 159 - "Modules Dashboard 1"
+Cohesion: 0.18
+Nodes (21): addDoseSuggestions(), addIdentityCandidate(), assignMedicationInstanceIds(), buildIndex(), checkInteractions(), cleanReportLine(), createEmptyIndex(), createParsedInteraction() (+13 more)
+
 ### Community 160 - "Modules Treatment Plan"
 Cohesion: 0.67
 Nodes (3): format, type, correlationId
 
 ### Community 161 - "Modules Treatment Plan"
-Cohesion: 0.67
-Nodes (3): signedAt, format, type
+Cohesion: 0.09
+Nodes (22): Admin Account Lifecycle Boundaries, Admin Account Management, Cookie Policy, Current API Routes, Dashboard Redirect Behavior, Disclaimer Behavior, Downstream Verification Checklist, `GET /api/auth/admin/users` (+14 more)
+
+### Community 221 - "Contracts Adapters Node"
+Cohesion: 0.15
+Nodes (8): createCommonContractHandlers(), HttpContractAdapter, InMemoryContractAdapter, problem(), responseJson(), contract, openapi, problemSchema
+
+### Community 222 - "Contracts Adapters Node"
+Cohesion: 0.13
+Nodes (8): date, ClinicalFlag, ClinicalSection, generate_patient_code(), PatientDemographics, PatientIntake, Any, BaseModel
+
+### Community 223 - "Contracts Adapters Node"
+Cohesion: 0.17
+Nodes (20): main(), _paths(), Route-seam split tests for the diagnosis module.  Issue: split public routes fro, Invariant 4: ``/_meta`` and ``/_csrf`` MUST match before     ``/{code}`` or Fast, The Dashboard discovery route lives in ``dashboard.py`` only —     invariant 10, The audit-log route lives in ``dashboard.py`` only — invariant 10     (seam spli, `MODULE_ID` is part of the discovery contract — Dashboard joins on     it and th, Tests + Insight callers import contract symbols from     ``diagnosis.api`` direc (+12 more)
+
+### Community 225 - "Modules Ddi Checker"
+Cohesion: 0.14
+Nodes (22): addDoseSuggestions(), buildKnowledgeBase(), cleanLine(), compareRelativePaths(), createInteraction(), createRevisionId(), __dirname, drugIdFor() (+14 more)
+
+### Community 226 - "Modules Ddi Checker"
+Cohesion: 0.22
+Nodes (14): auth_session_url(), AuthSessionError, _expiry(), fetch_auth_identity(), _fetch_json(), forwarded_auth_headers(), normalize_authenticated_session(), normalize_psychiatrist_session() (+6 more)
+
+### Community 227 - "Modules Ddi Checker"
+Cohesion: 0.11
+Nodes (20): items, type, uniqueItems, minLength, type, pattern, type, items (+12 more)
+
+### Community 228 - "Modules Ddi Checker"
+Cohesion: 0.10
+Nodes (20): type, type, additionalProperties, properties, required, type, type, csrfFailure (+12 more)
+
+### Community 229 - "Modules Ddi Checker"
+Cohesion: 0.11
+Nodes (16): assigned, fileTypes, finalGraph, fs, graph, inter, issues, layers (+8 more)
+
+### Community 230 - "Modules Ddi Checker"
+Cohesion: 0.24
+Nodes (9): get_registry_entry(), list_registry_entries(), ModelRegistryEntry, Path, read_owned_registry_file(), read_registry_model(), read_registry_schema(), resolve_owned_registry_file() (+1 more)
+
+### Community 231 - "Modules Ddi Checker"
+Cohesion: 0.22
+Nodes (14): activateFromCode(), addMedicationRow(), api(), clearError(), elements, escapeAttribute(), isYes(), loadOptions() (+6 more)
+
+### Community 232 - "Modules Ddi Checker"
+Cohesion: 0.31
+Nodes (16): cleanLine(), collectSections(), extractDoseSuggestions(), extractListDrugs(), inferMechanism(), inferMonitoring(), inferRecommendation(), isNoiseLine() (+8 more)
+
+### Community 233 - "Modules Ddi Checker"
+Cohesion: 0.18
+Nodes (14): CONFIDENCE, fingerprint(), here, label(), object(), pair(), REQUIRED, runCli() (+6 more)
+
+### Community 234 - "Modules Ddi Checker"
+Cohesion: 0.12
+Nodes (16): const, const, const, const, pattern, type, properties, basePath (+8 more)
+
+### Community 238 - "Modules Severity 1"
+Cohesion: 0.22
+Nodes (9): app, clone(), createApp(), createJsonAssessmentStore(), createMemoryAssessmentStore(), DEFAULT_DATA_DIR, __dirname, __filename (+1 more)
+
+### Community 239 - "Modules Severity 1"
+Cohesion: 0.12
+Nodes (16): auth, basePath, capabilities, compatibilityRoutes, dependencies, interfaceVersion, moduleId, moduleVersion (+8 more)
+
+### Community 240 - "Modules Severity 1"
+Cohesion: 0.13
+Nodes (15): items, type, const, additionalProperties, properties, required, deprecated, path (+7 more)
+
+### Community 241 - "Modules Treatment Plan"
+Cohesion: 0.17
+Nodes (18): App(), reviewCase, clonePlan(), compare(), Comparison, createReviewWorkspace(), Dose, fields (+10 more)
+
+### Community 242 - "Modules Treatment Plan"
+Cohesion: 0.13
+Nodes (15): const, minimum, type, minLength, type, const, httpOnly, maxAgeSeconds (+7 more)
+
+### Community 243 - "Modules Treatment Plan"
+Cohesion: 0.14
+Nodes (14): bootstrapPath, cookieName, failureStatus, headerName, httpOnly, maxAgeSeconds, path, sameSite (+6 more)
+
+### Community 244 - "Modules Treatment Plan"
+Cohesion: 0.14
+Nodes (14): message, status, errorPolicy, csrfFailure, disclosure, loginFailure, readinessFailure, validationFailure (+6 more)
+
+### Community 245 - "Modules Treatment Plan"
+Cohesion: 0.14
+Nodes (14): type, caller, readiness, server, timeoutPolicy, type, type, additionalProperties (+6 more)
+
+### Community 246 - "Modules Treatment Plan"
+Cohesion: 0.19
+Nodes (14): required, name, path, required, bootstrapPath, cookieName, failureStatus, headerName (+6 more)
+
+### Community 247 - "Modules Treatment Plan"
+Cohesion: 0.15
+Nodes (13): additionalProperties, properties, required, type, required, schemes, auth, required (+5 more)
+
+### Community 248 - "Modules Treatment Plan"
+Cohesion: 0.15
+Nodes (13): const, minLength, type, properties, const, minLength, type, bootstrapPath (+5 more)
+
+### Community 249 - "Modules Treatment Plan"
+Cohesion: 0.15
+Nodes (12): 1. Visual Theme & Atmosphere, 2. Color System, 3. Typography, 4. Components & Patterns, 5. Spacing & Layout, 6. Motion & Interaction, Accessibility, Contrast Ratios (+4 more)
+
+### Community 253 - "contract.json"
+Cohesion: 0.17
+Nodes (11): basePath, capabilities, compatibilityRoutes, dependencies, interfaceVersion, moduleId, moduleVersion, schemaVersion (+3 more)
+
+### Community 254 - "properties"
+Cohesion: 0.17
+Nodes (12): additionalProperties, type, minLength, type, const, properties, csrf, downstreamTrust (+4 more)
+
+### Community 255 - "INSIGHT Authentication module"
+Cohesion: 0.17
+Nodes (11): Admin account management, Contract, Design, Environment, INSIGHT Authentication module, Other modules register psychiatrists, Persistence, Roles (+3 more)
+
+### Community 256 - "Add-New-Patient-1.1.0/app.js"
+Cohesion: 0.25
+Nodes (9): CLIENT_VALIDATION_MESSAGES, createAddNewPatientModule(), FIELD_INPUT_NAMES, generateBrowserPatientCode(), getRequiredElement(), isValidDob(), normalizePatientInput(), parseListInput() (+1 more)
+
+### Community 257 - "properties"
+Cohesion: 0.18
+Nodes (11): properties, type, type, const, type, jwksPolicy, jwtPolicy, legacySession (+3 more)
+
+### Community 258 - "Authentication-1.1.0/contracts/schemas/1.0.0/auth-session.schema.json"
+Cohesion: 0.18
+Nodes (10): additionalProperties, $id, authenticated, gates, schemaVersion, session, user, required (+2 more)
+
+### Community 259 - "gates"
+Cohesion: 0.18
+Nodes (11): type, additionalProperties, properties, required, type, disclaimerAccepted, passwordChangeRequired, type (+3 more)
+
+### Community 260 - "sessionCookie"
+Cohesion: 0.20
+Nodes (10): securityPolicy, downstreamTrust, jwks, sessionCookie, httpOnly, maxAgeSeconds, name, path (+2 more)
+
+### Community 261 - "security-policy.schema.json"
+Cohesion: 0.20
+Nodes (9): additionalProperties, $id, required, $schema, type, csrf, downstreamTrust, jwks (+1 more)
+
+### Community 262 - "required"
+Cohesion: 0.22
+Nodes (9): additionalProperties, required, type, compatibility, jwksPolicy, jwtPolicy, legacySession, legacySessionPolicy (+1 more)
+
+### Community 263 - "Dashboard Module"
+Cohesion: 0.22
+Nodes (8): Dashboard Module, Files, Health, Module Interface, Postgres Upgrade Path, Run, Test, Workspace Rules
+
+### Community 265 - "test/server.test.js"
+Cohesion: 0.22
+Nodes (6): assert, fs, os, path, { spawn }, test
+
+### Community 266 - "properties"
+Cohesion: 0.25
+Nodes (8): minLength, type, displayName, username, properties, maxLength, minLength, type
+
+### Community 267 - "roles"
+Cohesion: 0.25
+Nodes (8): enum, psychiatrist, roles, items, minItems, type, uniqueItems, admin
+
+### Community 268 - "storage-adapter.test.mjs"
+Cohesion: 0.32
+Nodes (4): browserStorageAdapter(), memoryStorageAdapter(), { browserStorageAdapter, memoryStorageAdapter }, require
+
+### Community 269 - "public_file_response"
+Cohesion: 0.52
+Nodes (7): embedded_module_shell(), public_file_response(), FileResponse, HTTPException, root(), serve_embedded_asset(), serve_static()
+
+### Community 270 - "supportedClinicalScope"
+Cohesion: 0.29
+Nodes (7): declaration, populations, workflows, supportedClinicalScope, additionalProperties, required, type
+
+### Community 271 - "id"
+Cohesion: 0.29
+Nodes (7): format, type, minLength, type, expiresAt, id, properties
+
+### Community 272 - "user"
+Cohesion: 0.29
+Nodes (7): user, additionalProperties, required, type, displayName, roles, username
+
+### Community 273 - "DatabaseAdapter"
+Cohesion: 0.33
+Nodes (3): DatabaseAdapter, Any, Protocol
+
+### Community 274 - "compatibility"
+Cohesion: 0.33
+Nodes (6): compatibility, jwksPolicy, jwtPolicy, legacySession, legacySessionPolicy, sessionAuthority
+
+### Community 275 - "session"
+Cohesion: 0.33
+Nodes (6): id, session, additionalProperties, required, type, expiresAt
+
+### Community 276 - "auth"
+Cohesion: 0.40
+Nodes (5): auth, required, schemes, csrf-double-submit, session-cookie
+
+### Community 277 - "auth-contract.schema.json"
+Cohesion: 0.40
+Nodes (4): additionalProperties, $id, $schema, type
+
+### Community 278 - "properties"
+Cohesion: 0.40
+Nodes (5): const, properties, authenticated, schemaVersion, const
+
+### Community 279 - "writeMethods"
+Cohesion: 0.40
+Nodes (5): PATCH, POST, writeMethods, const, type
+
+### Community 280 - "report-parser-parity.test.mjs"
+Cohesion: 0.40
+Nodes (3): engine, fixtureDir, require
+
+### Community 282 - "schemas"
+Cohesion: 0.50
+Nodes (4): schemas, auth-contract, auth-session, security-policy
+
+### Community 283 - "supportedClinicalScope"
+Cohesion: 0.50
+Nodes (4): supportedClinicalScope, declaration, populations, workflows
+
+### Community 284 - "timeoutPolicy"
+Cohesion: 0.50
+Nodes (4): timeoutPolicy, caller, readiness, server
+
+### Community 286 - "ddi-engine.test.mjs"
+Cohesion: 0.50
+Nodes (3): engine, fixtureKb, require
+
+### Community 287 - "ui-source.test.mjs"
+Cohesion: 0.50
+Nodes (3): __dirname, __filename, projectRoot
 
 ## Knowledge Gaps
-- **906 isolated node(s):** `clinical-graph-models`, `name`, `version`, `private`, `description` (+901 more)
+- **1270 isolated node(s):** `CLIENT_VALIDATION_MESSAGES`, `FIELD_INPUT_NAMES`, `here`, `html`, `moduleId` (+1265 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **96 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **78 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Settings` connect `Modules Treatment Plan` to `Modules Treatment Plan`, `Modules Add New`, `Modules Treatment Plan`, `Modules Treatment Plan`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `DiagnosisStore` connect `Modules Diagnosis 1` to `Modules Diagnosis 1`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
-- **Why does `PlanEditLedger` connect `Modules Treatment Plan` to `Modules Treatment Plan`, `Modules Treatment Plan`, `Modules Treatment Plan`, `Modules Treatment Plan`, `Modules Treatment Plan`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Why does `Security` connect `Modules Treatment Plan` to `Modules Treatment Plan`, `Modules Treatment Plan`, `Modules Treatment Plan`?**
+  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `_run_migrations()` connect `Modules Treatment Plan` to `Modules Treatment Plan`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Are the 28 inferred relationships involving `DdiMedicationChecker` (e.g. with `RecordingDdiPort` and `TP13DdiCheckTests`) actually correct?**
   _`DdiMedicationChecker` has 28 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 30 inferred relationships involving `PlanEditLedger` (e.g. with `EditLedgerRouteTests` and `EditLedgerTests`) actually correct?**
@@ -948,3 +1214,5 @@ _Questions this graph is uniquely positioned to answer:_
   _`PlanFinalizer` has 22 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 22 inferred relationships involving `SQLiteRepository` (e.g. with `ScaffoldTests` and `EditLedgerRouteTests`) actually correct?**
   _`SQLiteRepository` has 22 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `CLIENT_VALIDATION_MESSAGES`, `FIELD_INPUT_NAMES`, `here` to the rest of the system?**
+  _1270 weakly-connected nodes found - possible documentation gaps or missing edges._
