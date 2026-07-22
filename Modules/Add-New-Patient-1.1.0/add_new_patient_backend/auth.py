@@ -1,270 +1,58 @@
 from __future__ import annotations
-
-import asyncio
-import json
-from datetime import UTC, datetime
+import asyncio,json
+from datetime import UTC,datetime
 from typing import Any
-from urllib.error import HTTPError, URLError
-from urllib.request import Request as UrlRequest, urlopen
-
+from urllib.error import HTTPError,URLError
+from urllib.request import Request as UrlRequest,urlopen
 from fastapi import Request
-
 from .config import settings
-
-
-class AuthSessionError(Exception):
-    pass
-
-
-BLOCKED_AUTH_STATUSES = {
-    "expired",
-    "force_password_change",
-    "forced_password_change",
-    "forced_password_reset",
-    "password_change_required",
-    "password_reset_required",
-    "disclaimer_blocked",
-    "disclaimer_required",
-    "disclaimer_acceptance_required",
-    "blocked_by_disclaimer",
-}
-
-EXPIRED_FLAGS = ["expired", "isExpired"]
-PASSWORD_BLOCK_FLAGS = [
-    "forcePasswordChange",
-    "forcePasswordChangeRequired",
-    "forcedPasswordChange",
-    "forcedPasswordChangeRequired",
-    "forcedPasswordResetRequired",
-    "mustChangePassword",
-    "mustResetPassword",
-    "passwordChangeRequired",
-    "passwordResetRequired",
-    "requiresPasswordChange",
-]
-DISCLAIMER_BLOCK_FLAGS = [
-    "blockedByDisclaimer",
-    "disclaimerBlocked",
-    "disclaimerRequired",
-    "disclaimerAcceptanceRequired",
-    "requiresDisclaimer",
-    "requiresDisclaimerAcceptance",
-]
-
-
-def auth_session_url(request: Request) -> str:
-    if settings.auth_session_url:
-        return settings.auth_session_url
-    if settings.auth_base_url:
-        return f"{settings.auth_base_url.rstrip('/')}/api/auth/session"
-    if settings.use_mock_auth:
-        return f"{request.url.scheme}://{request.headers.get('host')}/api/auth/session"
+class AuthSessionError(Exception): pass
+def auth_session_url(request: Request)->str:
+    if settings.auth_session_url:return settings.auth_session_url
+    if settings.auth_base_url:return f"{settings.auth_base_url.rstrip('/')}/api/auth/session"
+    if settings.use_mock_auth:return f"{request.url.scheme}://{request.headers.get('host')}/api/auth/session"
     return ""
-
-
-def forwarded_auth_headers(request: Request, session: dict[str, Any] | None = None) -> dict[str, str]:
-    headers = {"accept": "application/json"}
-    for name in ["authorization", "cookie", "x-auth-session", "x-auth-session-id"]:
-        value = request.headers.get(name)
-        if value:
-            headers[name] = value
-    demo_user = request.headers.get("x-demo-auth-user")
-    if settings.use_mock_auth and demo_user:
-        headers["x-demo-auth-user"] = demo_user
-    if session and session.get("authSessionId") and "x-auth-session" not in headers:
-        headers["x-auth-session"] = session["authSessionId"]
+def forwarded_auth_headers(request: Request, session: dict[str, Any] | None = None)->dict[str,str]:
+    headers={"accept":"application/json"}; cookie=request.headers.get("cookie")
+    if cookie: headers["cookie"]=cookie
+    demo=request.headers.get("x-demo-auth-user")
+    if settings.use_mock_auth and not demo and session: demo=session.get("userId")
+    if settings.use_mock_auth and demo: headers["x-demo-auth-user"]=demo
     return headers
-
-
-def _is_truthy(value: Any) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.strip().lower() in ["1", "true", "yes"]
-    return False
-
-
-def _is_falsey(value: Any) -> bool:
-    if isinstance(value, bool):
-        return not value
-    if isinstance(value, str):
-        return value.strip().lower() in ["0", "false", "no"]
-    return False
-
-
-def _status_key(value: Any) -> str:
-    if not isinstance(value, str):
-        return ""
-    return value.strip().lower().replace("-", "_").replace(" ", "_")
-
-
-def _has_blocked_status(*parts: dict[str, Any]) -> bool:
-    return any(_status_key(part.get("status")) in BLOCKED_AUTH_STATUSES for part in parts)
-
-
-def _has_truthy_flag(parts: list[dict[str, Any]], fields: list[str]) -> bool:
-    return any(_is_truthy(part.get(field)) for part in parts for field in fields)
-
-
-def _parse_expiry(value: Any) -> datetime | None:
-    if isinstance(value, (int, float)):
-        return datetime.fromtimestamp(value, UTC)
-    if not isinstance(value, str) or not value.strip():
-        return None
-    raw = value.strip()
+def _expiry(value:Any)->datetime|None:
+    if not isinstance(value,str) or not value.strip(): return None
+    try: parsed=datetime.fromisoformat(value.strip().replace("Z","+00:00"))
+    except ValueError: return None
+    return (parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)).astimezone(UTC)
+def normalize_authenticated_session(data:dict[str,Any])->dict[str,Any]|None:
+    if data.get("schemaVersion")!="1.0.0" or data.get("authenticated") is not True:return None
+    user,session,gates=data.get("user"),data.get("session"),data.get("gates")
+    if not all(isinstance(value,dict) for value in (user,session,gates)):return None
+    if gates.get("disclaimerAccepted") is not True or gates.get("passwordChangeRequired") is not False:return None
+    sid=session.get("id"); uid=user.get("id"); roles=user.get("roles"); expires=_expiry(session.get("expiresAt"))
+    if not isinstance(sid,str) or not sid or not isinstance(uid,str) or not uid or not expires or expires<=datetime.now(UTC):return None
+    if not isinstance(roles,list) or any(not isinstance(role,str) for role in roles):return None
+    normalized=[role.strip().upper() for role in roles if role.strip()]
+    if not normalized:return None
+    role="PSYCHIATRIST" if "PSYCHIATRIST" in normalized else normalized[0]
+    return {"authSessionId":sid,"user":{"id":uid,"role":role,"roles":normalized,"fullName":user.get("displayName") or user.get("username") or "Authenticated User","title":"Dr." if role=="PSYCHIATRIST" else ""}}
+def normalize_psychiatrist_session(data:dict[str,Any])->dict[str,Any]|None:
+    identity=normalize_authenticated_session(data)
+    return identity if identity and "PSYCHIATRIST" in identity["user"]["roles"] else None
+def _fetch_json(endpoint:str,headers:dict[str,str])->dict[str,Any]|None:
     try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
-
-
-def _is_expired(*parts: dict[str, Any]) -> bool:
-    for part in parts:
-        for field in ["expiresAt", "expires_at", "expires"]:
-            expiry = _parse_expiry(part.get(field))
-            if expiry and expiry <= datetime.now(UTC):
-                return True
-    return False
-
-
-def _blocked_auth_session(data: dict[str, Any], session: dict[str, Any], user: dict[str, Any]) -> bool:
-    parts = [data, session, user]
-    gates = data.get("gates")
-    if "gates" in data:
-        if not isinstance(gates, dict):
-            return True
-        if not isinstance(gates.get("disclaimerAccepted"), bool):
-            return True
-        if not isinstance(gates.get("passwordChangeRequired"), bool):
-            return True
-        if not gates["disclaimerAccepted"] or gates["passwordChangeRequired"]:
-            return True
-    return (
-        ("authenticated" in data and _is_falsey(data.get("authenticated")))
-        or ("ok" in data and _is_falsey(data.get("ok")))
-        or _is_falsey(session.get("active"))
-        or _has_blocked_status(data, session, user)
-        or _has_truthy_flag(parts, EXPIRED_FLAGS)
-        or _is_expired(data, session)
-        or _has_truthy_flag(parts, PASSWORD_BLOCK_FLAGS)
-        or _has_truthy_flag(parts, DISCLAIMER_BLOCK_FLAGS)
-    )
-
-
-PSYCHIATRIST_ROLE = "PSYCHIATRIST"
-
-
-def _normalized_roles(data: dict[str, Any], user: dict[str, Any]) -> list[str]:
-    raw_roles: list[Any] = []
-    for part in [user, data]:
-        value = part.get("roles")
-        if isinstance(value, list):
-            raw_roles.extend(value)
-        elif isinstance(value, str):
-            raw_roles.append(value)
-        if part.get("role") is not None:
-            raw_roles.append(part.get("role"))
-
-    roles: list[str] = []
-    for value in raw_roles:
-        if not isinstance(value, str):
-            continue
-        role = value.strip().lower()
-        if role == "user":
-            role = "psychiatrist"
-        if role and role not in roles:
-            roles.append(role)
-    return roles
-
-
-def normalize_authenticated_session(data: dict[str, Any]) -> dict[str, Any] | None:
-    session = data.get("session") or {}
-    if not isinstance(session, dict):
-        return None
-    user = data.get("user") or data
-    if not isinstance(user, dict):
-        return None
-    auth_session_id = (
-        session.get("id")
-        or session.get("session_uuid")
-        or session.get("sessionId")
-        or data.get("sessionId")
-        or data.get("authSessionId")
-        or data.get("session_uuid")
-        or data.get("session_id")
-    )
-    if not auth_session_id or _blocked_auth_session(data, session, user):
-        return None
-
-    user_id = (
-        user.get("id")
-        or user.get("user_uuid")
-        or user.get("userId")
-        or data.get("user_uuid")
-        or data.get("user_id")
-    )
-    roles = _normalized_roles(data, user)
-    if not user_id or not roles:
-        return None
-    role = "psychiatrist" if "psychiatrist" in roles else roles[0]
-    return {
-        "authSessionId": auth_session_id,
-        "user": {
-            "id": user_id,
-            "role": role.upper(),
-            "roles": [value.upper() for value in roles],
-            "fullName": user.get("fullName") or user.get("displayName") or user.get("name") or user.get("username") or data.get("username") or "Authenticated User",
-            "title": user.get("title") or "Dr.",
-        },
-    }
-
-
-def normalize_psychiatrist_session(data: dict[str, Any]) -> dict[str, Any] | None:
-    identity = normalize_authenticated_session(data)
-    if not identity or "PSYCHIATRIST" not in identity["user"].get("roles", []):
-        return None
-    return identity
-
-
-def _fetch_json(endpoint: str, headers: dict[str, str]) -> dict[str, Any] | None:
-    req = UrlRequest(endpoint, headers=headers, method="GET")
-    try:
-        with urlopen(req, timeout=settings.auth_session_timeout_seconds) as response:
-            if response.status in [401, 403]:
-                return None
-            if response.status < 200 or response.status >= 300:
-                raise AuthSessionError(f"Authentication session check failed with {response.status}")
+        with urlopen(UrlRequest(endpoint,headers=headers,method="GET"),timeout=settings.auth_session_timeout_seconds) as response:
+            if response.status in (401,403):return None
+            if response.status<200 or response.status>=300:raise AuthSessionError("Authentication session check failed")
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as error:
-        try:
-            if error.code in [401, 403]:
-                return None
-            raise AuthSessionError(f"Authentication session check failed with {error.code}") from error
-        finally:
-            if error.fp:
-                error.fp.close()
-            error.close()
-    except URLError as error:
-        raise AuthSessionError(str(error.reason)) from error
-
-
-async def fetch_auth_identity(
-    request: Request,
-    session: dict[str, Any] | None = None,
-    *,
-    require_psychiatrist: bool = False,
-) -> dict[str, Any] | None:
-    endpoint = auth_session_url(request)
-    if not endpoint:
-        raise AuthSessionError("Authentication session endpoint is not configured")
-    data = await asyncio.to_thread(_fetch_json, endpoint, forwarded_auth_headers(request, session))
-    if not data:
-        return None
-    normalizer = normalize_psychiatrist_session if require_psychiatrist else normalize_authenticated_session
-    return normalizer(data)
-
-
-normalize_auth_identity = normalize_psychiatrist_session
+        if error.code in (401,403):return None
+        raise AuthSessionError("Authentication session check failed") from error
+    except URLError as error:raise AuthSessionError(str(error.reason)) from error
+async def fetch_auth_identity(request:Request,session:dict[str,Any]|None=None,*,require_psychiatrist:bool=False)->dict[str,Any]|None:
+    endpoint=auth_session_url(request)
+    if not endpoint:raise AuthSessionError("Authentication session endpoint is not configured")
+    data=await asyncio.to_thread(_fetch_json,endpoint,forwarded_auth_headers(request, session))
+    if not data:return None
+    return normalize_psychiatrist_session(data) if require_psychiatrist else normalize_authenticated_session(data)
+normalize_auth_identity=normalize_psychiatrist_session

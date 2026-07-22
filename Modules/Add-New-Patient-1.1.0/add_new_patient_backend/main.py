@@ -35,7 +35,7 @@ EMBEDDED_ASSET_PATHS = {
 
 # ponytail: in-memory mock — matches Dashboard. Persists only for the process.
 MOCK_AUTH_USERS = {
-    "psy-1": {"id": "psy-1", "role": "PSYCHIATRIST", "fullName": "Mina Rahimi", "title": "Dr."},
+    "psy-1": {"id": "psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Mina Rahimi"},
 }
 MOCK_AUTH_SESSIONS: dict[str, str] = {}
 
@@ -148,14 +148,14 @@ async def mock_auth_session(request: Request) -> JSONResponse:
             return JSONResponse(status_code=401, content={"authenticated": False})
         session_id = f"mock-auth-{user['id']}"
         MOCK_AUTH_SESSIONS[session_id] = user["id"]
-        return JSONResponse(content={"authenticated": True, "session": {"id": session_id}, "user": user})
+        return JSONResponse(content={"schemaVersion": "1.0.0", "authenticated": True, "session": {"id": session_id, "expiresAt": "2099-01-01T00:00:00Z"}, "user": user, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False}})
 
     session_id = request.headers.get("x-auth-session") or request.headers.get("x-auth-session-id")
     user_id = MOCK_AUTH_SESSIONS.get(session_id or "")
     user = MOCK_AUTH_USERS.get(user_id or "")
     if not user:
         return JSONResponse(status_code=401, content={"authenticated": False})
-    return JSONResponse(content={"authenticated": True, "session": {"id": session_id}, "user": user})
+    return JSONResponse(content={"schemaVersion": "1.0.0", "authenticated": True, "session": {"id": session_id, "expiresAt": "2099-01-01T00:00:00Z"}, "user": user, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False}})
 
 
 @app.get("/api/add-new-patient/csrf")

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import unittest
 
@@ -21,9 +21,11 @@ class AuthenticationGuardTests(unittest.TestCase):
     def test_valid_psychiatrist_can_evaluate_registered_xml_model(self) -> None:
         client = self._client(
             {
+                "schemaVersion": "1.0.0",
                 "authenticated": True,
-                "user": {"id": "psy-1", "roles": [" PSYCHIATRIST "]},
-                "csrfToken": "csrf-1",
+                "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                "session": {"id": "session-1", "expiresAt": "2099-01-01T00:00:00Z"},
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
             }
         )
         response = client.post(
@@ -34,7 +36,7 @@ class AuthenticationGuardTests(unittest.TestCase):
                     "Schizophrenia_Suicide_Indication": "Met",
                 },
             },
-            headers={"x-csrf-token": "csrf-1"},
+            headers={"x-csrf-token": "csrf-1", "Cookie": "csrf_token=csrf-1"},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -47,15 +49,17 @@ class AuthenticationGuardTests(unittest.TestCase):
     def test_valid_admin_can_validate_registered_xml_model(self) -> None:
         client = self._client(
             {
+                "schemaVersion": "1.0.0",
                 "authenticated": True,
-                "user": {"id": "admin-1", "roles": ["Administrator"]},
-                "csrfToken": "csrf-2",
+                "user": {"id": "admin-1", "roles": ["admin"]},
+                "session": {"id": "session-2", "expiresAt": "2099-01-01T00:00:00Z"},
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
             }
         )
         response = client.post(
             "/api/bn-manager/v1/models/validate",
             json={"model": {"model_id": "bnm.pharmacotherapy"}},
-            headers={"x-csrf-token": "csrf-2"},
+            headers={"x-csrf-token": "csrf-2", "Cookie": "csrf_token=csrf-2"},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -67,16 +71,17 @@ class AuthenticationGuardTests(unittest.TestCase):
     def test_expired_session_is_rejected_before_model_loading(self) -> None:
         client = self._client(
             {
+                "schemaVersion": "1.0.0",
                 "authenticated": True,
-                "roles": ["Psychiatrist"],
-                "csrfToken": "csrf-3",
-                "expiresAt": "2000-01-01T00:00:00Z",
+                "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                "session": {"id": "session-3", "expiresAt": "2000-01-01T00:00:00Z"},
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
             }
         )
         response = client.post(
             "/api/bn-manager/v1/dashboard/evaluate",
             json={},
-            headers={"x-csrf-token": "csrf-3"},
+            headers={"x-csrf-token": "csrf-3", "Cookie": "csrf_token=csrf-3"},
         )
 
         self.assertEqual(response.status_code, 401)
@@ -84,8 +89,8 @@ class AuthenticationGuardTests(unittest.TestCase):
 
     def test_disclaimer_and_forced_password_sessions_are_blocked(self) -> None:
         blocked_payloads = (
-            ({"authenticated": True, "roles": ["Psychiatrist"], "csrfToken": "csrf-4", "disclaimerAccepted": False}, "disclaimer_required"),
-            ({"authenticated": True, "roles": ["Psychiatrist"], "csrfToken": "csrf-5", "forcePasswordChange": True}, "forced_password_change"),
+            ({"schemaVersion": "1.0.0", "authenticated": True, "user": {"id": "psy-1", "roles": ["psychiatrist"]}, "session": {"id": "session-4", "expiresAt": "2099-01-01T00:00:00Z"}, "gates": {"disclaimerAccepted": False, "passwordChangeRequired": False}}, "disclaimer_required"),
+            ({"schemaVersion": "1.0.0", "authenticated": True, "user": {"id": "psy-1", "roles": ["psychiatrist"]}, "session": {"id": "session-5", "expiresAt": "2099-01-01T00:00:00Z"}, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": True}}, "forced_password_change"),
         )
         for session_payload, reason in blocked_payloads:
             with self.subTest(reason=reason):
@@ -93,7 +98,7 @@ class AuthenticationGuardTests(unittest.TestCase):
                 response = client.post(
                     "/api/bn-manager/v1/dashboard/evaluate",
                     json={},
-                    headers={"x-csrf-token": str(session_payload["csrfToken"])},
+                    headers={"x-csrf-token": "csrf", "Cookie": "csrf_token=csrf"},
                 )
                 self.assertEqual(response.status_code, 403)
                 self.assertEqual(response.json()["error"]["details"]["reason"], reason)
@@ -101,19 +106,24 @@ class AuthenticationGuardTests(unittest.TestCase):
     def test_csrf_rejection_blocks_write_route(self) -> None:
         client = self._client(
             {
+                "schemaVersion": "1.0.0",
                 "authenticated": True,
-                "roles": ["Psychiatrist"],
-                "csrfToken": "csrf-good",
+                "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                "session": {"id": "session-6", "expiresAt": "2099-01-01T00:00:00Z"},
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
             }
         )
         response = client.post(
             "/api/bn-manager/v1/dashboard/evaluate",
             json={},
-            headers={"x-csrf-token": "csrf-bad"},
+            headers={"x-csrf-token": "csrf-bad", "Cookie": "csrf_token=csrf-good"},
         )
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "BNM_FORBIDDEN")
+
+    def test_legacy_flat_payload_is_rejected(self) -> None:
+        self.assertFalse(session_from_payload({"authenticated": True, "userId": "psy-1", "roles": ["psychiatrist"]}).active)
 
     def _client(self, payload: dict) -> TestClient:
         return TestClient(create_app(session_adapter=FakeSessionAdapter(session_from_payload(payload))))

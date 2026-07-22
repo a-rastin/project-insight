@@ -16,42 +16,6 @@ class AuthSessionError(Exception):
     pass
 
 
-BLOCKED_AUTH_STATUSES = {
-    "expired",
-    "force_password_change",
-    "forced_password_change",
-    "forced_password_reset",
-    "password_change_required",
-    "password_reset_required",
-    "disclaimer_blocked",
-    "disclaimer_required",
-    "disclaimer_acceptance_required",
-    "blocked_by_disclaimer",
-}
-
-EXPIRED_FLAGS = ["expired", "isExpired"]
-PASSWORD_BLOCK_FLAGS = [
-    "forcePasswordChange",
-    "forcePasswordChangeRequired",
-    "forcedPasswordChange",
-    "forcedPasswordChangeRequired",
-    "forcedPasswordResetRequired",
-    "mustChangePassword",
-    "mustResetPassword",
-    "passwordChangeRequired",
-    "passwordResetRequired",
-    "requiresPasswordChange",
-]
-DISCLAIMER_BLOCK_FLAGS = [
-    "blockedByDisclaimer",
-    "disclaimerBlocked",
-    "disclaimerRequired",
-    "disclaimerAcceptanceRequired",
-    "requiresDisclaimer",
-    "requiresDisclaimerAcceptance",
-]
-
-
 def auth_session_url(request: Request) -> str:
     if settings.auth_session_url:
         return settings.auth_session_url
@@ -64,108 +28,46 @@ def auth_session_url(request: Request) -> str:
 
 def forwarded_auth_headers(request: Request, session: dict[str, Any] | None = None) -> dict[str, str]:
     headers = {"accept": "application/json"}
-    for name in ["authorization", "cookie", "x-auth-session", "x-auth-session-id"]:
-        value = request.headers.get(name)
-        if value:
-            headers[name] = value
+    cookie = request.headers.get("cookie")
+    if cookie:
+        headers["cookie"] = cookie
     demo_user = request.headers.get("x-demo-auth-user")
+    if settings.use_mock_auth and not demo_user and session:
+        demo_user = session.get("userId")
     if settings.use_mock_auth and demo_user:
         headers["x-demo-auth-user"] = demo_user
-    if session and session.get("authSessionId") and "x-auth-session" not in headers:
-        headers["x-auth-session"] = session["authSessionId"]
     return headers
 
 
-def _is_truthy(value: Any) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.strip().lower() in ["1", "true", "yes"]
-    return False
-
-
-def _is_falsey(value: Any) -> bool:
-    if isinstance(value, bool):
-        return not value
-    if isinstance(value, str):
-        return value.strip().lower() in ["0", "false", "no"]
-    return False
-
-
-def _status_key(value: Any) -> str:
-    if not isinstance(value, str):
-        return ""
-    return value.strip().lower().replace("-", "_").replace(" ", "_")
-
-
-def _has_blocked_status(*parts: dict[str, Any]) -> bool:
-    return any(_status_key(part.get("status")) in BLOCKED_AUTH_STATUSES for part in parts)
-
-
-def _has_truthy_flag(parts: list[dict[str, Any]], fields: list[str]) -> bool:
-    return any(_is_truthy(part.get(field)) for part in parts for field in fields)
-
-
 def _parse_expiry(value: Any) -> datetime | None:
-    if isinstance(value, (int, float)):
-        return datetime.fromtimestamp(value, UTC)
     if not isinstance(value, str) or not value.strip():
         return None
-    raw = value.strip()
     try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
     except ValueError:
         return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
-
-
-def _is_expired(*parts: dict[str, Any]) -> bool:
-    for part in parts:
-        for field in ["expiresAt", "expires_at", "expires"]:
-            expiry = _parse_expiry(part.get(field))
-            if expiry and expiry <= datetime.now(UTC):
-                return True
-    return False
-
-
-def _blocked_auth_session(data: dict[str, Any], session: dict[str, Any], user: dict[str, Any]) -> bool:
-    parts = [data, session, user]
-    return (
-        ("authenticated" in data and _is_falsey(data.get("authenticated")))
-        or _is_falsey(session.get("active"))
-        or _has_blocked_status(data, session, user)
-        or _has_truthy_flag(parts, EXPIRED_FLAGS)
-        or _is_expired(data, session)
-        or _has_truthy_flag(parts, PASSWORD_BLOCK_FLAGS)
-        or _has_truthy_flag(parts, DISCLAIMER_BLOCK_FLAGS)
-    )
+    return (parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)).astimezone(UTC)
 
 
 def normalize_auth_identity(data: dict[str, Any]) -> dict[str, Any] | None:
-    session = data.get("session") or {}
-    if not isinstance(session, dict):
+    if data.get("schemaVersion") != "1.0.0" or data.get("authenticated") is not True:
         return None
-    user = data.get("user") or data
-    if not isinstance(user, dict):
+    user, session, gates = data.get("user"), data.get("session"), data.get("gates")
+    if not isinstance(user, dict) or not isinstance(session, dict) or not isinstance(gates, dict):
         return None
-    auth_session_id = session.get("id") or data.get("sessionId") or data.get("authSessionId")
-    if not auth_session_id or _blocked_auth_session(data, session, user):
+    if gates.get("disclaimerAccepted") is not True or gates.get("passwordChangeRequired") is not False:
         return None
-    user_id = user.get("id") or user.get("userId")
-    role = user.get("role")
-    if not user_id or role not in ["ADMIN", "PSYCHIATRIST"]:
+    session_id, expires_at, roles = session.get("id"), _parse_expiry(session.get("expiresAt")), user.get("roles")
+    if not isinstance(session_id, str) or not session_id or not expires_at or expires_at <= datetime.now(UTC):
         return None
-    return {
-        "authSessionId": auth_session_id,
-        "user": {
-            "id": user_id,
-            "role": role,
-            "fullName": user.get("fullName") or user.get("name") or "Authenticated User",
-            "title": user.get("title") or ("Dr." if role == "PSYCHIATRIST" else ""),
-        },
-    }
+    if not isinstance(user.get("id"), str) or not user["id"] or not isinstance(user.get("displayName"), str):
+        return None
+    if not isinstance(roles, list) or any(not isinstance(role, str) or role != role.lower() for role in roles):
+        return None
+    role = next((value for value in ("psychiatrist", "admin") if value in roles), None)
+    if not role:
+        return None
+    return {"authSessionId": session_id, "user": {"id": user["id"], "role": role.upper(), "fullName": user["displayName"], "title": "Dr." if role == "psychiatrist" else ""}}
 
 
 def _fetch_json(endpoint: str, headers: dict[str, str]) -> dict[str, Any] | None:
@@ -178,14 +80,9 @@ def _fetch_json(endpoint: str, headers: dict[str, str]) -> dict[str, Any] | None
                 raise AuthSessionError(f"Authentication session check failed with {response.status}")
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as error:
-        try:
-            if error.code in [401, 403]:
-                return None
-            raise AuthSessionError(f"Authentication session check failed with {error.code}") from error
-        finally:
-            if error.fp:
-                error.fp.close()
-            error.close()
+        if error.code in [401, 403]:
+            return None
+        raise AuthSessionError(f"Authentication session check failed with {error.code}") from error
     except URLError as error:
         raise AuthSessionError(str(error.reason)) from error
 

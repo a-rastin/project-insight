@@ -71,24 +71,27 @@ def _write_headers() -> dict[str, str]:
 SCENARIOS = {
     # path query 'as'    ->   payload
     "psychiatrist": {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-psy-1",
-        "roles": ["psychiatrist"],
-        "session_id": "s-1",
+        "user": {"id": "u-psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Clinician"},
+        "session": {"id": "s-1", "expiresAt": "2099-01-01T00:00:00Z"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
     "admin": {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-adm-1",
-        "roles": ["admin"],
-        "session_id": "s-2",
+        "user": {"id": "u-adm-1", "username": "admin", "roles": ["admin"], "displayName": "Admin"},
+        "session": {"id": "s-2", "expiresAt": "2099-01-01T00:00:00Z"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
     "nora": {  # neither role
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-other",
-        "roles": ["nurse"],
-        "session_id": "s-3",
+        "user": {"id": "u-other", "username": "nora", "roles": ["nurse"], "displayName": "Nora"},
+        "session": {"id": "s-3", "expiresAt": "2099-01-01T00:00:00Z"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
-    "anon": {"authenticated": False, "user_id": None, "roles": [], "session_id": None},
+    "anon": {"schemaVersion": "1.0.0", "authenticated": False, "user": None, "session": None, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False}},
 }
 
 
@@ -281,6 +284,12 @@ def test_auth_service_down_returns_401():
     r = c.get("/diagnosis/_meta")
     assert r.status_code == 401, (r.status_code, r.text)
 
+
+def test_legacy_flat_payload_is_rejected():
+    import pytest
+    from diagnosis.auth import _build_session
+    with pytest.raises(Exception):
+        _build_session({"authenticated": True, "user_id": "u-1", "roles": ["psychiatrist"], "session_id": "s-1"})
 
 def main() -> None:
     _global_httpd, _global_port = _start_fake_auth()
