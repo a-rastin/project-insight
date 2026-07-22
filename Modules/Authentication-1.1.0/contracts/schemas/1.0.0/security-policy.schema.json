@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:insight:authentication:1.0.0:security-policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionCookie", "csrf", "downstreamTrust", "jwks"],
+  "properties": {
+    "sessionCookie": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "httpOnly", "sameSite", "secure", "path", "maxAgeSeconds"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "httpOnly": {"const": true},
+        "sameSite": {"const": "Lax"},
+        "secure": {"type": "boolean"},
+        "path": {"const": "/"},
+        "maxAgeSeconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "csrf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "bootstrapPath", "cookieName", "headerName", "httpOnly", "sameSite", "secure", "path", "maxAgeSeconds", "writeMethods", "failureStatus"],
+      "properties": {
+        "strategy": {"const": "signed-double-submit"},
+        "bootstrapPath": {"const": "/api/auth/csrf"},
+        "cookieName": {"type": "string", "minLength": 1},
+        "headerName": {"type": "string", "minLength": 1},
+        "httpOnly": {"const": false},
+        "sameSite": {"const": "Lax"},
+        "secure": {"type": "boolean"},
+        "path": {"const": "/"},
+        "maxAgeSeconds": {"type": "integer", "minimum": 1},
+        "writeMethods": {"type": "array", "const": ["POST", "PATCH"]},
+        "failureStatus": {"const": 403}
+      }
+    },
+    "downstreamTrust": {"type": "string", "minLength": 1},
+    "jwks": {"const": "deferred"}
+  }
+}

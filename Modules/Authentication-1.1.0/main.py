@@ -1,12 +1,14 @@
 import os
 
 from fastapi import FastAPI, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 try:
+    from .contract import contract_payload, openapi_document, schema
     from .router import HealthResponse, ReadinessResponse, liveness, readiness, router
 except ImportError:  # Keeps `python main.py` working from this directory.
+    from contract import contract_payload, openapi_document, schema
     from router import HealthResponse, ReadinessResponse, liveness, readiness, router
 
 # Stays standalone-runnable: `uvicorn modules.auth.main:app` from the repo
@@ -17,6 +19,28 @@ _dir = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title="INSIGHT Authentication", docs_url="/api/auth/docs")
 app.include_router(router)
 app.mount("/static", StaticFiles(directory=os.path.join(_dir, "static")), name="static")
+
+
+@app.get("/contract")
+def contract():
+    return JSONResponse(contract_payload())
+
+
+@app.get("/schemas/{version}/{name}")
+def published_schema(version: str, name: str):
+    try:
+        payload = schema(version, name)
+    except (KeyError, ValueError):
+        return JSONResponse(
+            {"code": "SCHEMA_NOT_FOUND", "message": "Requested schema is not published."},
+            status_code=404,
+            media_type="application/problem+json",
+        )
+    return JSONResponse(payload, media_type="application/schema+json")
+
+
+# FastAPI built-in openapi route delegates to this callable.
+app.openapi = openapi_document
 
 
 @app.get("/")

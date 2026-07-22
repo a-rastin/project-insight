@@ -1,0 +1,22 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "INSIGHT Authentication", "version": "1.0.0", "description": "Authentication discovery and session interface. Downstream modules trust the canonical session response, never JWT internals or human-oriented messages."},
+  "paths": {
+    "/contract": {"get": {"operationId": "getAuthenticationContract", "responses": {"200": {"description": "Authentication module contract", "content": {"application/json": {"schema": {"$ref": "../../schemas/1.0.0/auth-contract.schema.json"}}}}}}},
+    "/openapi.json": {"get": {"operationId": "getAuthenticationOpenapi", "responses": {"200": {"description": "Authentication OpenAPI document"}}}},
+    "/schemas/{version}/{name}": {"get": {"operationId": "getAuthenticationSchema", "parameters": [{"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "name", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Published JSON Schema"}, "404": {"description": "Schema is not published"}}}},
+    "/api/auth/health": {"get": {"operationId": "getAuthHealth", "responses": {"200": {"description": "Liveness"}}}},
+    "/api/auth/ready": {"get": {"operationId": "getAuthReadiness", "responses": {"200": {"description": "Ready"}, "503": {"description": "Not ready"}}}},
+    "/api/auth/csrf": {"get": {"operationId": "getCsrfToken", "responses": {"200": {"description": "CSRF bootstrap"}}}},
+    "/api/auth/login": {"post": {"operationId": "login", "responses": {"200": {"description": "Authenticated session created"}, "401": {"description": "Generic credential failure"}, "403": {"description": "CSRF or role failure"}, "422": {"description": "Validation failure"}}}},
+    "/api/auth/session": {"get": {"operationId": "getSession", "description": "Canonical session response. Downstream modules must use this response and must not decode the session JWT.", "responses": {"200": {"description": "Authenticated session", "content": {"application/json": {"schema": {"$ref": "../../schemas/1.0.0/auth-session.schema.json"}}}}, "401": {"description": "Unauthenticated"}}}},
+    "/api/auth/session/legacy": {"get": {"operationId": "getLegacySession", "deprecated": true, "responses": {"200": {"description": "Legacy compatibility response"}, "401": {"description": "Unauthenticated"}}}},
+    "/api/auth/password/change": {"post": {"operationId": "changePassword", "responses": {"200": {"description": "Password changed"}, "401": {"description": "Unauthenticated"}, "403": {"description": "Invalid CSRF"}, "422": {"description": "Validation failure"}}}},
+    "/api/auth/logout": {"post": {"operationId": "logout", "responses": {"200": {"description": "Session revoked"}, "403": {"description": "Invalid CSRF"}}}}
+  },
+  "components": {
+    "securitySchemes": {"SessionCookie": {"type": "apiKey", "in": "cookie", "name": "insight_session"}},
+    "parameters": {"CsrfHeader": {"name": "x-csrf-token", "in": "header", "required": true, "schema": {"type": "string"}}},
+    "schemas": {"AuthContract": {"$ref": "../../schemas/1.0.0/auth-contract.schema.json"}, "AuthSession": {"$ref": "../../schemas/1.0.0/auth-session.schema.json"}, "SecurityPolicy": {"$ref": "../../schemas/1.0.0/security-policy.schema.json"}}
+  }
+}

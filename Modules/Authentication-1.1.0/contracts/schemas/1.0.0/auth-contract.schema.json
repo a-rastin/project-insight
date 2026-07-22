@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:insight:authentication:1.0.0:auth-contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["moduleId", "moduleVersion", "interfaceVersion", "schemaVersion", "basePath", "capabilities", "dependencies", "auth", "compatibilityRoutes", "supportedClinicalScope", "schemas", "securityPolicy", "timeoutPolicy", "errorPolicy", "compatibility"],
+  "properties": {
+    "moduleId": {"const": "authentication"},
+    "moduleVersion": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "interfaceVersion": {"const": "1.0.0"},
+    "schemaVersion": {"const": "1.0.0"},
+    "basePath": {"const": "/api/auth"},
+    "capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "dependencies": {"const": []},
+    "auth": {"type": "object", "additionalProperties": false, "required": ["required", "schemes"], "properties": {"required": {"const": false}, "schemes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}}},
+    "compatibilityRoutes": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["path", "deprecated", "replacement"], "properties": {"path": {"type": "string"}, "deprecated": {"const": true}, "replacement": {"type": "string"}}}},
+    "supportedClinicalScope": {"type": "object", "additionalProperties": false, "required": ["declaration", "populations", "workflows"], "properties": {"declaration": {"type": "string", "minLength": 1}, "populations": {"type": "array", "items": {"type": "string"}}, "workflows": {"type": "array", "items": {"type": "string"}}}},
+    "schemas": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"}, "uniqueItems": true},
+    "securityPolicy": {"$ref": "security-policy.schema.json"},
+    "timeoutPolicy": {"type": "object", "additionalProperties": false, "required": ["server", "caller", "readiness"], "properties": {"server": {"type": "string"}, "caller": {"type": "string"}, "readiness": {"type": "string"}}},
+    "errorPolicy": {"type": "object", "additionalProperties": false, "required": ["loginFailure", "csrfFailure", "validationFailure", "readinessFailure", "disclosure"], "properties": {"loginFailure": {"type": "object"}, "csrfFailure": {"type": "object"}, "validationFailure": {"type": "object"}, "readinessFailure": {"type": "object"}, "disclosure": {"type": "string"}}},
+    "compatibility": {"type": "object", "additionalProperties": false, "required": ["sessionAuthority", "legacySession", "legacySessionPolicy", "jwtPolicy", "jwksPolicy"], "properties": {"sessionAuthority": {"const": "/api/auth/session"}, "legacySession": {"const": "/api/auth/session/legacy"}, "legacySessionPolicy": {"type": "string"}, "jwtPolicy": {"type": "string"}, "jwksPolicy": {"type": "string"}}}
+  }
+}

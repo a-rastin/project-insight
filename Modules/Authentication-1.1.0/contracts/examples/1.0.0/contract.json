@@ -1,0 +1,65 @@
+{
+  "moduleId": "authentication",
+  "moduleVersion": "1.1.0",
+  "interfaceVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "basePath": "/api/auth",
+  "capabilities": ["session.verify", "account.manage", "csrf.bootstrap"],
+  "dependencies": [],
+  "auth": {"required": false, "schemes": ["session-cookie", "csrf-double-submit"]},
+  "compatibilityRoutes": [
+    {"path": "/api/auth/session/legacy", "deprecated": true, "replacement": "/api/auth/session"},
+    {"path": "/api/auth/health", "deprecated": true, "replacement": "/healthz"},
+    {"path": "/api/auth/ready", "deprecated": true, "replacement": "/readyz"}
+  ],
+  "supportedClinicalScope": {
+    "declaration": "Authentication only; this module makes no clinical decisions.",
+    "populations": [],
+    "workflows": []
+  },
+  "schemas": ["auth-contract", "auth-session", "security-policy"],
+  "securityPolicy": {
+    "sessionCookie": {
+      "name": "insight_session",
+      "httpOnly": true,
+      "sameSite": "Lax",
+      "secure": false,
+      "path": "/",
+      "maxAgeSeconds": 28800
+    },
+    "csrf": {
+      "strategy": "signed-double-submit",
+      "bootstrapPath": "/api/auth/csrf",
+      "cookieName": "insight_csrf",
+      "headerName": "x-csrf-token",
+      "httpOnly": false,
+      "sameSite": "Lax",
+      "secure": false,
+      "path": "/",
+      "maxAgeSeconds": 28800,
+      "writeMethods": ["POST", "PATCH"],
+      "failureStatus": 403
+    },
+    "downstreamTrust": "Downstream modules trust only a successful canonical session response from /api/auth/session; never decode JWT internals or authorize from human-oriented messages.",
+    "jwks": "deferred"
+  },
+  "timeoutPolicy": {
+    "server": "No outbound dependency is used by Authentication.",
+    "caller": "Callers enforce a bounded request timeout; timeout or transport failure is not authenticated.",
+    "readiness": "A failed readiness check returns 503."
+  },
+  "errorPolicy": {
+    "loginFailure": {"status": 401, "message": "Wrong username or password"},
+    "csrfFailure": {"status": 403, "message": "Invalid CSRF token"},
+    "validationFailure": {"status": 422, "message": "Request validation failed"},
+    "readinessFailure": {"status": 503, "message": "not_ready"},
+    "disclosure": "Errors and readiness responses contain no secret, signing key, filesystem path, host path, or internal URL."
+  },
+  "compatibility": {
+    "sessionAuthority": "/api/auth/session",
+    "legacySession": "/api/auth/session/legacy",
+    "legacySessionPolicy": "Read-only compatibility route; downstream authorization must use the canonical session response.",
+    "jwtPolicy": "JWT claims are internal cookie implementation details, not a downstream contract.",
+    "jwksPolicy": "No JWKS endpoint or key-discovery seam exists until signed bearer tokens are introduced."
+  }
+}
