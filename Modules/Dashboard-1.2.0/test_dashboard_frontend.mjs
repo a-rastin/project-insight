@@ -9,10 +9,10 @@ function workspaceModel(role) {
       title: "Workspace",
       buttons: psychiatrist
         ? [
-            { id: "add-new-patient", title: "Add New Patient", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/add-new-patient" } },
-            { id: "patient-follow-up", title: "Patient Follow-up", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/patient-follow-up" } },
-            { id: "list-of-patients", title: "List of Patients", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/list-of-patients" } },
-            { id: "setting", title: "Setting", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/setting" } }
+            { id: "add-new-patient", title: "Add New Patient", status: "unavailable", reason: "contract endpoint returned HTTP 503", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/add-new-patient" } },
+            { id: "patient-follow-up", title: "Patient Follow-up", status: "available", reason: "contract and readiness checks passed", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/patient-follow-up" } },
+            { id: "list-of-patients", title: "List of Patients", status: "available", reason: "contract and readiness checks passed", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/list-of-patients" } },
+            { id: "setting", title: "Setting", status: "available", reason: "contract and readiness checks passed", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/setting" } }
           ]
         : [
             { id: "add-new-user", title: "Add New User", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/add-new-user" } },
@@ -83,6 +83,9 @@ assert.match(psychiatristHtml, /Jul|07\/06|6\/7|06\/07/);
 for (const title of ["Add New Patient", "Patient Follow-up", "List of Patients", "Setting"]) {
   assert.match(psychiatristHtml, new RegExp(title));
 }
+assert.match(psychiatristHtml, /unavailable/i);
+assert.match(psychiatristHtml, /contract endpoint returned HTTP 503/);
+assert.match(psychiatristHtml, /data-module="add-new-patient" disabled/);
 
 const adminHtml = await renderScenario("ADMIN");
 assert.match(adminHtml, /<h1>Workspace<\/h1>/);
@@ -91,5 +94,4 @@ assert.doesNotMatch(adminHtml, /Dr\. Ari Morgan/);
 for (const title of ["Add New User", "Logs", "Backup", "List of Users"]) {
   assert.match(adminHtml, new RegExp(title));
 }
-
 

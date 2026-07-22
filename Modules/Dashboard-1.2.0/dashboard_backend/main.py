@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -11,27 +12,13 @@ from fastapi.staticfiles import StaticFiles
 from .auth import AuthSessionError, fetch_auth_identity
 from .config import ROOT, settings
 from .db import SQLiteAdapter
+from .discovery import ModuleRegistration, discover_module
 from .repository import DashboardRepository, now_iso
 
 repo = DashboardRepository(SQLiteAdapter(settings.db_path))
 repo.initialize()
 
 app = FastAPI(title="Dashboard Backend")
-
-MODULE_BUTTONS = {
-    "PSYCHIATRIST": [
-        ("add-new-patient", "Add New Patient"),
-        ("patient-follow-up", "Patient Follow-up"),
-        ("list-of-patients", "List of Patients"),
-        ("setting", "Setting"),
-    ],
-    "ADMIN": [
-        ("add-new-user", "Add New User"),
-        ("logs", "Logs"),
-        ("backup", "Backup"),
-        ("list-of-users", "List of Users"),
-    ],
-}
 
 MOCK_AUTH_USERS = {
     "psy-1": {"id": "psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Mina Rahimi"},
@@ -107,22 +94,24 @@ def module_route_discovery(module_id: str) -> dict[str, str]:
     return {"method": "GET", "href": f"/internal/dashboard/module-routes/{module_id}"}
 
 
-def workspace_buttons(role: str) -> list[dict[str, Any]]:
-    return [
-        {"id": module_id, "title": title, "routeDiscovery": module_route_discovery(module_id)}
-        for module_id, title in MODULE_BUTTONS[role]
-    ]
+def modules_for_role(role: str) -> list[ModuleRegistration]:
+    return [module for module in settings.module_registry if role in module.roles]
 
 
-def module_button(role: str, module_id: str) -> tuple[str, str] | None:
-    return next((button for button in MODULE_BUTTONS[role] if button[0] == module_id), None)
+async def discover_registered_module(module: ModuleRegistration) -> dict[str, Any]:
+    discovered = await asyncio.to_thread(discover_module, module, settings.module_discovery_timeout_seconds)
+    discovered["id"] = discovered["moduleId"]
+    discovered["routeDiscovery"] = module_route_discovery(module.module_id)
+    return discovered
 
 
-def workspace_for(session: dict[str, Any]) -> dict[str, Any]:
+async def workspace_for(session: dict[str, Any]) -> dict[str, Any]:
     user = session.get("authUser")
     if not user:
         raise json_error(401, "authentication_session_required")
 
+    modules = modules_for_role(user["role"])
+    buttons = list(await asyncio.gather(*(discover_registered_module(module) for module in modules)))
     model: dict[str, Any] = {
         "user": {**user, "displayName": display_name_for(user)},
         "displayName": display_name_for(user),
@@ -130,7 +119,7 @@ def workspace_for(session: dict[str, Any]) -> dict[str, Any]:
         "workspace": {
             "kind": user["role"],
             "title": "Workspace",
-            "buttons": workspace_buttons(user["role"]),
+            "buttons": buttons,
         },
     }
 
@@ -208,20 +197,18 @@ async def delete_dashboard_session(session: dict[str, Any] = Depends(require_ses
 @app.get("/internal/dashboard/workspace")
 @app.get("/internal/dashboard/summary")
 async def workspace(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
-    return workspace_for(session)
+    return await workspace_for(session)
 
 
 @app.get("/internal/dashboard/module-routes/{module_id}")
 async def module_route(module_id: str, session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
-    button = module_button(session["role"], module_id)
-    if not button:
+    module = next((item for item in modules_for_role(session["role"]) if item.module_id == module_id), None)
+    if not module:
         raise json_error(404, "module_route_not_available")
-    return {
-        "moduleId": button[0],
-        "title": button[1],
-        "href": f"/modules/{button[0]}",
-        "placeholder": True,
-    }
+    discovered = await discover_registered_module(module)
+    discovered.pop("id")
+    discovered.pop("routeDiscovery")
+    return discovered
 
 
 @app.post("/internal/dashboard/disclaimer/accept")
@@ -233,7 +220,7 @@ async def accept_disclaimer(session: dict[str, Any] = Depends(require_session)) 
     session["disclaimerAcceptedAt"] = accepted_at
     session["authUser"] = with_dashboard_fields(user, session)
     repo.record_event(session, "disclaimer_accepted")
-    return workspace_for(session)
+    return await workspace_for(session)
 
 
 @app.get("/")

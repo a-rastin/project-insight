@@ -11,7 +11,7 @@ Backend: Python FastAPI. Local state: Dashboard sessions plus optional workspace
 3. Dashboard creates a local Dashboard session bound to verified `user.id`, `role`, and Authentication session id.
 4. UI calls `GET /internal/dashboard/workspace`.
 5. Dashboard re-validates local session and calls `GET /api/auth/session` again.
-6. Dashboard returns INSIGHT workspace metadata and module-link placeholders.
+6. Dashboard returns INSIGHT workspace metadata and live discovery results for configured modules.
 
 Protected Dashboard endpoints accept Dashboard session id through either:
 
@@ -79,6 +79,8 @@ Config:
 | `AUTH_BASE_URL` | Base URL; Dashboard appends `/api/auth/session`. |
 | `DASHBOARD_MOCK_AUTH` | `1` enables standalone mock auth; `0` disables it. |
 | `DASHBOARD_DB_PATH` | SQLite path; defaults to `dashboard.sqlite3`. |
+| `DASHBOARD_MODULE_REGISTRY` | JSON array of `{moduleId, title, roles, contractUrl}` entries; overrides `module-config.json`. |
+| `DASHBOARD_MODULE_TIMEOUT_MS` | Timeout for each module contract/readiness request; defaults to `2000`. |
 
 When neither `AUTH_SESSION_URL` nor `AUTH_BASE_URL` is set, standalone mock auth is enabled unless `DASHBOARD_MOCK_AUTH=0`.
 
@@ -161,9 +163,12 @@ Common response:
     "title": "Workspace",
     "buttons": [
       {
-        "id": "add-new-patient",
-        "title": "Add New Patient",
-        "routeDiscovery": {
+         "id": "add-new-patient",
+         "title": "Add New Patient",
+         "href": "/modules/add-new-patient",
+         "status": "available",
+         "reason": "contract and readiness checks passed",
+         "routeDiscovery": {
           "method": "GET",
           "href": "/internal/dashboard/module-routes/add-new-patient"
         }
@@ -203,9 +208,11 @@ Errors:
 | `401` | `authentication_session_mismatch` | Authentication user differs from Dashboard session user. |
 | `502` | `authentication_session_unavailable` | Authentication endpoint unavailable, failed, or misconfigured. |
 
-## Module-Link Placeholders
+## Runtime Module Discovery
 
-Every workspace button includes route discovery metadata:
+Dashboard has no hard-coded module links. It reads `moduleRegistry` from `module-config.json` (or the `DASHBOARD_MODULE_REGISTRY` override), queries every role-visible module's configured `/contract` URL and adjacent `/ready` URL, and keeps failed modules visible with a status and reason.
+
+Every workspace button includes route discovery metadata plus `status`, `reason`, and the compatible contract's `basePath` as `href`:
 
 ```json
 {
@@ -232,14 +239,19 @@ Success:
   "moduleId": "logs",
   "title": "Logs",
   "href": "/modules/logs",
-  "placeholder": true
+  "status": "available",
+  "reason": "contract and readiness checks passed"
 }
 ```
 
-Placeholder rules:
+Discovery states:
 
-- `placeholder: true` means Dashboard only exposes navigation shell metadata.
-- `href` is `/modules/{moduleId}`.
+- `available`: contract uses supported interface major version `1` and readiness reports `ready`.
+- `degraded`: contract is compatible but readiness failed or did not report `ready`.
+- `incompatible`: contract identity, interface version, or `basePath` is invalid for Dashboard.
+- `unavailable`: the contract endpoint could not be reached or returned a non-success status.
+- Every state includes a non-empty `reason`; failed entries are never omitted.
+- `href` is the compatible contract's `basePath`, otherwise `null`.
 - Target module owns data, mutations, permissions beyond entry, UI, and workflow implementation.
 - Dashboard returns no module payload in route discovery.
 
@@ -313,4 +325,3 @@ GET /readyz
 ```
 
 Returns `200` with `{ "ok": true }` when DB adapter can run trivial query. Returns `503` with `{ "ok": false, "error": "..." }` when DB readiness fails.
-

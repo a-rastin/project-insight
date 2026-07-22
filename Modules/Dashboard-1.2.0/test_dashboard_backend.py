@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+from contextlib import ExitStack
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError
@@ -61,14 +62,76 @@ class MockAuthenticationServer:
         self.thread.join(timeout=5)
 
 
+class MockModuleServer:
+    def __init__(self, module_id: str, interface_version: str = "1.0.0", ready_status: int = 200, contract_status: int = 200) -> None:
+        self.module_id = module_id
+        self.interface_version = interface_version
+        self.ready_status = ready_status
+        self.contract_status = contract_status
+        self.requests: list[str] = []
+
+    def __enter__(self) -> "MockModuleServer":
+        owner = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                owner.requests.append(self.path)
+                if self.path == "/contract":
+                    status = owner.contract_status
+                    payload = {
+                        "moduleId": owner.module_id,
+                        "moduleVersion": "1.0.0",
+                        "interfaceVersion": owner.interface_version,
+                        "schemaVersion": "1.0.0",
+                        "basePath": f"/modules/{owner.module_id}",
+                        "capabilities": [],
+                        "dependencies": [],
+                        "auth": {"required": True, "schemes": ["session"]},
+                        "compatibilityRoutes": [],
+                        "supportedClinicalScope": {"declaration": "module-owned", "populations": [], "workflows": []},
+                    }
+                elif self.path == "/ready":
+                    status = owner.ready_status
+                    payload = {"status": "ready" if status == 200 else "not-ready"}
+                else:
+                    status = 404
+                    payload = {"error": "not_found"}
+                body = json.dumps(payload).encode("utf-8")
+                self.send_response(status)
+                self.send_header("content-type", "application/json")
+                self.send_header("content-length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *_: object) -> None:
+                return
+
+        self.port = free_port()
+        self.server = ThreadingHTTPServer(("127.0.0.1", self.port), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.contract_url = f"http://127.0.0.1:{self.port}/contract"
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+
+
 class DashboardServer:
-    def __init__(self, auth_session_url: str | None = None) -> None:
+    def __init__(self, auth_session_url: str | None = None, module_registry: list[dict] | None = None) -> None:
         self.auth_session_url = auth_session_url
+        self.module_registry = module_registry
 
     def __enter__(self) -> str:
         self.tempdir = tempfile.TemporaryDirectory()
         self.db_path = os.path.join(self.tempdir.name, "dashboard.sqlite3")
         os.environ["DASHBOARD_DB_PATH"] = self.db_path
+        if self.module_registry is None:
+            os.environ.pop("DASHBOARD_MODULE_REGISTRY", None)
+        else:
+            os.environ["DASHBOARD_MODULE_REGISTRY"] = json.dumps(self.module_registry)
         if self.auth_session_url:
             os.environ["AUTH_SESSION_URL"] = self.auth_session_url
             os.environ["DASHBOARD_MOCK_AUTH"] = "0"
@@ -257,19 +320,12 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(workspace["workspace"]["title"], "Workspace")
             self.assertEqual(
                 [button["title"] for button in workspace["workspace"]["buttons"]],
-                ["Add New Patient", "Patient Follow-up", "List of Patients", "Setting"],
+                [],
             )
             self.assertNotIn("cards", workspace["workspace"])
             self.assertNotIn("patients", workspace)
             self.assertNotIn("drafts", workspace)
             self.assertNotIn("followUps", workspace)
-
-            discovery = workspace["workspace"]["buttons"][0]["routeDiscovery"]
-            self.assertEqual(discovery, {"method": "GET", "href": "/internal/dashboard/module-routes/add-new-patient"})
-            status, route = request_json(base, discovery["href"], headers={"x-dashboard-session": created["sessionId"]})
-            self.assertEqual(status, 200)
-            self.assertEqual(route["href"], "/modules/add-new-patient")
-            self.assertTrue(route["placeholder"])
 
     def test_admin_workspace_model_has_exact_buttons_only(self) -> None:
         with DashboardServer() as base:
@@ -282,7 +338,7 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(workspace["workspace"]["title"], "Workspace")
             self.assertEqual(
                 [button["title"] for button in workspace["workspace"]["buttons"]],
-                ["Add New User", "Logs", "Backup", "List of Users"],
+                [],
             )
             self.assertNotIn("cards", workspace["workspace"])
             self.assertNotIn("oversight", workspace)
@@ -290,19 +346,47 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertNotIn("Bayesian", json.dumps(workspace))
             self.assertNotIn("Admin oversight", json.dumps(workspace))
 
-    def test_module_routes_are_role_scoped_placeholders(self) -> None:
-        with DashboardServer() as base:
-            admin = create_session(base, "admin-1")
-            status, route = request_json(base, "/internal/dashboard/module-routes/logs", headers={"x-dashboard-session": admin["sessionId"]})
-            self.assertEqual(status, 200)
-            self.assertEqual(route["title"], "Logs")
-            self.assertEqual(route["href"], "/modules/logs")
-            self.assertTrue(route["placeholder"])
+    def test_runtime_discovery_reports_every_configured_module_state(self) -> None:
+        with ExitStack() as stack:
+            available = stack.enter_context(MockModuleServer("available"))
+            degraded = stack.enter_context(MockModuleServer("degraded", ready_status=503))
+            incompatible = stack.enter_context(MockModuleServer("incompatible", interface_version="2.0.0"))
+            unavailable = stack.enter_context(MockModuleServer("unavailable", contract_status=503))
+            modules = [
+                {"moduleId": server.module_id, "title": server.module_id.title(), "roles": ["PSYCHIATRIST"], "contractUrl": server.contract_url}
+                for server in (available, degraded, incompatible, unavailable)
+            ]
+            base = stack.enter_context(DashboardServer(module_registry=modules))
+            created = create_session(base, "psy-1")
+            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
 
-            psychiatrist = create_session(base, "psy-1")
-            status, data = request_json(base, "/internal/dashboard/module-routes/logs", headers={"x-dashboard-session": psychiatrist["sessionId"]})
-            self.assertEqual(status, 404)
-            self.assertEqual(data["error"], "module_route_not_available")
+            self.assertEqual(status, 200)
+            buttons = workspace["workspace"]["buttons"]
+            self.assertEqual([button["id"] for button in buttons], ["available", "degraded", "incompatible", "unavailable"])
+            self.assertEqual([button["status"] for button in buttons], ["available", "degraded", "incompatible", "unavailable"])
+            self.assertTrue(all(button["reason"] for button in buttons))
+            self.assertNotIn("placeholder", json.dumps(buttons))
+            for server in (available, degraded, incompatible, unavailable):
+                self.assertEqual(server.requests, ["/contract", "/ready"])
+
+            status, route = request_json(
+                base,
+                "/internal/dashboard/module-routes/available",
+                headers={"x-dashboard-session": created["sessionId"]},
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(route["status"], "available")
+            self.assertEqual(route["href"], "/modules/available")
+            self.assertNotIn("placeholder", route)
+
+    def test_module_routes_remain_role_scoped(self) -> None:
+        with MockModuleServer("logs") as module:
+            registry = [{"moduleId": "logs", "title": "Logs", "roles": ["ADMIN"], "contractUrl": module.contract_url}]
+            with DashboardServer(module_registry=registry) as base:
+                psychiatrist = create_session(base, "psy-1")
+                status, data = request_json(base, "/internal/dashboard/module-routes/logs", headers={"x-dashboard-session": psychiatrist["sessionId"]})
+                self.assertEqual(status, 404)
+                self.assertEqual(data["error"], "module_route_not_available")
 
     def test_dashboard_does_not_own_patient_mutation_endpoint(self) -> None:
         with DashboardServer() as base:
@@ -429,10 +513,9 @@ class DashboardBackendTest(unittest.TestCase):
                 self.assertEqual(workspace["workspace"]["kind"], "ADMIN")
                 self.assertEqual(
                     [button["title"] for button in workspace["workspace"]["buttons"]],
-                    ["Add New User", "Logs", "Backup", "List of Users"],
+                    [],
                 )
 
 
 if __name__ == "__main__":
     unittest.main()
-

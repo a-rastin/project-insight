@@ -27,6 +27,10 @@ const ROLE_META = {
 };
 
 const STATUS_META = {
+  available: ["normal", "Available"],
+  degraded: ["warning", "Degraded"],
+  incompatible: ["urgent", "Incompatible"],
+  unavailable: ["urgent", "Unavailable"],
   Urgent: ["urgent", "High"],
   Warning: ["warning", "Needs review"],
   Normal: ["normal", "Ready"],
@@ -348,8 +352,9 @@ function renderWorkspace() {
 
 function renderNavButton(button, role, active) {
   const [kind] = buttonMeta(button, role);
+  const unavailable = button.status && button.status !== "available";
   return `
-    <button class="nav-item ${active ? "active" : ""}" data-module="${escapeHtml(button.id)}">
+    <button class="nav-item ${active ? "active" : ""}" data-module="${escapeHtml(button.id)}" ${unavailable ? "disabled" : ""}>
       <span>${escapeHtml(kind.slice(0, 2).toUpperCase())}</span>
       ${escapeHtml(button.title)}
     </button>
@@ -380,16 +385,18 @@ function renderMetric(label, value, helper) {
 
 function renderModuleRow(button, role, locked) {
   const [kind, description, status] = buttonMeta(button, role);
+  const unavailable = button.status && button.status !== "available";
   return `
     <tr>
       <th scope="row">
         <span class="module-title">${escapeHtml(button.title)}</span>
         <span class="module-desc">${escapeHtml(description)}</span>
+        ${button.reason ? `<span class="module-desc">${escapeHtml(button.reason)}</span>` : ""}
       </th>
       <td>${escapeHtml(kind)}</td>
-      <td>${statusBadge(locked ? "Warning" : status)}</td>
+      <td>${statusBadge(locked ? "Warning" : (button.status || status))}</td>
       <td><code>${escapeHtml(button.routeDiscovery?.href || "Not available")}</code></td>
-      <td><button class="table-action" data-module="${escapeHtml(button.id)}" ${locked ? "disabled" : ""}>Open</button></td>
+      <td><button class="table-action" data-module="${escapeHtml(button.id)}" ${locked || unavailable ? "disabled" : ""}>Open</button></td>
     </tr>
   `;
 }
@@ -408,7 +415,7 @@ async function acceptDisclaimer() {
 
 async function launchModule(moduleId) {
   const button = state.model.workspace.buttons.find((item) => item.id === moduleId);
-  if (!button || state.model.requiresDisclaimer) return;
+  if (!button || state.model.requiresDisclaimer || (button.status && button.status !== "available")) return;
   try {
     const route = await api.moduleRoute(button.routeDiscovery.href);
     location.assign(route.href);
