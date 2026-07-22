@@ -17,7 +17,7 @@ try:
 except ImportError:  # Keeps `python main.py` working from this directory.
     import disclaimer_contract
 
-# ponytail: env read inline rather than a pydantic-settings class â€” config is
+# ponytail: env read inline rather than a pydantic-settings class — config is
 # read once at startup; a settings object would re-wrap os.environ for nothing.
 
 DEFAULTS = {
@@ -29,12 +29,14 @@ DEFAULTS = {
     "AUTH_CSRF_MAX_AGE_SECONDS": "28800",
     "AUTH_COOKIE_MAX_AGE_SECONDS": "28800",
     "AUTH_SECURE_COOKIE": "false",
+    "AUTH_CLOCK_SKEW_SECONDS": "60",
     "AUTH_ADMIN_USERNAME": "Admin",
     "AUTH_ADMIN_PASSWORD": "Admin",
     "AUTH_ALLOWED_REDIRECTS": "/dashboard/admin,/dashboard/user",
     "AUTH_LOGIN_FAILURE_LIMIT": "5",
     "AUTH_LOGIN_FAILURE_WINDOW_SECONDS": "300",
     "AUTH_LOGIN_LOCKOUT_SECONDS": "900",
+    "AUTH_LOGIN_FAILURE_MAX_ENTRIES": "10000",
 }
 
 SERVICE_NAME = "auth"
@@ -97,13 +99,16 @@ def readiness_report() -> dict:
 def _now() -> int:
     return int(time.time())
 
+def _clock_skew_seconds() -> int:
+    return max(0, cfg_int("AUTH_CLOCK_SKEW_SECONDS", 60))
+
 
 # --- bcrypt password hashing --------------------------------------------------
 
 def hash_password(plain: str) -> str:
-    # bcrypt: 12 rounds cost factor â€” adequate for 2026, leaves the calibration
+    # bcrypt: 12 rounds cost factor — adequate for 2026, leaves the calibration
     # knob in one place. Ponytail: no pepper, no double-hash; bcrypt is enough
-    # at a trust boundary. Knob stays â€” a real CPU may need to bump rounds.
+    # at a trust boundary. Knob stays — a real CPU may need to bump rounds.
     return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt(12)).decode("utf-8")
 
 
@@ -136,7 +141,15 @@ def verify_token(token: str) -> dict | None:
     # ponytail: returning None on any failure keeps the router a single guard.
     # A typed Result would be more honest but adds nothing callers use here.
     try:
-        return jwt.decode(token, cfg("AUTH_JWT_SECRET"), algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            cfg("AUTH_JWT_SECRET"),
+            algorithms=[ALGORITHM],
+            options={"verify_exp": False, "verify_iat": False},
+        )
+        if int(payload["exp"]) + _clock_skew_seconds() <= _now():
+            return None
+        return payload
     except (jwt.PyJWTError, ValueError, TypeError):
         return None
 
@@ -211,7 +224,7 @@ def verify_csrf_token(cookie_token: str | None, header_token: str | None) -> boo
 # writes mean a global connection lock is correct; upgrade to per-account locks
 # or a pool only if concurrent write contention shows up. Knob left in get_conn.
 
-LATEST_SCHEMA_VERSION = 7
+LATEST_SCHEMA_VERSION = 8
 
 _conn = None
 _conn_lock = threading.RLock()
@@ -302,6 +315,7 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         (5, _migration_005_disclaimer_versions),
         (6, _migration_006_audit_log),
         (7, _migration_007_uuid_identity),
+        (8, _migration_008_audit_log_append_only),
     )
     for version, migration in migrations:
         if current < version:
@@ -530,6 +544,26 @@ def _migration_007_uuid_identity(conn: sqlite3.Connection) -> None:
     finally:
         conn.execute(f"PRAGMA foreign_keys = {foreign_keys_enabled}")
 
+def _migration_008_audit_log_append_only(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS audit_log_no_update
+        BEFORE UPDATE ON audit_log
+        BEGIN
+            SELECT RAISE(ABORT, "auth audit log is append-only");
+        END
+        """
+    )
+    conn.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS audit_log_no_delete
+        BEFORE DELETE ON audit_log
+        BEGIN
+            SELECT RAISE(ABORT, "auth audit log is append-only");
+        END
+        """
+    )
+
 @contextmanager
 def _tx(conn: sqlite3.Connection):
     # sqlite3 isolation is fine; explicit commit/rollback makes intent clear.
@@ -649,6 +683,9 @@ def _login_failure_window_seconds() -> int:
 def _login_lockout_seconds() -> int:
     return max(1, cfg_int("AUTH_LOGIN_LOCKOUT_SECONDS", 900))
 
+def _login_failure_max_entries() -> int:
+    return max(1, cfg_int("AUTH_LOGIN_FAILURE_MAX_ENTRIES", 10000))
+
 
 def _prune_login_failures(conn: sqlite3.Connection, now: int) -> None:
     cutoff = now - _login_failure_window_seconds()
@@ -660,7 +697,18 @@ def _prune_login_failures(conn: sqlite3.Connection, now: int) -> None:
         """,
         (cutoff, now),
     )
-
+    conn.execute(
+        """
+        DELETE FROM login_failures
+         WHERE identity IN (
+             SELECT identity
+               FROM login_failures
+              ORDER BY last_failed_at DESC, identity DESC
+              LIMIT -1 OFFSET ?
+         )
+        """,
+        (_login_failure_max_entries(),),
+    )
 
 def login_attempt_allowed(username: str, client_id: str | None) -> bool:
     """Return whether a login attempt should be evaluated for this principal.
@@ -731,6 +779,8 @@ def record_login_failure(username: str, client_id: str | None) -> None:
         )
 
 
+        _prune_login_failures(conn, now)
+
 def record_login_success(username: str, client_id: str | None) -> None:
     if _login_failure_limit() <= 0:
         return
@@ -742,7 +792,7 @@ def record_login_success(username: str, client_id: str | None) -> None:
 
 # --- audit log ----------------------------------------------------------------
 # ponytail: writes never carry secrets. caller-name fields hold the *username*
-# shown on the request, not a token/hash. target optional â€” single-actor
+# shown on the request, not a token/hash. target optional — single-actor
 # events (login, logout, password change, disclaimer accept) set actor == target.
 
 _AUDIT_ACTIONS = {
@@ -759,6 +809,19 @@ _AUDIT_ACTIONS = {
 }
 
 
+_AUDIT_REDACTED = "[REDACTED]"
+_SENSITIVE_AUDIT_KEYS = {"password", "password_hash", "token", "jwt", "secret", "authorization", "cookie"}
+
+def _redact_audit_value(value, key: str | None = None):
+    if key and key.casefold() in _SENSITIVE_AUDIT_KEYS:
+        return _AUDIT_REDACTED
+    if isinstance(value, dict):
+        return {str(k): _redact_audit_value(v, str(k)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_audit_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_redact_audit_value(item) for item in value]
+    return value
 def record_audit(
     action: str,
     actor: dict | None = None,
@@ -767,7 +830,7 @@ def record_audit(
     client_ip: str | None = None,
     status: str = "success",
 ) -> None:
-    """Append one audit row. Never raises â€” audit must not break auth.
+    """Append one audit row. Never raises — audit must not break auth.
 
     `actor` / `target` are resolved-session dicts (sub, username, role) or a
     minimal {"id", "username"} mapping. Unknown actions are still recorded
@@ -793,7 +856,7 @@ def record_audit(
         except (TypeError, ValueError):
             target_id = None
         target_name = (target.get("username") or None)
-    meta_json = _json.dumps(metadata) if metadata else None
+    meta_json = _json.dumps(_redact_audit_value(metadata)) if metadata else None
     ip = (client_ip or None)
     if ip is not None:
         ip = ip[:128]
@@ -1145,7 +1208,7 @@ def resolve_session(
         return None
     if int(session["user_id"]) != user_id or int(session["expires_at"]) != expires_at:
         return None
-    if int(session["expires_at"]) < _now():
+    if int(session["expires_at"]) + _clock_skew_seconds() <= _now():
         revoke_session(token)
         return None
 

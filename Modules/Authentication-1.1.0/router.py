@@ -269,7 +269,7 @@ def _audit(
     metadata: dict | None = None,
     status: str = "success",
 ) -> None:
-    # ponytail: fire-and-forget â€” audit must never break an auth flow. The
+    # ponytail: fire-and-forget — audit must never break an auth flow. The
     # storage layer also swallows nothing; if SQLite dies we surface elsewhere.
     # Calling sites use resolved-session dicts as actor/target shapes.
     try:
@@ -326,7 +326,7 @@ def login(body: LoginRequest, request: Request, response: Response):
         raise _generic_login_error()
 
     user = security.get_user(body.username)
-    # ponytail: blanket error message â€” never reveal which field failed, per
+    # ponytail: blanket error message — never reveal which field failed, per
     # the spec. Generic message returned to UI; HTTP 401 only.
     if user is None or user["disabled"] or not security.verify_password(body.password, user["password_hash"]):
         security.record_login_failure(body.username, client_id)
@@ -367,7 +367,7 @@ def login(body: LoginRequest, request: Request, response: Response):
 
     security.record_login_success(body.username, client_id)
     # ponytail: account state available right now, handiness cached; only public
-    # facts used as metadata â€” disabled flag stored separately, no password/JWT.
+    # facts used as metadata — disabled flag stored separately, no password/JWT.
     _audit(
         request,
         "login",
@@ -675,13 +675,17 @@ def legacy_session(request: Request):
 @router.post("/logout", response_model=MessageResponse)
 def logout(request: Request, response: Response):
     _require_csrf(request)
+    payload = _current_user(request, require_disclaimer=False, require_password_change=False)
     token = request.cookies.get(security.cfg("AUTH_COOKIE_NAME"))
     security.revoke_session(token)
+    if payload is not None:
+        _audit(
+            request,
+            "logout",
+            actor={"id": int(payload["sub"]), "username": payload.get("username")},
+            target={"id": int(payload["sub"]), "username": payload.get("username")},
+        )
     kwargs = security.cookie_kwargs()
     # expire cookie by setting max_age=0; starlette handles the rest.
     response.set_cookie(value="", **{**kwargs, "max_age": 0})
     return MessageResponse(ok=True, message="Signed out.")
-
-
-
-
