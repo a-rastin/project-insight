@@ -1,0 +1,467 @@
+{
+  "scriptCompleted": true,
+  "entryPointCandidates": [
+    {
+      "id": "file:src/app.js",
+      "score": 6,
+      "name": "app.js",
+      "summary": "Coordinates the browser dashboard, local knowledge-base revisions, medication entry, interaction checks, clinical review workflows, report upload, audit history, and exports.",
+      "type": "file"
+    },
+    {
+      "id": "file:scripts/ingest.mjs",
+      "score": 3,
+      "name": "ingest.mjs",
+      "summary": "Ingests source drug reports, normalizes drug identities and dose hints, extracts interaction records, and builds versioned browser and JSON knowledge-base artifacts.",
+      "type": "file"
+    },
+    {
+      "id": "file:scripts/validate-kb.mjs",
+      "score": 3,
+      "name": "validate-kb.mjs",
+      "summary": "Validates required interaction fields, severity values, drug references, and self-interaction constraints in an active knowledge-base JSON file.",
+      "type": "file"
+    },
+    {
+      "id": "file:src/styles.css",
+      "score": 3,
+      "name": "styles.css",
+      "summary": "Defines the responsive visual system for the medication checker dashboard, alerts, review panels, forms, navigation, and administrative views.",
+      "type": "file"
+    },
+    {
+      "id": "file:test/ddi-engine.test.mjs",
+      "score": 3,
+      "name": "ddi-engine.test.mjs",
+      "summary": "Exercises the drug-interaction engine's normalization, parsing, suggestions, interaction detection, severity behavior, and audit output.",
+      "type": "file"
+    }
+  ],
+  "fanInRanking": [
+    {
+      "id": "file:data/active-kb.js",
+      "fanIn": 2,
+      "name": "active-kb.js"
+    },
+    {
+      "id": "file:src/ddi-engine.js",
+      "fanIn": 2,
+      "name": "ddi-engine.js"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:buildKnowledgeBase",
+      "fanIn": 2,
+      "name": "buildKnowledgeBase"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:cleanLine",
+      "fanIn": 2,
+      "name": "cleanLine"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:collectInteractionSections",
+      "fanIn": 2,
+      "name": "collectInteractionSections"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:extractDoseSuggestions",
+      "fanIn": 2,
+      "name": "extractDoseSuggestions"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:looksLikeDrugHeading",
+      "fanIn": 2,
+      "name": "looksLikeDrugHeading"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:normalizeDrugName",
+      "fanIn": 2,
+      "name": "normalizeDrugName"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:parseBulletRecord",
+      "fanIn": 2,
+      "name": "parseBulletRecord"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:parseReport",
+      "fanIn": 2,
+      "name": "parseReport"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:slugify",
+      "fanIn": 2,
+      "name": "slugify"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:splitBlocks",
+      "fanIn": 2,
+      "name": "splitBlocks"
+    },
+    {
+      "id": "config:data/active-kb.json",
+      "fanIn": 1,
+      "name": "active-kb.json"
+    },
+    {
+      "id": "file:scripts/ingest.mjs",
+      "fanIn": 1,
+      "name": "ingest.mjs"
+    },
+    {
+      "id": "file:src/app.js",
+      "fanIn": 1,
+      "name": "app.js"
+    },
+    {
+      "id": "file:test/ddi-engine.test.mjs",
+      "fanIn": 1,
+      "name": "ddi-engine.test.mjs"
+    },
+    {
+      "id": "file:test/ingest.test.mjs",
+      "fanIn": 1,
+      "name": "ingest.test.mjs"
+    },
+    {
+      "id": "file:test/ui-source.test.mjs",
+      "fanIn": 1,
+      "name": "ui-source.test.mjs"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:addDoseSuggestions",
+      "fanIn": 1,
+      "name": "addDoseSuggestions"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:createInteraction",
+      "fanIn": 1,
+      "name": "createInteraction"
+    }
+  ],
+  "fanOutRanking": [
+    {
+      "id": "file:scripts/ingest.mjs",
+      "fanOut": 30,
+      "name": "ingest.mjs"
+    },
+    {
+      "id": "file:src/app.js",
+      "fanOut": 3,
+      "name": "app.js"
+    },
+    {
+      "id": "config:data/active-kb.json",
+      "fanOut": 1,
+      "name": "active-kb.json"
+    },
+    {
+      "id": "file:scripts/validate-kb.mjs",
+      "fanOut": 1,
+      "name": "validate-kb.mjs"
+    },
+    {
+      "id": "file:src/ddi-engine.js",
+      "fanOut": 1,
+      "name": "ddi-engine.js"
+    },
+    {
+      "id": "file:src/styles.css",
+      "fanOut": 1,
+      "name": "styles.css"
+    },
+    {
+      "id": "file:test/ddi-engine.test.mjs",
+      "fanOut": 1,
+      "name": "ddi-engine.test.mjs"
+    },
+    {
+      "id": "file:test/ingest.test.mjs",
+      "fanOut": 1,
+      "name": "ingest.test.mjs"
+    },
+    {
+      "id": "config:.understand-anything/config.json",
+      "fanOut": 0,
+      "name": "config.json"
+    },
+    {
+      "id": "file:.understand-anything/.understandignore",
+      "fanOut": 0,
+      "name": ".understandignore"
+    },
+    {
+      "id": "file:data/active-kb.js",
+      "fanOut": 0,
+      "name": "active-kb.js"
+    },
+    {
+      "id": "file:test/ui-source.test.mjs",
+      "fanOut": 0,
+      "name": "ui-source.test.mjs"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:addDoseSuggestions",
+      "fanOut": 0,
+      "name": "addDoseSuggestions"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:buildKnowledgeBase",
+      "fanOut": 0,
+      "name": "buildKnowledgeBase"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:cleanLine",
+      "fanOut": 0,
+      "name": "cleanLine"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:collectInteractionSections",
+      "fanOut": 0,
+      "name": "collectInteractionSections"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:createInteraction",
+      "fanOut": 0,
+      "name": "createInteraction"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:extractDoseSuggestions",
+      "fanOut": 0,
+      "name": "extractDoseSuggestions"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:getOrCreateDrug",
+      "fanOut": 0,
+      "name": "getOrCreateDrug"
+    },
+    {
+      "id": "function:scripts/ingest.mjs:inferMechanism",
+      "fanOut": 0,
+      "name": "inferMechanism"
+    }
+  ],
+  "bfsTraversal": {
+    "startNode": "file:src/app.js",
+    "order": [
+      "file:src/app.js"
+    ],
+    "depthMap": {
+      "file:src/app.js": 0
+    },
+    "byDepth": {
+      "0": [
+        "file:src/app.js"
+      ]
+    }
+  },
+  "nonCodeFiles": {
+    "documentation": [],
+    "infrastructure": [],
+    "data": [],
+    "config": [
+      {
+        "id": "config:.understand-anything/config.json",
+        "name": "config.json",
+        "type": "config",
+        "summary": "Stores the Understand analyzer output-language preference for this project."
+      },
+      {
+        "id": "config:data/active-kb.json",
+        "name": "active-kb.json",
+        "type": "config",
+        "summary": "Canonical active knowledge-base dataset containing normalized drugs, interaction evidence, reports, clinical-use metadata, and audit schema."
+      }
+    ]
+  },
+  "clusters": [],
+  "layers": {
+    "count": 5,
+    "list": [
+      {
+        "id": "layer:project-analysis-config",
+        "name": "Project Analysis Configuration",
+        "description": "Local Understand settings and ignore rules control how this drug-interaction module is analyzed and documented."
+      },
+      {
+        "id": "layer:knowledge-base-data",
+        "name": "Knowledge Base Data",
+        "description": "Canonical JSON and browser-ready JavaScript artifacts hold the active versioned drug-interaction knowledge base."
+      },
+      {
+        "id": "layer:ingestion-and-validation",
+        "name": "Ingestion and Validation",
+        "description": "Command-line tooling parses source reports, builds knowledge-base revisions, and validates clinical interaction data integrity."
+      },
+      {
+        "id": "layer:clinical-application",
+        "name": "Clinical Application",
+        "description": "The browser controller, deterministic interaction engine, and responsive stylesheet deliver medication checking, review, audit, and administration workflows."
+      },
+      {
+        "id": "layer:test-suite",
+        "name": "Test Suite",
+        "description": "Node-based tests verify the interaction engine, ingestion pipeline, and safety-critical UI source behavior."
+      }
+    ]
+  },
+  "nodeSummaryIndex": {
+    "file:.understand-anything/.understandignore": {
+      "name": ".understandignore",
+      "type": "file",
+      "summary": "Controls which project paths the Understand analyzer excludes from codebase discovery and graph generation."
+    },
+    "config:.understand-anything/config.json": {
+      "name": "config.json",
+      "type": "config",
+      "summary": "Stores the Understand analyzer output-language preference for this project."
+    },
+    "file:data/active-kb.js": {
+      "name": "active-kb.js",
+      "type": "file",
+      "summary": "Generated browser-ready JavaScript artifact containing the active drug-interaction knowledge base for direct loading by the dashboard."
+    },
+    "config:data/active-kb.json": {
+      "name": "active-kb.json",
+      "type": "config",
+      "summary": "Canonical active knowledge-base dataset containing normalized drugs, interaction evidence, reports, clinical-use metadata, and audit schema."
+    },
+    "file:scripts/ingest.mjs": {
+      "name": "ingest.mjs",
+      "type": "file",
+      "summary": "Ingests source drug reports, normalizes drug identities and dose hints, extracts interaction records, and builds versioned browser and JSON knowledge-base artifacts."
+    },
+    "file:scripts/validate-kb.mjs": {
+      "name": "validate-kb.mjs",
+      "type": "file",
+      "summary": "Validates required interaction fields, severity values, drug references, and self-interaction constraints in an active knowledge-base JSON file."
+    },
+    "file:src/app.js": {
+      "name": "app.js",
+      "type": "file",
+      "summary": "Coordinates the browser dashboard, local knowledge-base revisions, medication entry, interaction checks, clinical review workflows, report upload, audit history, and exports."
+    },
+    "file:src/ddi-engine.js": {
+      "name": "ddi-engine.js",
+      "type": "file",
+      "summary": "Provides the environment-neutral drug-interaction engine for report parsing, knowledge-base indexing, drug suggestion and resolution, pair checking, severity ordering, and audit entry creation."
+    },
+    "file:src/styles.css": {
+      "name": "styles.css",
+      "type": "file",
+      "summary": "Defines the responsive visual system for the medication checker dashboard, alerts, review panels, forms, navigation, and administrative views."
+    },
+    "file:test/ddi-engine.test.mjs": {
+      "name": "ddi-engine.test.mjs",
+      "type": "file",
+      "summary": "Exercises the drug-interaction engine's normalization, parsing, suggestions, interaction detection, severity behavior, and audit output."
+    },
+    "file:test/ingest.test.mjs": {
+      "name": "ingest.test.mjs",
+      "type": "file",
+      "summary": "Tests report-ingestion helpers and knowledge-base construction against representative drug and interaction text."
+    },
+    "file:test/ui-source.test.mjs": {
+      "name": "ui-source.test.mjs",
+      "type": "file",
+      "summary": "Performs source-level UI assertions for administrative controls, session/result exports, and safe evidence rendering."
+    },
+    "function:scripts/ingest.mjs:slugify": {
+      "name": "slugify",
+      "type": "function",
+      "summary": "Converts arbitrary labels into stable lowercase underscore-separated identifiers."
+    },
+    "function:scripts/ingest.mjs:cleanLine": {
+      "name": "cleanLine",
+      "type": "function",
+      "summary": "Removes citation markers, bullet prefixes, and excess whitespace from imported report lines."
+    },
+    "function:scripts/ingest.mjs:isNoiseLine": {
+      "name": "isNoiseLine",
+      "type": "function",
+      "summary": "Recognizes navigation, timestamp, URL, and interaction-checker boilerplate that should be excluded from report parsing."
+    },
+    "function:scripts/ingest.mjs:normalizeDrugName": {
+      "name": "normalizeDrugName",
+      "type": "function",
+      "summary": "Canonicalizes drug names by removing product qualifiers and normalizing punctuation and whitespace."
+    },
+    "function:scripts/ingest.mjs:getOrCreateDrug": {
+      "name": "getOrCreateDrug",
+      "type": "function",
+      "summary": "Resolves a normalized drug identity in the ingestion map or creates a pending identity while preserving useful aliases."
+    },
+    "function:scripts/ingest.mjs:addDoseSuggestions": {
+      "name": "addDoseSuggestions",
+      "type": "function",
+      "summary": "Merges cleaned, unique dose suggestions into a drug record with a bounded result size."
+    },
+    "function:scripts/ingest.mjs:extractDoseSuggestions": {
+      "name": "extractDoseSuggestions",
+      "type": "function",
+      "summary": "Extracts plausible dosing statements from report text using units, dosage-form, route, and frequency heuristics."
+    },
+    "function:scripts/ingest.mjs:readTextFiles": {
+      "name": "readTextFiles",
+      "type": "function",
+      "summary": "Recursively discovers supported source text files while recording paths skipped by extension filtering."
+    },
+    "function:scripts/ingest.mjs:parseDrugHeader": {
+      "name": "parseDrugHeader",
+      "type": "function",
+      "summary": "Infers the primary drug name and aliases from cleaned report headings and the source filename."
+    },
+    "function:scripts/ingest.mjs:collectInteractionSections": {
+      "name": "collectInteractionSections",
+      "type": "function",
+      "summary": "Collects report text under recognized severity headings while stopping at unrelated clinical sections."
+    },
+    "function:scripts/ingest.mjs:splitBlocks": {
+      "name": "splitBlocks",
+      "type": "function",
+      "summary": "Segments interaction-section lines into logical records using blanks, bullets, headings, and continuation rules."
+    },
+    "function:scripts/ingest.mjs:looksLikeDrugHeading": {
+      "name": "looksLikeDrugHeading",
+      "type": "function",
+      "summary": "Classifies short report lines that resemble drug-name headings rather than narrative content."
+    },
+    "function:scripts/ingest.mjs:parseBulletRecord": {
+      "name": "parseBulletRecord",
+      "type": "function",
+      "summary": "Parses a structured bullet block into interacting-drug and narrative fields when its syntax is sufficiently complete."
+    },
+    "function:scripts/ingest.mjs:inferMechanism": {
+      "name": "inferMechanism",
+      "type": "function",
+      "summary": "Infers a concise pharmacologic interaction mechanism from characteristic phrases in source evidence."
+    },
+    "function:scripts/ingest.mjs:inferRecommendation": {
+      "name": "inferRecommendation",
+      "type": "function",
+      "summary": "Derives a clinical handling recommendation from interaction severity and narrative cues."
+    },
+    "function:scripts/ingest.mjs:inferMonitoring": {
+      "name": "inferMonitoring",
+      "type": "function",
+      "summary": "Builds monitoring guidance from evidence mentioning ECG, bleeding, laboratory, sedation, or vital-sign risks."
+    },
+    "function:scripts/ingest.mjs:createInteraction": {
+      "name": "createInteraction",
+      "type": "function",
+      "summary": "Constructs a normalized interaction record with evidence provenance, review state, and knowledge-base version metadata."
+    },
+    "function:scripts/ingest.mjs:parseReport": {
+      "name": "parseReport",
+      "type": "function",
+      "summary": "Orchestrates complete report parsing by resolving drugs, extracting severity sections and dose hints, and emitting interaction and report records."
+    },
+    "function:scripts/ingest.mjs:buildKnowledgeBase": {
+      "name": "buildKnowledgeBase",
+      "type": "function",
+      "summary": "Reads all source reports, merges drug and interaction records, deduplicates pairs, and assembles the versioned active knowledge-base document."
+    }
+  },
+  "totalNodes": 31,
+  "totalEdges": 39
+}

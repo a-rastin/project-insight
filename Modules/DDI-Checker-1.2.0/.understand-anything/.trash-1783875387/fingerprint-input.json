@@ -1,0 +1,21 @@
+{
+  "projectRoot": "G:\\INSIGHT-Project\\Modules\\DDI-Checker-1.1.0",
+  "sourceFilePaths": [
+    ".understand-anything/.understandignore",
+    ".understand-anything/config.json",
+    "data/active-kb.js",
+    "data/active-kb.json",
+    "index.html",
+    "package.json",
+    "README.md",
+    "scripts/ingest.mjs",
+    "scripts/validate-kb.mjs",
+    "src/app.js",
+    "src/ddi-engine.js",
+    "src/styles.css",
+    "test/ddi-engine.test.mjs",
+    "test/ingest.test.mjs",
+    "test/ui-source.test.mjs"
+  ],
+  "gitCommitHash": "887c7b753709f09e53051d2ac3b95068f9750942"
+}

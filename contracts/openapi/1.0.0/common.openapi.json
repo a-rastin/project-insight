@@ -1,0 +1,67 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "INSIGHT Common Module Interface",
+    "version": "1.0.0",
+    "description": "Shared transport routes and reusable interface schemas. Domain behavior remains module-owned."
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {"200": {"description": "Process is live"}}
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "responses": {
+          "200": {"description": "Module is ready"},
+          "503": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/contract": {
+      "get": {
+        "operationId": "getModuleContract",
+        "responses": {
+          "200": {"description": "Module contract", "content": {"application/json": {"schema": {"$ref": "../../schemas/1.0.0/module-contract.schema.json"}}}}
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "getOpenapiDocument",
+        "responses": {"200": {"description": "OpenAPI document", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      }
+    },
+    "/schemas/{version}/{name}": {
+      "get": {
+        "operationId": "getVersionedSchema",
+        "parameters": [
+          {"name": "version", "in": "path", "required": true, "schema": {"$ref": "../../schemas/1.0.0/identifiers.schema.json#/$defs/SemVer"}},
+          {"name": "name", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"}}
+        ],
+        "responses": {
+          "200": {"description": "Versioned JSON Schema", "content": {"application/schema+json": {"schema": {"type": "object"}}}},
+          "404": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "RequestId": {"name": "X-Request-ID", "in": "header", "required": false, "schema": {"$ref": "../../schemas/1.0.0/identifiers.schema.json#/$defs/Uuid"}},
+      "CorrelationId": {"name": "X-Correlation-ID", "in": "header", "required": false, "schema": {"$ref": "../../schemas/1.0.0/identifiers.schema.json#/$defs/Uuid"}},
+      "CausationId": {"name": "X-Causation-ID", "in": "header", "required": false, "schema": {"$ref": "../../schemas/1.0.0/identifiers.schema.json#/$defs/Uuid"}},
+      "IfMatch": {"name": "If-Match", "in": "header", "required": true, "schema": {"type": "string", "pattern": "^\"[^\"]+\"$"}},
+      "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 1}}
+    },
+    "responses": {
+      "Problem": {
+        "description": "RFC 9457 problem details",
+        "content": {"application/problem+json": {"schema": {"$ref": "../../schemas/1.0.0/problem-details.schema.json"}}}
+      }
+    }
+  }
+}

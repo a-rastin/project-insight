@@ -1,0 +1,16 @@
+{
+  "0": "Auth & Session Management",
+  "1": "Test Suite",
+  "2": "Database Layer",
+  "3": "API Routes",
+  "4": "Auth REST Client",
+  "5": "Package Config",
+  "6": "Workspace Model",
+  "7": "Architecture Patterns",
+  "8": "Frontend Tests",
+  "9": "Backend Init",
+  "10": "Dashboard — Module Handoff",
+  "11": "Dashboard API Contract: INSIGHT Workspace",
+  "12": "Dashboard Module",
+  "13": "Dashboard Dataset Schema"
+}

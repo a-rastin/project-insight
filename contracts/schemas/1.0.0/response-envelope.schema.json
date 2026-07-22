@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/response-envelope.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "interfaceVersion", "requestId", "correlationId", "data", "meta"],
+  "properties": {
+    "schemaVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "interfaceVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "requestId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "correlationId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "causationId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "data": {"type": "object"},
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timestamp"],
+      "properties": {"timestamp": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"}}
+    }
+  }
+}

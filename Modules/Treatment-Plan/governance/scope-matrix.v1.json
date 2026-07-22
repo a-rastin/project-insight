@@ -1,0 +1,65 @@
+{
+  "$schema": "./scope-matrix.schema.json",
+  "schemaVersion": "1.0.0",
+  "documentId": "INSIGHT-TP-SCOPE-V1",
+  "status": "draft_pending_approval",
+  "intendedUse": {
+    "decision": null,
+    "researchOnly": null,
+    "jurisdictions": [],
+    "clinicalUser": "psychiatrist",
+    "statement": null
+  },
+  "clinicalScope": {
+    "supportedDiagnoses": [],
+    "supportedPopulation": null,
+    "planBreadth": null,
+    "appointmentPolicy": null,
+    "emergencyBehavior": null
+  },
+  "knowledgeAuthority": {
+    "approvedSources": [],
+    "diagnosisTerminology": null,
+    "medicationTerminology": null,
+    "licensingAssessment": null
+  },
+  "clinicalWorkflow": {
+    "finalizationPolicy": null,
+    "highSeverityOverridePolicy": null,
+    "missingDataPolicy": null
+  },
+  "notSupported": [],
+  "decisionGates": [
+    {"id": "DG-01", "name": "Jurisdiction and intended use", "status": "unresolved", "decision": null},
+    {"id": "DG-02", "name": "Clinical knowledge authority", "status": "unresolved", "decision": null},
+    {"id": "DG-03", "name": "Supported population", "status": "unresolved", "decision": null},
+    {"id": "DG-04", "name": "Plan breadth", "status": "unresolved", "decision": null},
+    {"id": "DG-05", "name": "Appointment policy", "status": "unresolved", "decision": null},
+    {"id": "DG-06", "name": "Clinical workflow", "status": "unresolved", "decision": null},
+    {"id": "DG-07", "name": "Diagnosis breadth", "status": "unresolved", "decision": null},
+    {"id": "DG-08", "name": "Terminology and coding", "status": "unresolved", "decision": null}
+  ],
+  "owners": {
+    "psychiatrist": null,
+    "clinicalSafetyOfficer": null,
+    "product": null,
+    "privacy": null,
+    "regulatory": null
+  },
+  "approvals": [],
+  "regulatoryAssessment": {
+    "status": "not_completed",
+    "classification": null,
+    "jurisdictionAnalysis": null,
+    "assessor": null,
+    "assessedAt": null,
+    "evidenceRef": null
+  },
+  "clinicalValidation": {
+    "status": "not_completed",
+    "protocolRef": null,
+    "reportRef": null,
+    "approvedByClinicalSafetyOfficer": false,
+    "approvedAt": null
+  }
+}

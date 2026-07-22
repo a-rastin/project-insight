@@ -1,0 +1,12 @@
+{
+  "moduleId": "dashboard",
+  "moduleVersion": "1.2.0",
+  "interfaceVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "basePath": "/api/dashboard/v1",
+  "capabilities": ["workspace.read"],
+  "dependencies": [],
+  "auth": {"required": true, "schemes": ["session"]},
+  "compatibilityRoutes": [],
+  "supportedClinicalScope": {"declaration": "module-owned", "populations": [], "workflows": []}
+}

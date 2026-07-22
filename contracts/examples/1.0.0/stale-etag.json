@@ -1,0 +1,10 @@
+{
+  "type": "https://insight.example/problems/stale-etag",
+  "title": "Resource version is stale",
+  "status": 412,
+  "detail": "If-Match does not identify current resource version.",
+  "instance": "/requests/22222222-2222-4222-8222-222222222222",
+  "code": "STALE_ETAG",
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "correlationId": "33333333-3333-4333-8333-333333333333"
+}

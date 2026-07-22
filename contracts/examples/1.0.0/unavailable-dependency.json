@@ -1,0 +1,10 @@
+{
+  "type": "https://insight.example/problems/unavailable-dependency",
+  "title": "Dependency unavailable",
+  "status": 503,
+  "detail": "A required dependency is unavailable.",
+  "instance": "/requests/22222222-2222-4222-8222-222222222222",
+  "code": "DEPENDENCY_UNAVAILABLE",
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "correlationId": "33333333-3333-4333-8333-333333333333"
+}

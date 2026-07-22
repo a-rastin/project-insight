@@ -1,0 +1,10 @@
+{
+  "type": "https://insight.example/problems/idempotency-conflict",
+  "title": "Idempotency key conflict",
+  "status": 409,
+  "detail": "Idempotency-Key was already used with a different request.",
+  "instance": "/requests/22222222-2222-4222-8222-222222222222",
+  "code": "IDEMPOTENCY_CONFLICT",
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "correlationId": "33333333-3333-4333-8333-333333333333"
+}

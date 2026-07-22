@@ -1,0 +1,108 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 29,
+    "filesWithImports": 19,
+    "totalEdges": 50
+  },
+  "importMap": {
+    "diagnosis/__init__.py": [
+      "diagnosis/api.py",
+      "diagnosis/criteria.py",
+      "diagnosis/readiness.py"
+    ],
+    "diagnosis/__main__.py": [],
+    "diagnosis/api.py": [
+      "diagnosis/dashboard.py",
+      "diagnosis/diagnosis_api.py",
+      "diagnosis/page.py"
+    ],
+    "diagnosis/app.py": [
+      "diagnosis/api.py",
+      "diagnosis/config.py",
+      "diagnosis/readiness.py"
+    ],
+    "diagnosis/auth.py": [
+      "diagnosis/config.py"
+    ],
+    "diagnosis/config.py": [],
+    "diagnosis/criteria.py": [],
+    "diagnosis/csrf.py": [
+      "diagnosis/config.py"
+    ],
+    "diagnosis/dashboard.py": [
+      "diagnosis/auth.py",
+      "diagnosis/config.py",
+      "diagnosis/criteria.py",
+      "diagnosis/deps.py"
+    ],
+    "diagnosis/deps.py": [
+      "diagnosis/auth.py",
+      "diagnosis/store.py"
+    ],
+    "diagnosis/diagnosis_api.py": [
+      "diagnosis/auth.py",
+      "diagnosis/criteria.py",
+      "diagnosis/dashboard.py",
+      "diagnosis/deps.py",
+      "diagnosis/patient.py"
+    ],
+    "diagnosis/page.py": [
+      "diagnosis/auth.py",
+      "diagnosis/deps.py"
+    ],
+    "diagnosis/patient.py": [
+      "diagnosis/config.py"
+    ],
+    "diagnosis/readiness.py": [],
+    "diagnosis/static/index.html": [],
+    "diagnosis/store.py": [
+      "diagnosis/config.py"
+    ],
+    "docs/api-contract.md": [],
+    "HANDOFF.md": [],
+    "README.md": [],
+    "requirements.txt": [],
+    "test_auth.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/app.py"
+    ],
+    "test_config.py": [],
+    "test_csrf.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/app.py"
+    ],
+    "test_discovery.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/app.py"
+    ],
+    "test_embed.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/api.py",
+      "diagnosis/page.py"
+    ],
+    "test_patient.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/app.py"
+    ],
+    "test_readiness.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/app.py",
+      "diagnosis/readiness.py",
+      "diagnosis/store.py"
+    ],
+    "test_routes.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/dashboard.py",
+      "diagnosis/diagnosis_api.py",
+      "diagnosis/page.py"
+    ],
+    "test_unittest.py": [
+      "diagnosis/__init__.py",
+      "diagnosis/api.py",
+      "diagnosis/app.py",
+      "diagnosis/criteria.py",
+      "diagnosis/patient.py"
+    ]
+  }
+}

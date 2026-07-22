@@ -1,0 +1,930 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 29,
+  "totalBatches": 5,
+  "exportsByPath": {
+    "diagnosis/__init__.py": [
+      "get_app"
+    ],
+    "diagnosis/__main__.py": [
+      "main"
+    ],
+    "diagnosis/api.py": [
+      "_http_selfcheck"
+    ],
+    "diagnosis/app.py": [
+      "health",
+      "ready"
+    ],
+    "diagnosis/auth.py": [
+      "Session",
+      "_AuthUnavailable",
+      "_fetch_session",
+      "_build_session",
+      "require_role",
+      "reset_auth_for_tests"
+    ],
+    "diagnosis/config.py": [
+      "_env_truthy",
+      "_env_list",
+      "Settings",
+      "_load",
+      "_config_selfcheck"
+    ],
+    "diagnosis/criteria.py": [
+      "Evaluation",
+      "get_criteria",
+      "meta_contract",
+      "_classify",
+      "evaluate",
+      "_demo"
+    ],
+    "diagnosis/csrf.py": [
+      "_sign",
+      "_verify",
+      "mint",
+      "set_cookie",
+      "_read_cookie",
+      "_read_header",
+      "require_csrf",
+      "reset_secret_for_tests"
+    ],
+    "diagnosis/dashboard.py": [
+      "meta",
+      "csrf_token",
+      "module_routes",
+      "audit_log",
+      "_dump_for_audit"
+    ],
+    "diagnosis/deps.py": [],
+    "diagnosis/diagnosis_api.py": [
+      "Submission",
+      "init_session",
+      "get_session",
+      "put_session"
+    ],
+    "diagnosis/page.py": [
+      "_read_page",
+      "page"
+    ],
+    "diagnosis/patient.py": [
+      "Patient",
+      "_PatientUnavailable",
+      "_fetch_patient",
+      "_PatientNotFound",
+      "_build_patient",
+      "resolve_patient",
+      "reset_patient_for_tests",
+      "_patient_selfcheck"
+    ],
+    "diagnosis/readiness.py": [
+      "_check_db",
+      "_check_auth",
+      "_check_patient",
+      "check_readiness",
+      "_readiness_selfcheck"
+    ],
+    "diagnosis/store.py": [
+      "_resolve_path",
+      "DiagnosisStore",
+      "_store_selfcheck"
+    ],
+    "test_auth.py": [
+      "_arm_with_csrf",
+      "_write_headers",
+      "_Handler",
+      "_free_port",
+      "_start_fake_auth",
+      "_cookie_for",
+      "_client_for",
+      "_exercise",
+      "test_no_cookie_returns_401_on_every_protected_path",
+      "test_unauthenticated_payload_returns_401",
+      "test_nurse_role_is_403_on_every_protected_path",
+      "test_psychiatrist_can_read_and_write",
+      "test_admin_can_read_but_not_write",
+      "test_admin_can_read_existing_session_after_psychiatrist_seeds_it",
+      "test_auth_service_down_returns_401",
+      "main"
+    ],
+    "test_config.py": [
+      "_snapshot_env",
+      "_restore_env",
+      "_clear_env",
+      "_reload_config",
+      "_run",
+      "test_defaults_match_prior_hardcoded_constants",
+      "test_custom_env_rebuilds_snapshot",
+      "test_settings_frozen_raises_on_mutation",
+      "test_cors_origins_star_survives",
+      "test_cors_origins_blank_falls_back_to_star",
+      "test_module_id_for_nested_prefix_uses_last_segment",
+      "test_auth_module_sourced_from_settings",
+      "test_auth_reset_for_tests_restores_to_settings",
+      "test_patient_module_sourced_from_settings",
+      "test_patient_reset_for_tests_restores_to_settings",
+      "test_csrf_secret_pinned_from_settings",
+      "test_csrf_secure_flag_from_settings",
+      "test_dashboard_module_id_from_settings",
+      "test_app_cors_reads_settings",
+      "test_main_argparse_defaults_from_settings",
+      "test_config_selfcheck_passes",
+      "main"
+    ],
+    "test_csrf.py": [
+      "_Handler",
+      "_free_port",
+      "_start_fake_auth",
+      "_client",
+      "_mint_valid_token",
+      "_mint_bad_token",
+      "test_missing_csrf_blocks_put",
+      "test_missing_csrf_blocks_init",
+      "test_header_only_blocked",
+      "test_cookie_only_blocked",
+      "test_cookie_header_mismatch_blocked",
+      "test_bad_signature_blocked",
+      "test_valid_token_allows_init",
+      "test_valid_token_allows_put",
+      "test_csrf_route_sets_cookie_and_returns_token",
+      "test_html_page_carries_meta_token",
+      "test_bypass_env_skips_csrf",
+      "main"
+    ],
+    "test_discovery.py": [
+      "_Handler",
+      "_free_port",
+      "_start_fake_auth",
+      "_client",
+      "test_descriptor_shape_and_launch_href",
+      "test_admin_can_read_discovery",
+      "test_unknown_module_id_returns_404",
+      "test_nurse_role_is_403",
+      "test_no_cookie_returns_401",
+      "main"
+    ],
+    "test_embed.py": [
+      "_served_page",
+      "test_read_page_is_embeddable_shell",
+      "test_served_page_exposes_createDiagnosisModule",
+      "test_contract_signature_takes_root_and_apiBaseUrl",
+      "test_served_page_drops_back_to_dashboard_placeholder",
+      "test_served_page_does_not_bake_standalone_topbar_in_body_markup",
+      "test_embedded_flag_skips_topbar_chrome",
+      "test_fn_returns_mount_unmount_handle",
+      "test_csrf_meta_token_still_read_via_meta_tag",
+      "test_read_page_back_compat_reexport",
+      "test_route_layer_unchanged",
+      "test_bypass_serve_path_is_byte_clean",
+      "main"
+    ],
+    "test_patient.py": [
+      "_AuthHandler",
+      "_PatientHandler",
+      "_free_port",
+      "_start_fake",
+      "_arm_with_csrf",
+      "_client",
+      "test_init_binds_canonical_patient_id",
+      "test_put_binds_canonical_patient_id",
+      "test_unknown_code_returns_422_not_404",
+      "test_registry_404_on_put_returns_422",
+      "test_empty_code_returns_400",
+      "test_missing_canonical_id_returns_422",
+      "test_registry_bad_json_returns_422",
+      "test_registry_500_returns_422",
+      "test_registry_down_returns_422",
+      "test_lookup_disabled_env_falls_back_to_free_text",
+      "main"
+    ],
+    "test_readiness.py": [
+      "test_default_env_is_ready",
+      "test_bypass_shim_fails_readiness",
+      "test_auth_base_url_blank_fails",
+      "test_patient_lookup_enabled_and_configured",
+      "test_patient_lookup_enabled_blank_url_fails",
+      "test_db_fault_is_false_without_raising",
+      "test_response_never_leaks_base_urls",
+      "test_http_ready_200_when_healthy",
+      "test_http_ready_503_when_bypass_on",
+      "test_http_ready_503_when_db_down",
+      "test_http_ready_body_no_url_leak",
+      "_set_env",
+      "_restore_env",
+      "_swap_store",
+      "_fresh_tmpdb",
+      "_break_tmpdb",
+      "_heal_tmpdb",
+      "_cleanup_tmpdb",
+      "_Handler",
+      "_free_port",
+      "_start_fake_auth",
+      "main"
+    ],
+    "test_routes.py": [
+      "_paths",
+      "test_page_seam_owns_only_browser_page",
+      "test_dashboard_seam_owns_only_discovery_routes",
+      "test_diagnosis_seam_owns_only_per_patient_rest",
+      "test_composed_router_has_all_paths_from_app_openapi",
+      "test_literal_routes_precede_parameterized_code_route",
+      "test_dashboard_seam_module_routes_is_in_seam",
+      "test_audit_seam_is_in_dashboard_seam_only",
+      "test_discovery_module_id_constant",
+      "test_back_compat_reexports_from_api_seam",
+      "test_each_seam_shares_one_store_and_policy",
+      "main"
+    ],
+    "test_unittest.py": [
+      "_fake_request",
+      "TestCriteriaRules",
+      "TestRestContract",
+      "TestAuditSeam",
+      "TestClinicianAuthority",
+      "TestAuthRejection",
+      "TestCSRF",
+      "TestPersistence",
+      "TestPatientIdentity"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "diagnosis/api.py",
+          "language": "python",
+          "sizeLines": 142,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/auth.py",
+          "language": "python",
+          "sizeLines": 153,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/criteria.py",
+          "language": "python",
+          "sizeLines": 214,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/dashboard.py",
+          "language": "python",
+          "sizeLines": 197,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/deps.py",
+          "language": "python",
+          "sizeLines": 74,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/diagnosis_api.py",
+          "language": "python",
+          "sizeLines": 136,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/page.py",
+          "language": "python",
+          "sizeLines": 58,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_embed.py",
+          "language": "python",
+          "sizeLines": 325,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_routes.py",
+          "language": "python",
+          "sizeLines": 250,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "diagnosis/api.py": [
+          "diagnosis/dashboard.py",
+          "diagnosis/diagnosis_api.py",
+          "diagnosis/page.py"
+        ],
+        "diagnosis/auth.py": [
+          "diagnosis/config.py"
+        ],
+        "diagnosis/criteria.py": [],
+        "diagnosis/dashboard.py": [
+          "diagnosis/auth.py",
+          "diagnosis/config.py",
+          "diagnosis/criteria.py",
+          "diagnosis/deps.py"
+        ],
+        "diagnosis/deps.py": [
+          "diagnosis/auth.py",
+          "diagnosis/store.py"
+        ],
+        "diagnosis/diagnosis_api.py": [
+          "diagnosis/auth.py",
+          "diagnosis/criteria.py",
+          "diagnosis/dashboard.py",
+          "diagnosis/deps.py",
+          "diagnosis/patient.py"
+        ],
+        "diagnosis/page.py": [
+          "diagnosis/auth.py",
+          "diagnosis/deps.py"
+        ],
+        "test_embed.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/api.py",
+          "diagnosis/page.py"
+        ],
+        "test_routes.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/dashboard.py",
+          "diagnosis/diagnosis_api.py",
+          "diagnosis/page.py"
+        ]
+      },
+      "neighborMap": {
+        "diagnosis/api.py": [
+          {
+            "path": "diagnosis/__init__.py",
+            "batchIndex": 2,
+            "symbols": [
+              "get_app"
+            ]
+          },
+          {
+            "path": "diagnosis/app.py",
+            "batchIndex": 2,
+            "symbols": [
+              "health",
+              "ready"
+            ]
+          },
+          {
+            "path": "test_unittest.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_fake_request",
+              "TestCriteriaRules",
+              "TestRestContract",
+              "TestAuditSeam",
+              "TestClinicianAuthority",
+              "TestAuthRejection",
+              "TestCSRF",
+              "TestPersistence",
+              "TestPatientIdentity"
+            ]
+          }
+        ],
+        "diagnosis/auth.py": [
+          {
+            "path": "diagnosis/config.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_env_truthy",
+              "_env_list",
+              "Settings",
+              "_load",
+              "_config_selfcheck"
+            ]
+          }
+        ],
+        "diagnosis/criteria.py": [
+          {
+            "path": "diagnosis/__init__.py",
+            "batchIndex": 2,
+            "symbols": [
+              "get_app"
+            ]
+          },
+          {
+            "path": "test_unittest.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_fake_request",
+              "TestCriteriaRules",
+              "TestRestContract",
+              "TestAuditSeam",
+              "TestClinicianAuthority",
+              "TestAuthRejection",
+              "TestCSRF",
+              "TestPersistence",
+              "TestPatientIdentity"
+            ]
+          }
+        ],
+        "diagnosis/dashboard.py": [
+          {
+            "path": "diagnosis/config.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_env_truthy",
+              "_env_list",
+              "Settings",
+              "_load",
+              "_config_selfcheck"
+            ]
+          }
+        ],
+        "diagnosis/deps.py": [
+          {
+            "path": "diagnosis/store.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_resolve_path",
+              "DiagnosisStore",
+              "_store_selfcheck"
+            ]
+          }
+        ],
+        "diagnosis/diagnosis_api.py": [
+          {
+            "path": "diagnosis/patient.py",
+            "batchIndex": 3,
+            "symbols": [
+              "Patient",
+              "_PatientUnavailable",
+              "_fetch_patient",
+              "_PatientNotFound",
+              "_build_patient",
+              "resolve_patient",
+              "reset_patient_for_tests",
+              "_patient_selfcheck"
+            ]
+          }
+        ],
+        "test_embed.py": [
+          {
+            "path": "diagnosis/__init__.py",
+            "batchIndex": 2,
+            "symbols": [
+              "get_app"
+            ]
+          }
+        ],
+        "test_routes.py": [
+          {
+            "path": "diagnosis/__init__.py",
+            "batchIndex": 2,
+            "symbols": [
+              "get_app"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "diagnosis/__init__.py",
+          "language": "python",
+          "sizeLines": 35,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/app.py",
+          "language": "python",
+          "sizeLines": 55,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/readiness.py",
+          "language": "python",
+          "sizeLines": 278,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_auth.py",
+          "language": "python",
+          "sizeLines": 322,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_csrf.py",
+          "language": "python",
+          "sizeLines": 298,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_discovery.py",
+          "language": "python",
+          "sizeLines": 188,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_patient.py",
+          "language": "python",
+          "sizeLines": 325,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_readiness.py",
+          "language": "python",
+          "sizeLines": 395,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "diagnosis/__init__.py": [
+          "diagnosis/api.py",
+          "diagnosis/criteria.py",
+          "diagnosis/readiness.py"
+        ],
+        "diagnosis/app.py": [
+          "diagnosis/api.py",
+          "diagnosis/config.py",
+          "diagnosis/readiness.py"
+        ],
+        "diagnosis/readiness.py": [],
+        "test_auth.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/app.py"
+        ],
+        "test_csrf.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/app.py"
+        ],
+        "test_discovery.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/app.py"
+        ],
+        "test_patient.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/app.py"
+        ],
+        "test_readiness.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/app.py",
+          "diagnosis/readiness.py",
+          "diagnosis/store.py"
+        ]
+      },
+      "neighborMap": {
+        "diagnosis/__init__.py": [
+          {
+            "path": "diagnosis/api.py",
+            "batchIndex": 1,
+            "symbols": [
+              "_http_selfcheck"
+            ]
+          },
+          {
+            "path": "diagnosis/criteria.py",
+            "batchIndex": 1,
+            "symbols": [
+              "Evaluation",
+              "get_criteria",
+              "meta_contract",
+              "_classify",
+              "evaluate",
+              "_demo"
+            ]
+          },
+          {
+            "path": "test_embed.py",
+            "batchIndex": 1,
+            "symbols": [
+              "_served_page",
+              "test_read_page_is_embeddable_shell",
+              "test_served_page_exposes_createDiagnosisModule",
+              "test_contract_signature_takes_root_and_apiBaseUrl",
+              "test_served_page_drops_back_to_dashboard_placeholder",
+              "test_served_page_does_not_bake_standalone_topbar_in_body_markup",
+              "test_embedded_flag_skips_topbar_chrome",
+              "test_fn_returns_mount_unmount_handle",
+              "test_csrf_meta_token_still_read_via_meta_tag",
+              "test_read_page_back_compat_reexport",
+              "test_route_layer_unchanged",
+              "test_bypass_serve_path_is_byte_clean",
+              "main"
+            ]
+          },
+          {
+            "path": "test_routes.py",
+            "batchIndex": 1,
+            "symbols": [
+              "_paths",
+              "test_page_seam_owns_only_browser_page",
+              "test_dashboard_seam_owns_only_discovery_routes",
+              "test_diagnosis_seam_owns_only_per_patient_rest",
+              "test_composed_router_has_all_paths_from_app_openapi",
+              "test_literal_routes_precede_parameterized_code_route",
+              "test_dashboard_seam_module_routes_is_in_seam",
+              "test_audit_seam_is_in_dashboard_seam_only",
+              "test_discovery_module_id_constant",
+              "test_back_compat_reexports_from_api_seam",
+              "test_each_seam_shares_one_store_and_policy",
+              "main"
+            ]
+          },
+          {
+            "path": "test_unittest.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_fake_request",
+              "TestCriteriaRules",
+              "TestRestContract",
+              "TestAuditSeam",
+              "TestClinicianAuthority",
+              "TestAuthRejection",
+              "TestCSRF",
+              "TestPersistence",
+              "TestPatientIdentity"
+            ]
+          }
+        ],
+        "diagnosis/app.py": [
+          {
+            "path": "diagnosis/api.py",
+            "batchIndex": 1,
+            "symbols": [
+              "_http_selfcheck"
+            ]
+          },
+          {
+            "path": "diagnosis/config.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_env_truthy",
+              "_env_list",
+              "Settings",
+              "_load",
+              "_config_selfcheck"
+            ]
+          },
+          {
+            "path": "test_unittest.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_fake_request",
+              "TestCriteriaRules",
+              "TestRestContract",
+              "TestAuditSeam",
+              "TestClinicianAuthority",
+              "TestAuthRejection",
+              "TestCSRF",
+              "TestPersistence",
+              "TestPatientIdentity"
+            ]
+          }
+        ],
+        "test_readiness.py": [
+          {
+            "path": "diagnosis/store.py",
+            "batchIndex": 3,
+            "symbols": [
+              "_resolve_path",
+              "DiagnosisStore",
+              "_store_selfcheck"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "diagnosis/config.py",
+          "language": "python",
+          "sizeLines": 288,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/csrf.py",
+          "language": "python",
+          "sizeLines": 155,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/patient.py",
+          "language": "python",
+          "sizeLines": 263,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/store.py",
+          "language": "python",
+          "sizeLines": 293,
+          "fileCategory": "code"
+        },
+        {
+          "path": "test_unittest.py",
+          "language": "python",
+          "sizeLines": 1075,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "diagnosis/config.py": [],
+        "diagnosis/csrf.py": [
+          "diagnosis/config.py"
+        ],
+        "diagnosis/patient.py": [
+          "diagnosis/config.py"
+        ],
+        "diagnosis/store.py": [
+          "diagnosis/config.py"
+        ],
+        "test_unittest.py": [
+          "diagnosis/__init__.py",
+          "diagnosis/api.py",
+          "diagnosis/app.py",
+          "diagnosis/criteria.py",
+          "diagnosis/patient.py"
+        ]
+      },
+      "neighborMap": {
+        "diagnosis/config.py": [
+          {
+            "path": "diagnosis/app.py",
+            "batchIndex": 2,
+            "symbols": [
+              "health",
+              "ready"
+            ]
+          },
+          {
+            "path": "diagnosis/auth.py",
+            "batchIndex": 1,
+            "symbols": [
+              "Session",
+              "_AuthUnavailable",
+              "_fetch_session",
+              "_build_session",
+              "require_role",
+              "reset_auth_for_tests"
+            ]
+          },
+          {
+            "path": "diagnosis/dashboard.py",
+            "batchIndex": 1,
+            "symbols": [
+              "meta",
+              "csrf_token",
+              "module_routes",
+              "audit_log",
+              "_dump_for_audit"
+            ]
+          }
+        ],
+        "diagnosis/patient.py": [
+          {
+            "path": "diagnosis/diagnosis_api.py",
+            "batchIndex": 1,
+            "symbols": [
+              "Submission",
+              "init_session",
+              "get_session",
+              "put_session"
+            ]
+          }
+        ],
+        "diagnosis/store.py": [
+          {
+            "path": "diagnosis/deps.py",
+            "batchIndex": 1,
+            "symbols": []
+          },
+          {
+            "path": "test_readiness.py",
+            "batchIndex": 2,
+            "symbols": [
+              "test_default_env_is_ready",
+              "test_bypass_shim_fails_readiness",
+              "test_auth_base_url_blank_fails",
+              "test_patient_lookup_enabled_and_configured",
+              "test_patient_lookup_enabled_blank_url_fails",
+              "test_db_fault_is_false_without_raising",
+              "test_response_never_leaks_base_urls",
+              "test_http_ready_200_when_healthy",
+              "test_http_ready_503_when_bypass_on",
+              "test_http_ready_503_when_db_down",
+              "test_http_ready_body_no_url_leak",
+              "_set_env",
+              "_restore_env",
+              "_swap_store",
+              "_fresh_tmpdb",
+              "_break_tmpdb",
+              "_heal_tmpdb",
+              "_cleanup_tmpdb",
+              "_Handler",
+              "_free_port",
+              "_start_fake_auth",
+              "main"
+            ]
+          }
+        ],
+        "test_unittest.py": [
+          {
+            "path": "diagnosis/__init__.py",
+            "batchIndex": 2,
+            "symbols": [
+              "get_app"
+            ]
+          },
+          {
+            "path": "diagnosis/api.py",
+            "batchIndex": 1,
+            "symbols": [
+              "_http_selfcheck"
+            ]
+          },
+          {
+            "path": "diagnosis/app.py",
+            "batchIndex": 2,
+            "symbols": [
+              "health",
+              "ready"
+            ]
+          },
+          {
+            "path": "diagnosis/criteria.py",
+            "batchIndex": 1,
+            "symbols": [
+              "Evaluation",
+              "get_criteria",
+              "meta_contract",
+              "_classify",
+              "evaluate",
+              "_demo"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "HANDOFF.md",
+          "language": "markdown",
+          "sizeLines": 969,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "markdown",
+          "sizeLines": 332,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "requirements.txt",
+          "language": "txt",
+          "sizeLines": 5,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "HANDOFF.md": [],
+        "README.md": [],
+        "requirements.txt": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": "diagnosis/__main__.py",
+          "language": "python",
+          "sizeLines": 56,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnosis/static/index.html",
+          "language": "html",
+          "sizeLines": 710,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "docs/api-contract.md",
+          "language": "markdown",
+          "sizeLines": 817,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "test_config.py",
+          "language": "python",
+          "sizeLines": 439,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "diagnosis/__main__.py": [],
+        "diagnosis/static/index.html": [],
+        "docs/api-contract.md": [],
+        "test_config.py": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

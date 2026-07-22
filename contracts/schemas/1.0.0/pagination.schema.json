@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/pagination.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["page", "pageSize", "total"],
+  "properties": {
+    "page": {"type": "integer", "minimum": 1},
+    "pageSize": {"type": "integer", "minimum": 1},
+    "total": {"type": "integer", "minimum": 0},
+    "nextCursor": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "null"}]}
+  }
+}

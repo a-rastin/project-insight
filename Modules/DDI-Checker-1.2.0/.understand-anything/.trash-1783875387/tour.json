@@ -1,0 +1,51 @@
+[
+  {
+    "order": 1,
+    "title": "Clinical Application Entry",
+    "description": "Start with the browser controller to see the project as a complete medication-safety workflow. It connects medication entry, interaction checking, clinical review, uploads, audit history, and exports, providing the broad runtime map for every later stop.",
+    "nodeIds": ["file:src/app.js"]
+  },
+  {
+    "order": 2,
+    "title": "Interaction Engine",
+    "description": "The environment-neutral engine supplies the deterministic behavior behind the dashboard: it indexes the knowledge base, resolves drug names, checks medication pairs, orders severity, and creates audit entries. Separating this logic from the browser controller makes the safety-critical rules easier to reuse and test.",
+    "nodeIds": ["file:src/ddi-engine.js"]
+  },
+  {
+    "order": 3,
+    "title": "Knowledge Base Contract",
+    "description": "The canonical JSON dataset is the durable contract consumed by the engine, containing normalized drugs, evidence-backed interactions, clinical metadata, report provenance, and audit schema. Its generated JavaScript counterpart makes the same active version directly loadable by the browser application introduced in Step 1.",
+    "nodeIds": ["config:data/active-kb.json", "file:data/active-kb.js"],
+    "languageLesson": "Keeping canonical JSON separate from a generated browser wrapper preserves a tool-friendly source of truth while supporting direct script loading in a static application."
+  },
+  {
+    "order": 4,
+    "title": "Report Ingestion Pipeline",
+    "description": "The ingestion command transforms heterogeneous source reports into the knowledge-base contract from Step 3. Its high fan-out reflects a staged pipeline that cleans text, normalizes identities, extracts dosing and severity evidence, constructs interaction records, and assembles a versioned dataset.",
+    "nodeIds": ["file:scripts/ingest.mjs", "function:scripts/ingest.mjs:parseReport", "function:scripts/ingest.mjs:buildKnowledgeBase"]
+  },
+  {
+    "order": 5,
+    "title": "Evidence Normalization",
+    "description": "Within ingestion, focused helpers turn inconsistent report prose into stable clinical records. Name normalization and section collection establish structure first, then mechanism, recommendation, and monitoring inference enrich each interaction without obscuring its source evidence.",
+    "nodeIds": ["function:scripts/ingest.mjs:normalizeDrugName", "function:scripts/ingest.mjs:collectInteractionSections", "function:scripts/ingest.mjs:inferMechanism", "function:scripts/ingest.mjs:inferRecommendation", "function:scripts/ingest.mjs:inferMonitoring"]
+  },
+  {
+    "order": 6,
+    "title": "Knowledge Base Validation",
+    "description": "After ingestion, the validation command guards the boundary between generated data and the clinical application. It checks required fields, allowed severity values, valid drug references, and self-interaction constraints before a knowledge-base revision is treated as active.",
+    "nodeIds": ["file:scripts/validate-kb.mjs"]
+  },
+  {
+    "order": 7,
+    "title": "Safety Test Suite",
+    "description": "The tests verify the architecture at its three highest-risk seams: deterministic engine behavior, report-to-knowledge-base construction, and safe UI capabilities. Read them after the implementation layers to see the concrete invariants maintained across parsing, severity handling, evidence rendering, administrative controls, and exports.",
+    "nodeIds": ["file:test/ddi-engine.test.mjs", "file:test/ingest.test.mjs", "file:test/ui-source.test.mjs"]
+  },
+  {
+    "order": 8,
+    "title": "Responsive Presentation",
+    "description": "Finish with the stylesheet that turns the workflows from Step 1 into a responsive clinical dashboard. Its rules cover alerts, forms, review panels, navigation, and administrative views, showing how interaction severity and workflow state are communicated visually to users.",
+    "nodeIds": ["file:src/styles.css"]
+  }
+]

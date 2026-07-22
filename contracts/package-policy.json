@@ -1,0 +1,5 @@
+{
+  "packageVersion": "1.0.0",
+  "description": "Shared interface artifacts only; executable code is limited to adapters and generated clients.",
+  "allowedCodeDirectories": ["adapters", "clients"]
+}

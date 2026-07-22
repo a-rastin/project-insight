@@ -1,0 +1,103 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "Start with the README to understand the project: a DSM-5-TR schizophrenia criteria checklist for the Insight clinical decision support tool. Clinician-controlled — the psychiatrist confirms or bypasses; the model never decides. Read HANDOFF.md for the architectural narrative and design decisions.",
+    "nodeIds": [
+      "file:README.md",
+      "file:HANDOFF.md"
+    ]
+  },
+  {
+    "order": 2,
+    "title": "Entry Point and Standalone Boot",
+    "description": "python -m diagnosis runs __main__.py:main(). It sets DIAGNOSIS_AUTH_BYPASS=1, runs six self-checks (criteria, store, patient, readiness, config, HTTP), drops the bypass, then starts uvicorn on diagnosis.app:app. The app includes the composed router and serves /health and /ready probes.",
+    "nodeIds": [
+      "file:diagnosis/__main__.py",
+      "file:diagnosis/app.py",
+      "endpoint:diagnosis/app.py:GET /health",
+      "endpoint:diagnosis/app.py:GET /ready"
+    ]
+  },
+  {
+    "order": 3,
+    "title": "Clinical Logic — The Pure Evaluation Engine",
+    "description": "criteria.py is the heart of the module. CRITERIA list holds 9 DSM-5-TR items (A1-A6, B1, C1, D1). evaluate(checked_ids) is a pure function returning Evaluation with no side effects and no I/O. meta_contract() exposes the rule primitives the browser UI uses for optimistic display — the JS never reimplements the DSM logic. The clinician-authority invariant (model never auto-decides) is a tested contract locked by TestClinicianAuthority.",
+    "nodeIds": [
+      "file:diagnosis/criteria.py",
+      "class:diagnosis/criteria.py:Evaluation",
+      "function:diagnosis/criteria.py:evaluate",
+      "function:diagnosis/criteria.py:meta_contract",
+      "function:diagnosis/criteria.py:get_criteria"
+    ]
+  },
+  {
+    "order": 4,
+    "title": "API Composition — Three Route Seams",
+    "description": "api.py is the composition root. It builds a single router by extending routes from three focused seams in literal-before-parameterized order (required invariant). page.py serves the SPA at GET /. dashboard.py serves GET /diagnosis/_meta, /diagnosis/_csrf, /internal/dashboard/module-routes/{moduleId}, and /internal/diagnosis/audit/{code}. diagnosis_api.py serves the per-patient REST: POST /diagnosis/{code}/init, GET /diagnosis/{code}, PUT /diagnosis/{code}. All seams share the process-wide DiagnosisStore and auth/CSRF policy from deps.py.",
+    "nodeIds": [
+      "file:diagnosis/api.py",
+      "file:diagnosis/page.py",
+      "file:diagnosis/dashboard.py",
+      "file:diagnosis/diagnosis_api.py",
+      "file:diagnosis/deps.py",
+      "endpoint:diagnosis/dashboard.py:GET /diagnosis/_meta",
+      "endpoint:diagnosis/diagnosis_api.py:POST /diagnosis/{code}/init",
+      "endpoint:diagnosis/diagnosis_api.py:GET /diagnosis/{code}",
+      "endpoint:diagnosis/diagnosis_api.py:PUT /diagnosis/{code}"
+    ]
+  },
+  {
+    "order": 5,
+    "title": "Persistence and Patient Identity",
+    "description": "store.py: DiagnosisStore wraps SQLite sessions (code, patient_id, checked JSON, decision) and audit (id, code, snapshot, created_at) tables. WAL journal, thread-safe via process lock. patient.py: the identity adapter aligns the free-text {code} with the canonical INSIGHT patient.id via internal REST lookup. Opt-in via DIAGNOSIS_PATIENT_LOOKUP=1; default disabled preserves prior diagnosis-local identity for self-check and offline tests.",
+    "nodeIds": [
+      "file:diagnosis/store.py",
+      "file:diagnosis/patient.py",
+      "class:diagnosis/store.py:DiagnosisStore",
+      "class:diagnosis/patient.py:Patient",
+      "function:diagnosis/store.py:_store_selfcheck",
+      "function:diagnosis/patient.py:resolve_patient"
+    ]
+  },
+  {
+    "order": 6,
+    "title": "Auth, CSRF, and Config",
+    "description": "auth.py delegates trust to the central Insight auth service (GET /api/auth/session with Cookie). CSRF protection uses HMAC-SHA256 signed double-submit tokens. config.py is the single settings adapter — frozen Settings dataclass read once at import, only place to add a new env knob. Every consumer reads settings.* instead of scattering os.environ.get calls.",
+    "nodeIds": [
+      "file:diagnosis/auth.py",
+      "file:diagnosis/csrf.py",
+      "file:diagnosis/config.py",
+      "class:diagnosis/auth.py:Session",
+      "class:diagnosis/config.py:Settings",
+      "function:diagnosis/auth.py:require_role",
+      "function:diagnosis/csrf.py:require_csrf"
+    ]
+  },
+  {
+    "order": 7,
+    "title": "The Test Surface and Self-Check Chain",
+    "description": "All tests use stdlib unittest plus threading HTTP server harnesses — no external framework. The boot chain runs six self-checks before uvicorn binds: criteria._demo (TestCriteriaRules), store._store_selfcheck, patient._patient_selfcheck, readiness._readiness_selfcheck, config._config_selfcheck, api._http_selfcheck (TestRestContract + TestClinicianAuthority + TestAuditSeam). Any failure raises SystemExit(1). The clinician-authority invariant (model never auto-decides) is tested at both the pure-rule layer and the REST layer.",
+    "nodeIds": [
+      "file:test_unittest.py",
+      "file:test_config.py",
+      "file:test_readiness.py",
+      "file:test_patient.py",
+      "file:test_csrf.py",
+      "file:test_auth.py",
+      "file:test_embed.py",
+      "file:test_routes.py",
+      "file:test_discovery.py"
+    ]
+  },
+  {
+    "order": 8,
+    "title": "The Embeddable Module UI",
+    "description": "The browser page (diagnosis/static/index.html) is a vanilla JS SPA with no build step. It exposes window.createDiagnosisModule({root, apiBaseUrl, embedded, initialCode}) returning {mount(), unmount(), setPatientCode()}. All display is derived from the GET /diagnosis/_meta meta_contract — the JS never reimplements DSM logic. Under the bypass shim the CSRF token injection is skipped so the served page is byte-clean for test asserts. The module never mutates the host URL or ships a host topbar.",
+    "nodeIds": [
+      "file:diagnosis/static/index.html",
+      "file:diagnosis/page.py",
+      "file:test_embed.py"
+    ]
+  }
+]

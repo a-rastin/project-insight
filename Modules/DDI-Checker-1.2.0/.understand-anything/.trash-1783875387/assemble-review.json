@@ -1,0 +1,13 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 0,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "The merge report is sane: one tested_by edge was direction-normalized, no imports required recovery, and no unfixable merge issues were reported.",
+    "All two import relationships in scan-result.json are represented exactly once in the assembled graph.",
+    "Remaining concern: Batch 1 failed after one retry, so README.md, index.html, and package.json have no nodes in the assembled graph. This leaves project documentation, the browser entry markup, and package metadata absent from downstream architecture and tour analysis."
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "projectRoot": "G:\\INSIGHT-Project\\Modules\\DDI-Checker-1.1.0",
+  "batchFiles": [
+    {"path": "README.md", "language": "markdown", "sizeLines": 55, "fileCategory": "docs"},
+    {"path": "index.html", "language": "html", "sizeLines": 183, "fileCategory": "markup"},
+    {"path": "package.json", "language": "json", "sizeLines": 18, "fileCategory": "config"}
+  ],
+  "batchImportData": {"README.md": [], "index.html": [], "package.json": []}
+}

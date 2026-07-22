@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "interfaceVersion": "1.0.0",
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "correlationId": "33333333-3333-4333-8333-333333333333",
+  "data": {
+    "moduleId": "dashboard",
+    "moduleVersion": "1.2.0",
+    "interfaceVersion": "1.0.0",
+    "schemaVersion": "1.0.0",
+    "basePath": "/api/dashboard/v1",
+    "capabilities": ["workspace.read"],
+    "dependencies": [],
+    "auth": {"required": true, "schemes": ["session"]},
+    "compatibilityRoutes": [],
+    "supportedClinicalScope": {"declaration": "module-owned", "populations": [], "workflows": []}
+  },
+  "meta": {"timestamp": "2026-07-22T12:00:00Z"}
+}

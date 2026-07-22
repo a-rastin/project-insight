@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://insight.example/contracts/treatment-plan/1.0.0/primary-plan.schema.json","$ref":"treatment-plan.schema.json#/$defs/PrimaryPlan"}

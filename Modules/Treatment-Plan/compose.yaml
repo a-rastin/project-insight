@@ -1,0 +1,8 @@
+services:
+  treatment-plan:
+    build: .
+    ports: ["8000:8000"]
+    volumes: ["treatment-plan-data:/data"]
+volumes:
+  treatment-plan-data:
+

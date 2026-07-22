@@ -1,0 +1,4213 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "fileCategory": "code",
+      "totalLines": 43,
+      "nonEmptyLines": 39,
+      "metrics": {}
+    },
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "sections": [
+        {
+          "heading": "outputLanguage",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "data/active-kb.js",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 560669,
+      "nonEmptyLines": 560669,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "data/active-kb.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 560669,
+      "nonEmptyLines": 560669,
+      "sections": [
+        {
+          "heading": "schemaVersion",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "version",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "status",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "generatedAt",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "activatedAt",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "source",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "normalization",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "clinicalUse",
+          "level": 1,
+          "line": 30
+        },
+        {
+          "heading": "drugs",
+          "level": 1,
+          "line": 34
+        },
+        {
+          "heading": "interactions",
+          "level": 1,
+          "line": 29202
+        },
+        {
+          "heading": "reports",
+          "level": 1,
+          "line": 559932
+        },
+        {
+          "heading": "auditSchema",
+          "level": 1,
+          "line": 560660
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "scripts/ingest.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 620,
+      "nonEmptyLines": 556,
+      "functions": [
+        {
+          "name": "slugify",
+          "startLine": 84,
+          "endLine": 91,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "cleanLine",
+          "startLine": 93,
+          "endLine": 99,
+          "params": [
+            "line"
+          ]
+        },
+        {
+          "name": "isNoiseLine",
+          "startLine": 101,
+          "endLine": 111,
+          "params": [
+            "line"
+          ]
+        },
+        {
+          "name": "normalizeDrugName",
+          "startLine": 113,
+          "endLine": 121,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "drugIdFor",
+          "startLine": 123,
+          "endLine": 131,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "getOrCreateDrug",
+          "startLine": 133,
+          "endLine": 154,
+          "params": [
+            "drugs",
+            "name"
+          ]
+        },
+        {
+          "name": "addDoseSuggestions",
+          "startLine": 156,
+          "endLine": 166,
+          "params": [
+            "drug",
+            "suggestions"
+          ]
+        },
+        {
+          "name": "extractDoseSuggestions",
+          "startLine": 168,
+          "endLine": 207,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "readTextFiles",
+          "startLine": 209,
+          "endLine": 232,
+          "params": [
+            "sourceDir"
+          ]
+        },
+        {
+          "name": "parseDrugHeader",
+          "startLine": 234,
+          "endLine": 248,
+          "params": [
+            "raw",
+            "filePath"
+          ]
+        },
+        {
+          "name": "getSeverityHeading",
+          "startLine": 250,
+          "endLine": 255,
+          "params": [
+            "line"
+          ]
+        },
+        {
+          "name": "collectInteractionSections",
+          "startLine": 257,
+          "endLine": 287,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "splitBlocks",
+          "startLine": 289,
+          "endLine": 314,
+          "params": [
+            "lines"
+          ]
+        },
+        {
+          "name": "looksLikeDrugHeading",
+          "startLine": 316,
+          "endLine": 323,
+          "params": [
+            "block"
+          ]
+        },
+        {
+          "name": "extractListDrugs",
+          "startLine": 325,
+          "endLine": 331,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "parseBulletRecord",
+          "startLine": 333,
+          "endLine": 355,
+          "params": [
+            "block"
+          ]
+        },
+        {
+          "name": "inferMechanism",
+          "startLine": 357,
+          "endLine": 368,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "inferRecommendation",
+          "startLine": 370,
+          "endLine": 388,
+          "params": [
+            "severity",
+            "text"
+          ]
+        },
+        {
+          "name": "inferMonitoring",
+          "startLine": 390,
+          "endLine": 399,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "firstSentence",
+          "startLine": 401,
+          "endLine": 404,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "createInteraction",
+          "startLine": 406,
+          "endLine": 431,
+          "params": []
+        },
+        {
+          "name": "parseReport",
+          "startLine": 433,
+          "endLine": 519,
+          "params": [
+            "raw",
+            "filePath",
+            "context"
+          ]
+        },
+        {
+          "name": "buildKnowledgeBase",
+          "startLine": 521,
+          "endLine": 599,
+          "params": []
+        },
+        {
+          "name": "writeOutputs",
+          "startLine": 601,
+          "endLine": 609,
+          "params": [
+            "kb"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "slugify",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "cleanLine",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "normalizeDrugName",
+          "line": 113,
+          "isDefault": false
+        },
+        {
+          "name": "extractDoseSuggestions",
+          "line": 168,
+          "isDefault": false
+        },
+        {
+          "name": "collectInteractionSections",
+          "line": 257,
+          "isDefault": false
+        },
+        {
+          "name": "splitBlocks",
+          "line": 289,
+          "isDefault": false
+        },
+        {
+          "name": "looksLikeDrugHeading",
+          "line": 316,
+          "isDefault": false
+        },
+        {
+          "name": "parseBulletRecord",
+          "line": 333,
+          "isDefault": false
+        },
+        {
+          "name": "parseReport",
+          "line": 433,
+          "isDefault": false
+        },
+        {
+          "name": "buildKnowledgeBase",
+          "line": 521,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace(/['']/g, \"\")\n    .replace(/[^a-z0-9]+/g, \"_\")\n    .replace",
+          "lineNumber": 85
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace(/['']/g, \"\")\n    .replace",
+          "lineNumber": 85
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace",
+          "lineNumber": 85
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace",
+          "lineNumber": 85
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n    .toLowerCase",
+          "lineNumber": 85
+        },
+        {
+          "caller": "slugify",
+          "callee": "String",
+          "lineNumber": 85
+        },
+        {
+          "caller": "cleanLine",
+          "callee": "String(line || \"\")\n    .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n    .replace(/\\s+/g, \" \")\n    .replace(/^[-•*]\\s*/, \"\")\n    .trim",
+          "lineNumber": 94
+        },
+        {
+          "caller": "cleanLine",
+          "callee": "String(line || \"\")\n    .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n    .replace(/\\s+/g, \" \")\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "cleanLine",
+          "callee": "String(line || \"\")\n    .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "cleanLine",
+          "callee": "String(line || \"\")\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "cleanLine",
+          "callee": "String",
+          "lineNumber": 94
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^https?:\\/\\//i.test",
+          "lineNumber": 103
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^\\d+\\/\\d+\\/\\d+,\\s+\\d+:\\d+/i.test",
+          "lineNumber": 104
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^this site is intended/i.test",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^interaction checker$/i.test",
+          "lineNumber": 106
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^enter a drug name/i.test",
+          "lineNumber": 107
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^no interactions found$/i.test",
+          "lineNumber": 108
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^interactions found$/i.test",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isNoiseLine",
+          "callee": "/^all interactions sort by/i.test",
+          "lineNumber": 110
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \"\")\n    .replace(/[^a-z0-9+/-]+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \"\")\n    .replace(/[^a-z0-9+/-]+/g, \" \")\n    .replace",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \"\")\n    .replace",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace(/\\([^)]*\\)/g, \"\")\n    .replace",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase()\n    .replace",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String(value || \"\")\n    .toLowerCase",
+          "lineNumber": 114
+        },
+        {
+          "caller": "normalizeDrugName",
+          "callee": "String",
+          "lineNumber": 114
+        },
+        {
+          "caller": "drugIdFor",
+          "callee": "normalizeDrugName",
+          "lineNumber": 124
+        },
+        {
+          "caller": "drugIdFor",
+          "callee": "slugify",
+          "lineNumber": 125
+        },
+        {
+          "caller": "drugIdFor",
+          "callee": "RXNORM_SEED.get",
+          "lineNumber": 126
+        },
+        {
+          "caller": "drugIdFor",
+          "callee": "RXNORM_SEED.get",
+          "lineNumber": 126
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "normalizeDrugName",
+          "lineNumber": 134
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drugIdFor",
+          "lineNumber": 136
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drugs.has",
+          "lineNumber": 137
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drugs.set",
+          "lineNumber": 138
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "identity.id.startsWith",
+          "lineNumber": 140
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "identity.id.replace",
+          "lineNumber": 140
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drugs.get",
+          "lineNumber": 148
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "cleanLine",
+          "lineNumber": 150
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drug.aliases.includes",
+          "lineNumber": 151
+        },
+        {
+          "caller": "getOrCreateDrug",
+          "callee": "drug.aliases.push",
+          "lineNumber": 151
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "Array.isArray",
+          "lineNumber": 158
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "cleanLine",
+          "lineNumber": 160
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.includes",
+          "lineNumber": 161
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.push",
+          "lineNumber": 162
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.slice",
+          "lineNumber": 165
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "raw.split(/\\r?\\n/).map",
+          "lineNumber": 169
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "raw.split",
+          "lineNumber": 169
+        },
+        {
+          "caller": "add",
+          "callee": "cleanLine(value)\n      .replace(/\\s*https?:\\/\\/\\S+.*/i, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim",
+          "lineNumber": 174
+        },
+        {
+          "caller": "add",
+          "callee": "cleanLine(value)\n      .replace(/\\s*https?:\\/\\/\\S+.*/i, \"\")\n      .replace",
+          "lineNumber": 174
+        },
+        {
+          "caller": "add",
+          "callee": "cleanLine(value)\n      .replace",
+          "lineNumber": 174
+        },
+        {
+          "caller": "add",
+          "callee": "cleanLine",
+          "lineNumber": 174
+        },
+        {
+          "caller": "add",
+          "callee": "/^(adult|pediatric|geriatric|dosing & uses|dosage forms & strengths)$/i.test",
+          "lineNumber": 179
+        },
+        {
+          "caller": "add",
+          "callee": "suggestions.includes",
+          "lineNumber": 180
+        },
+        {
+          "caller": "add",
+          "callee": "suggestions.push",
+          "lineNumber": 180
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/^interactions\\b/i.test",
+          "lineNumber": 184
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "isNoiseLine",
+          "lineNumber": 185
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/^(tablet|capsule|solution|oral solution|injection|suspension|liquid|patch|spray|inhaler|extended release|delayed-release|syrup|powder|film|cream|gel|suppository|vial)\\b/i.test",
+          "lineNumber": 187
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b\\d+(?:\\.\\d+)?\\s*(?:mg|mcg|g|mEq|units?|iu|%)\\b/i.test",
+          "lineNumber": 188
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b\\d+(?:\\.\\d+)?(?:mg|mcg|g|mEq)\\b/i.test",
+          "lineNumber": 188
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b(?:po|iv|im|subq|qday|qdaily|bid|tid|qid|qhs|q\\d+hr|daily|weekly|monthly|bedtime|initial|maintenance|maximum|not to exceed|dose|dosage|increase|titrate)\\b/i.test",
+          "lineNumber": 189
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "add",
+          "lineNumber": 197
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "add",
+          "lineNumber": 202
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "suggestions.slice",
+          "lineNumber": 206
+        },
+        {
+          "caller": "visit",
+          "callee": "fs.readdirSync",
+          "lineNumber": 214
+        },
+        {
+          "caller": "visit",
+          "callee": "path.join",
+          "lineNumber": 215
+        },
+        {
+          "caller": "visit",
+          "callee": "entry.isDirectory",
+          "lineNumber": 216
+        },
+        {
+          "caller": "visit",
+          "callee": "visit",
+          "lineNumber": 217
+        },
+        {
+          "caller": "visit",
+          "callee": "path.extname(entry.name).toLowerCase",
+          "lineNumber": 221
+        },
+        {
+          "caller": "visit",
+          "callee": "path.extname",
+          "lineNumber": 221
+        },
+        {
+          "caller": "visit",
+          "callee": "files.push",
+          "lineNumber": 223
+        },
+        {
+          "caller": "visit",
+          "callee": "skipped.push",
+          "lineNumber": 225
+        },
+        {
+          "caller": "readTextFiles",
+          "callee": "visit",
+          "lineNumber": 230
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "path.basename",
+          "lineNumber": 235
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "path.extname",
+          "lineNumber": 235
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "raw.split(/\\r?\\n/).map(cleanLine).filter",
+          "lineNumber": 236
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "raw.split(/\\r?\\n/).map",
+          "lineNumber": 236
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "raw.split",
+          "lineNumber": 236
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "isNoiseLine",
+          "lineNumber": 236
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "lines.find",
+          "lineNumber": 237
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "/\\(Rx\\)/i.test",
+          "lineNumber": 237
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "cleanLine(drugLine).replace(/\\(Rx\\).*/i, \"\").trim",
+          "lineNumber": 238
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "cleanLine(drugLine).replace",
+          "lineNumber": 238
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "cleanLine",
+          "lineNumber": 238
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "lines.find",
+          "lineNumber": 239
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "/^brand and other names:/i.test",
+          "lineNumber": 239
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "brandLine.replace",
+          "lineNumber": 243
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "brandText.split",
+          "lineNumber": 244
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "aliases.push",
+          "lineNumber": 244
+        },
+        {
+          "caller": "parseDrugHeader",
+          "callee": "alias.trim",
+          "lineNumber": 244
+        },
+        {
+          "caller": "getSeverityHeading",
+          "callee": "pattern.test",
+          "lineNumber": 252
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "raw.split(/\\r?\\n/).map",
+          "lineNumber": 258
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "raw.split",
+          "lineNumber": 258
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "current.lines.push",
+          "lineNumber": 264
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "isNoiseLine",
+          "lineNumber": 267
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "getSeverityHeading",
+          "lineNumber": 268
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 270
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "STOP_SECTION.test",
+          "lineNumber": 276
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 277
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "current.lines.push",
+          "lineNumber": 281
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 285
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "looksLikeDrugHeading",
+          "lineNumber": 295
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 296
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 297
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.slice(1).join",
+          "lineNumber": 297
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.slice",
+          "lineNumber": 297
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 299
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.join",
+          "lineNumber": 299
+        },
+        {
+          "caller": "splitBlocks",
+          "callee": "pushBlock",
+          "lineNumber": 306
+        },
+        {
+          "caller": "splitBlocks",
+          "callee": "block.push",
+          "lineNumber": 308
+        },
+        {
+          "caller": "splitBlocks",
+          "callee": "pushBlock",
+          "lineNumber": 312
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/[.:;]$/.test",
+          "lineNumber": 318
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/^(contraindicated|serious|minor|monitor closely|significant)/i.test",
+          "lineNumber": 319
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/\\b(increases|decreases|avoid|monitor|contraindicated|toxicity|levels|effect)\\b/i.test",
+          "lineNumber": 320
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/[a-z]/i.test",
+          "lineNumber": 321
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "String(value || \"\").split",
+          "lineNumber": 326
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "String",
+          "lineNumber": 326
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n    .split(/,\\s*|\\sand\\s/i)\n    .map((part) => part.replace(/\\([^)]*\\)/g, \"\").trim())\n    .filter",
+          "lineNumber": 327
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n    .split(/,\\s*|\\sand\\s/i)\n    .map",
+          "lineNumber": 327
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n    .split",
+          "lineNumber": 327
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "part.replace(/\\([^)]*\\)/g, \"\").trim",
+          "lineNumber": 329
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "part.replace",
+          "lineNumber": 329
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "/[a-z]/i.test",
+          "lineNumber": 330
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.indexOf",
+          "lineNumber": 334
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice(0, colon).trim",
+          "lineNumber": 336
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice",
+          "lineNumber": 336
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice(colon + 1).trim",
+          "lineNumber": 337
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice",
+          "lineNumber": 337
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "/\\(|\\//.test",
+          "lineNumber": 340
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "label.split",
+          "lineNumber": 340
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "extractListDrugs",
+          "lineNumber": 345
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "text.toLowerCase",
+          "lineNumber": 358
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 359
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 359
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 360
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 361
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 362
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 363
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 364
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 364
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 365
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 366
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 366
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "text.toLowerCase",
+          "lineNumber": 371
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 372
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 375
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 378
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 381
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "text.toLowerCase",
+          "lineNumber": 391
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 393
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 393
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 393
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 394
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 394
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 395
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 395
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 395
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 396
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 396
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 396
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 397
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 397
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.join",
+          "lineNumber": 398
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "String(text || \"\").match",
+          "lineNumber": 402
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "String",
+          "lineNumber": 402
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "String(text || \"\").slice",
+          "lineNumber": 403
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "String",
+          "lineNumber": 403
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "crypto.createHash(\"sha1\").update(idBase).digest(\"hex\").slice",
+          "lineNumber": 408
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "crypto.createHash(\"sha1\").update(idBase).digest",
+          "lineNumber": 408
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "crypto.createHash(\"sha1\").update",
+          "lineNumber": 408
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "crypto.createHash",
+          "lineNumber": 408
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "inferMechanism",
+          "lineNumber": 416
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "firstSentence",
+          "lineNumber": 417
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "inferRecommendation",
+          "lineNumber": 418
+        },
+        {
+          "caller": "createInteraction",
+          "callee": "inferMonitoring",
+          "lineNumber": 419
+        },
+        {
+          "caller": "parseReport",
+          "callee": "parseDrugHeader",
+          "lineNumber": 435
+        },
+        {
+          "caller": "parseReport",
+          "callee": "getOrCreateDrug",
+          "lineNumber": 436
+        },
+        {
+          "caller": "parseReport",
+          "callee": "addDoseSuggestions",
+          "lineNumber": 438
+        },
+        {
+          "caller": "parseReport",
+          "callee": "extractDoseSuggestions",
+          "lineNumber": 438
+        },
+        {
+          "caller": "parseReport",
+          "callee": "collectInteractionSections",
+          "lineNumber": 439
+        },
+        {
+          "caller": "parseReport",
+          "callee": "splitBlocks",
+          "lineNumber": 444
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "getOrCreateDrug",
+          "lineNumber": 450
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join(\" \").replace(/\\s+/g, \" \").trim",
+          "lineNumber": 452
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join(\" \").replace",
+          "lineNumber": 452
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join",
+          "lineNumber": 452
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "interactions.push",
+          "lineNumber": 453
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "createInteraction",
+          "lineNumber": 453
+        },
+        {
+          "caller": "parseReport",
+          "callee": "parseBulletRecord",
+          "lineNumber": 468
+        },
+        {
+          "caller": "parseReport",
+          "callee": "flushCurrent",
+          "lineNumber": 470
+        },
+        {
+          "caller": "parseReport",
+          "callee": "getOrCreateDrug",
+          "lineNumber": 471
+        },
+        {
+          "caller": "parseReport",
+          "callee": "interactions.push",
+          "lineNumber": 473
+        },
+        {
+          "caller": "parseReport",
+          "callee": "createInteraction",
+          "lineNumber": 473
+        },
+        {
+          "caller": "parseReport",
+          "callee": "flushCurrent",
+          "lineNumber": 487
+        },
+        {
+          "caller": "parseReport",
+          "callee": "getOrCreateDrug",
+          "lineNumber": 489
+        },
+        {
+          "caller": "parseReport",
+          "callee": "interactions.push",
+          "lineNumber": 491
+        },
+        {
+          "caller": "parseReport",
+          "callee": "createInteraction",
+          "lineNumber": 491
+        },
+        {
+          "caller": "parseReport",
+          "callee": "looksLikeDrugHeading",
+          "lineNumber": 505
+        },
+        {
+          "caller": "parseReport",
+          "callee": "flushCurrent",
+          "lineNumber": 506
+        },
+        {
+          "caller": "parseReport",
+          "callee": "currentParts.push",
+          "lineNumber": 512
+        },
+        {
+          "caller": "parseReport",
+          "callee": "flushCurrent",
+          "lineNumber": 515
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "fs.existsSync",
+          "lineNumber": 522
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "fs.statSync",
+          "lineNumber": 527
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "sourceStat.isDirectory",
+          "lineNumber": 528
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "readTextFiles",
+          "lineNumber": 532
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "GENERATED_AT.slice",
+          "lineNumber": 534
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "crypto.createHash(\"sha1\").update(versionSeed).digest(\"hex\").slice",
+          "lineNumber": 534
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "crypto.createHash(\"sha1\").update(versionSeed).digest",
+          "lineNumber": 534
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "crypto.createHash(\"sha1\").update",
+          "lineNumber": 534
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "crypto.createHash",
+          "lineNumber": 534
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "fs.readFileSync",
+          "lineNumber": 540
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "parseReport",
+          "lineNumber": 541
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "reports.push",
+          "lineNumber": 542
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "path.basename",
+          "lineNumber": 545
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "path.extname",
+          "lineNumber": 545
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "interactionMap.has",
+          "lineNumber": 550
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "interactionMap.set",
+          "lineNumber": 550
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "[...interactionMap.values()].sort",
+          "lineNumber": 554
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "interactionMap.values",
+          "lineNumber": 554
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "a.drugAName.localeCompare",
+          "lineNumber": 555
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "a.drugBName.localeCompare",
+          "lineNumber": 557
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "[...drugs.values()].sort",
+          "lineNumber": 560
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "drugs.values",
+          "lineNumber": 560
+        },
+        {
+          "caller": "buildKnowledgeBase",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 560
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "path.join",
+          "lineNumber": 602
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "fs.mkdirSync",
+          "lineNumber": 603
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "path.join",
+          "lineNumber": 604
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "path.join",
+          "lineNumber": 605
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "fs.writeFileSync",
+          "lineNumber": 606
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "JSON.stringify",
+          "lineNumber": 606
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "fs.writeFileSync",
+          "lineNumber": 607
+        },
+        {
+          "caller": "writeOutputs",
+          "callee": "JSON.stringify",
+          "lineNumber": 607
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 10,
+        "functionCount": 24,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "scripts/validate-kb.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 46,
+      "nonEmptyLines": 40,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/app.js",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 675,
+      "nonEmptyLines": 612,
+      "callGraph": [
+        {
+          "caller": "readJson",
+          "callee": "JSON.parse",
+          "lineNumber": 79
+        },
+        {
+          "caller": "readJson",
+          "callee": "localStorage.getItem",
+          "lineNumber": 79
+        },
+        {
+          "caller": "writeJson",
+          "callee": "localStorage.setItem",
+          "lineNumber": 86
+        },
+        {
+          "caller": "writeJson",
+          "callee": "JSON.stringify",
+          "lineNumber": 86
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "sessionStorage.getItem",
+          "lineNumber": 90
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "new Date().toISOString().slice(2, 10).replace",
+          "lineNumber": 92
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "new Date().toISOString().slice",
+          "lineNumber": 92
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "new Date().toISOString",
+          "lineNumber": 92
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "Math.random().toString(36).slice(2, 8).toUpperCase",
+          "lineNumber": 93
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "Math.random().toString(36).slice",
+          "lineNumber": 93
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "Math.random().toString",
+          "lineNumber": 93
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "Math.random",
+          "lineNumber": 93
+        },
+        {
+          "caller": "getSessionCode",
+          "callee": "sessionStorage.setItem",
+          "lineNumber": 95
+        },
+        {
+          "caller": "loadLocalKb",
+          "callee": "readJson",
+          "lineNumber": 100
+        },
+        {
+          "caller": "migrateKnowledgeBase",
+          "callee": "(baseKb.drugs || []).map",
+          "lineNumber": 107
+        },
+        {
+          "caller": "migrateKnowledgeBase",
+          "callee": "baseDrugsById.get",
+          "lineNumber": 109
+        },
+        {
+          "caller": "migrateKnowledgeBase",
+          "callee": "Array.isArray",
+          "lineNumber": 111
+        },
+        {
+          "caller": "migrateKnowledgeBase",
+          "callee": "Boolean",
+          "lineNumber": 115
+        },
+        {
+          "caller": "migrateKnowledgeBase",
+          "callee": "Array.isArray",
+          "lineNumber": 119
+        },
+        {
+          "caller": "refreshHeader",
+          "callee": "kb.interactions.filter",
+          "lineNumber": 127
+        },
+        {
+          "caller": "refreshHeader",
+          "callee": "updateResultSummary",
+          "lineNumber": 132
+        },
+        {
+          "caller": "setView",
+          "callee": "els.tabs.forEach",
+          "lineNumber": 136
+        },
+        {
+          "caller": "setView",
+          "callee": "button.classList.toggle",
+          "lineNumber": 136
+        },
+        {
+          "caller": "setView",
+          "callee": "els.views.forEach",
+          "lineNumber": 137
+        },
+        {
+          "caller": "setView",
+          "callee": "view.classList.toggle",
+          "lineNumber": 137
+        },
+        {
+          "caller": "setView",
+          "callee": "renderAudit",
+          "lineNumber": 138
+        },
+        {
+          "caller": "setView",
+          "callee": "renderReviewList",
+          "lineNumber": 139
+        },
+        {
+          "caller": "renderSuggestions",
+          "callee": "suggestSourceDrugs",
+          "lineNumber": 143
+        },
+        {
+          "caller": "renderSuggestions",
+          "callee": "suggestions\n      .map((drug) => `<option value=\"${escapeHtml(drug.name)}\"></option>`)\n      .join",
+          "lineNumber": 144
+        },
+        {
+          "caller": "renderSuggestions",
+          "callee": "suggestions\n      .map",
+          "lineNumber": 144
+        },
+        {
+          "caller": "renderSuggestions",
+          "callee": "escapeHtml",
+          "lineNumber": 145
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "(kb.reports || []).map((report) => report.drugId).filter",
+          "lineNumber": 150
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "(kb.reports || []).map",
+          "lineNumber": 150
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "kb.drugs.filter",
+          "lineNumber": 151
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "reportDrugIds.has",
+          "lineNumber": 151
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "(sourceDrugs.length ? sourceDrugs : kb.drugs)\n      .filter((drug) => drug?.name && !looksLikeParsedTextFragment(drug.name))\n      .sort",
+          "lineNumber": 152
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "(sourceDrugs.length ? sourceDrugs : kb.drugs)\n      .filter",
+          "lineNumber": 152
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "looksLikeParsedTextFragment",
+          "lineNumber": 153
+        },
+        {
+          "caller": "sourceDrugPool",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 154
+        },
+        {
+          "caller": "looksLikeParsedTextFragment",
+          "callee": "engine.normalizeName",
+          "lineNumber": 158
+        },
+        {
+          "caller": "looksLikeParsedTextFragment",
+          "callee": "/^\\d/.test",
+          "lineNumber": 161
+        },
+        {
+          "caller": "looksLikeParsedTextFragment",
+          "callee": "/\\b(?:recommended|monitor|patients|dosing|assay|study|initially|postoperatively|discontinuation)\\b/i.test",
+          "lineNumber": 162
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "engine.normalizeName",
+          "lineNumber": 167
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "sourceDrugPool",
+          "lineNumber": 168
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool.slice",
+          "lineNumber": 169
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool\n      .map((drug) => {\n        const name = engine.normalizeName(drug.name);\n        const exact = name === normalized;\n        const startsWith = name.startsWith(normalized);\n        const contains = name.includes(normalized);\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort((a, b) => a.score - b.score || a.drug.name.localeCompare(b.drug.name))\n      .slice(0, limit)\n      .map",
+          "lineNumber": 171
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool\n      .map((drug) => {\n        const name = engine.normalizeName(drug.name);\n        const exact = name === normalized;\n        const startsWith = name.startsWith(normalized);\n        const contains = name.includes(normalized);\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort((a, b) => a.score - b.score || a.drug.name.localeCompare(b.drug.name))\n      .slice",
+          "lineNumber": 171
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool\n      .map((drug) => {\n        const name = engine.normalizeName(drug.name);\n        const exact = name === normalized;\n        const startsWith = name.startsWith(normalized);\n        const contains = name.includes(normalized);\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort",
+          "lineNumber": 171
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool\n      .map((drug) => {\n        const name = engine.normalizeName(drug.name);\n        const exact = name === normalized;\n        const startsWith = name.startsWith(normalized);\n        const contains = name.includes(normalized);\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter",
+          "lineNumber": 171
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "pool\n      .map",
+          "lineNumber": 171
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "engine.normalizeName",
+          "lineNumber": 173
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "name.startsWith",
+          "lineNumber": 175
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "name.includes",
+          "lineNumber": 176
+        },
+        {
+          "caller": "suggestSourceDrugs",
+          "callee": "a.drug.name.localeCompare",
+          "lineNumber": 181
+        },
+        {
+          "caller": "selectedDrugForDose",
+          "callee": "engine.normalizeName",
+          "lineNumber": 187
+        },
+        {
+          "caller": "selectedDrugForDose",
+          "callee": "sourceDrugPool().find",
+          "lineNumber": 189
+        },
+        {
+          "caller": "selectedDrugForDose",
+          "callee": "sourceDrugPool",
+          "lineNumber": 189
+        },
+        {
+          "caller": "selectedDrugForDose",
+          "callee": "engine.normalizeName",
+          "lineNumber": 189
+        },
+        {
+          "caller": "selectedDrugForDose",
+          "callee": "engine.resolveDrug",
+          "lineNumber": 189
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "selectedDrugForDose",
+          "lineNumber": 193
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "Array.isArray",
+          "lineNumber": 194
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "suggestions\n      .slice(0, 30)\n      .map((dose) => `<option value=\"${escapeHtml(dose)}\"></option>`)\n      .join",
+          "lineNumber": 195
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "suggestions\n      .slice(0, 30)\n      .map",
+          "lineNumber": 195
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "suggestions\n      .slice",
+          "lineNumber": 195
+        },
+        {
+          "caller": "renderDoseSuggestions",
+          "callee": "escapeHtml",
+          "lineNumber": 197
+        },
+        {
+          "caller": "renderMedications",
+          "callee": "medications.map((med, idx) => `\n      <li class=\"med-item\">\n        <div>\n          <strong>${escapeHtml(med.name)}</strong>\n          <span>${escapeHtml(med.dose || \"Dose not specified\")}</span>\n        </div>\n        <button data-remove-med=\"${idx}\" aria-label=\"Remove ${escapeHtml(med.name)}\">Remove</button>\n      </li>\n    `).join",
+          "lineNumber": 212
+        },
+        {
+          "caller": "renderMedications",
+          "callee": "medications.map",
+          "lineNumber": 212
+        },
+        {
+          "caller": "renderMedications",
+          "callee": "escapeHtml",
+          "lineNumber": 215
+        },
+        {
+          "caller": "renderMedications",
+          "callee": "escapeHtml",
+          "lineNumber": 216
+        },
+        {
+          "caller": "renderMedications",
+          "callee": "escapeHtml",
+          "lineNumber": 218
+        },
+        {
+          "caller": "checkNow",
+          "callee": "engine.checkInteractions",
+          "lineNumber": 224
+        },
+        {
+          "caller": "checkNow",
+          "callee": "renderAlerts",
+          "lineNumber": 226
+        },
+        {
+          "caller": "checkNow",
+          "callee": "recordShownAlerts",
+          "lineNumber": 227
+        },
+        {
+          "caller": "checkNow",
+          "callee": "updateResultSummary",
+          "lineNumber": 228
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "els.unresolvedBox.classList.remove",
+          "lineNumber": 241
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "result.unresolved.map((med) => med.name).join",
+          "lineNumber": 242
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "result.unresolved.map",
+          "lineNumber": 242
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "els.unresolvedBox.classList.add",
+          "lineNumber": 244
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "result.alerts.map((alert) => `\n      <article class=\"alert-card ${alert.severity}\">\n        <div class=\"alert-head\">\n          <h3>${escapeHtml(alert.interactingDrugs.join(\" + \"))}</h3>\n          <span class=\"severity-badge ${alert.severity}\">${escapeHtml(alert.severityLabel)}</span>\n        </div>\n        <p><strong>Clinical concern:</strong> ${escapeHtml(alert.clinicalConcern)}</p>\n        <p><strong>Recommended psychiatrist action:</strong> ${escapeHtml(alert.recommendedAction)}</p>\n        ${alert.monitoring ? `<p><strong>Monitoring:</strong> ${escapeHtml(alert.monitoring)}</p>` : \"\"}\n        <p><strong>Review status:</strong> ${escapeHtml(alert.reviewStatus.replaceAll(\"_\", \" \"))}</p>\n        <div class=\"evidence\">\n          <strong>Evidence/source:</strong>\n          <p>${escapeHtml(alert.evidenceSource || \"Source report excerpt\")}</p>\n          <p>${escapeHtml(alert.evidenceExcerpt)}</p>\n        </div>\n        <div class=\"alert-actions\">\n          <button data-alert-action=\"accepted\" data-alert-id=\"${alert.id}\">Accepted</button>\n          <button data-alert-action=\"dismissed\" data-alert-id=\"${alert.id}\">Dismissed</button>\n          <button data-alert-action=\"overridden\" data-alert-id=\"${alert.id}\">Override</button>\n        </div>\n      </article>\n    `).join",
+          "lineNumber": 253
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "result.alerts.map",
+          "lineNumber": 253
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 256
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "alert.interactingDrugs.join",
+          "lineNumber": 256
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 257
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 259
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 260
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 261
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 262
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "alert.reviewStatus.replaceAll",
+          "lineNumber": 262
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 265
+        },
+        {
+          "caller": "renderAlerts",
+          "callee": "escapeHtml",
+          "lineNumber": 266
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "latestResult?.alerts.find",
+          "lineNumber": 278
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "window.prompt",
+          "lineNumber": 280
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "readJson",
+          "lineNumber": 281
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "audit.unshift",
+          "lineNumber": 282
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "engine.createAuditEntry",
+          "lineNumber": 282
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "writeJson",
+          "lineNumber": 288
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "audit.slice",
+          "lineNumber": 288
+        },
+        {
+          "caller": "recordAlertAction",
+          "callee": "renderAudit",
+          "lineNumber": 289
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "readJson",
+          "lineNumber": 294
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "new Date().toISOString",
+          "lineNumber": 295
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "result.alerts.map",
+          "lineNumber": 296
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "engine.createAuditEntry",
+          "lineNumber": 297
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "writeJson",
+          "lineNumber": 304
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "shownEntries.concat(audit).slice",
+          "lineNumber": 304
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "shownEntries.concat",
+          "lineNumber": 304
+        },
+        {
+          "caller": "recordShownAlerts",
+          "callee": "renderAudit",
+          "lineNumber": 305
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "engine.normalizeName",
+          "lineNumber": 309
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "kb.interactions.filter((record) => {\n      if (!query) return true;\n      return engine.normalizeName(`${record.drugAName} ${record.drugBName} ${record.severity} ${record.evidenceSource}`).includes(query);\n    }).slice",
+          "lineNumber": 310
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "kb.interactions.filter",
+          "lineNumber": 310
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "engine.normalizeName(`${record.drugAName} ${record.drugBName} ${record.severity} ${record.evidenceSource}`).includes",
+          "lineNumber": 312
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "engine.normalizeName",
+          "lineNumber": 312
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "records.map((record) => `\n      <button class=\"review-row ${record.id === selectedReviewId ? \"active\" : \"\"}\" data-review-id=\"${record.id}\">\n        <strong>${escapeHtml(record.drugAName)} + ${escapeHtml(record.drugBName)}</strong>\n        <span>${escapeHtml(record.severity)} · ${escapeHtml((record.reviewStatus || \"unknown\").replaceAll(\"_\", \" \"))}</span>\n        <span>${escapeHtml(record.mechanism || \"No mechanism parsed\")}</span>\n      </button>\n    `).join",
+          "lineNumber": 315
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "records.map",
+          "lineNumber": 315
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "escapeHtml",
+          "lineNumber": 317
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "escapeHtml",
+          "lineNumber": 317
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "escapeHtml",
+          "lineNumber": 318
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "escapeHtml",
+          "lineNumber": 318
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "(record.reviewStatus || \"unknown\").replaceAll",
+          "lineNumber": 318
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "escapeHtml",
+          "lineNumber": 319
+        },
+        {
+          "caller": "renderReviewList",
+          "callee": "renderReviewDetail",
+          "lineNumber": 323
+        },
+        {
+          "caller": "selectedRecord",
+          "callee": "kb.interactions.find",
+          "lineNumber": 327
+        },
+        {
+          "caller": "renderReviewDetail",
+          "callee": "selectedRecord",
+          "lineNumber": 331
+        },
+        {
+          "caller": "renderReviewDetail",
+          "callee": "(record.reviewStatus || \"unknown\").replaceAll",
+          "lineNumber": 339
+        },
+        {
+          "caller": "saveReview",
+          "callee": "selectedRecord",
+          "lineNumber": 351
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewMechanism.value.trim",
+          "lineNumber": 354
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewEffect.value.trim",
+          "lineNumber": 355
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewRecommendation.value.trim",
+          "lineNumber": 356
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewMonitoring.value.trim",
+          "lineNumber": 357
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewerName.value.trim",
+          "lineNumber": 360
+        },
+        {
+          "caller": "saveReview",
+          "callee": "new Date().toISOString",
+          "lineNumber": 361
+        },
+        {
+          "caller": "saveReview",
+          "callee": "els.reviewerName.value.trim",
+          "lineNumber": 364
+        },
+        {
+          "caller": "saveReview",
+          "callee": "new Date().toISOString",
+          "lineNumber": 365
+        },
+        {
+          "caller": "saveReview",
+          "callee": "persistKb",
+          "lineNumber": 367
+        },
+        {
+          "caller": "saveReview",
+          "callee": "renderReviewList",
+          "lineNumber": 368
+        },
+        {
+          "caller": "saveReview",
+          "callee": "checkNow",
+          "lineNumber": 369
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "kb.interactions.filter",
+          "lineNumber": 373
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "new Date().toISOString().slice",
+          "lineNumber": 374
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "new Date().toISOString",
+          "lineNumber": 374
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "new Date().toISOString",
+          "lineNumber": 376
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "persistKb",
+          "lineNumber": 382
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "refreshHeader",
+          "lineNumber": 383
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "renderReviewList",
+          "lineNumber": 384
+        },
+        {
+          "caller": "activateRevision",
+          "callee": "checkNow",
+          "lineNumber": 385
+        },
+        {
+          "caller": "persistKb",
+          "callee": "writeJson",
+          "lineNumber": 389
+        },
+        {
+          "caller": "persistKb",
+          "callee": "engine.buildIndex",
+          "lineNumber": 390
+        },
+        {
+          "caller": "persistKb",
+          "callee": "refreshHeader",
+          "lineNumber": 391
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "engine.normalizeName",
+          "lineNumber": 395
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "kb.drugs.find",
+          "lineNumber": 396
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "engine.normalizeName",
+          "lineNumber": 396
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "normalized.replace",
+          "lineNumber": 399
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "kb.drugs.push",
+          "lineNumber": 405
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "kb.drugs.sort",
+          "lineNumber": 406
+        },
+        {
+          "caller": "addDrugToKb",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 406
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "engine.normalizeName",
+          "lineNumber": 411
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "kb.drugs.find",
+          "lineNumber": 413
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "engine.normalizeName",
+          "lineNumber": 413
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "Array.isArray",
+          "lineNumber": 417
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "Array.isArray",
+          "lineNumber": 418
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "kb.drugs.push",
+          "lineNumber": 420
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "aliases.add",
+          "lineNumber": 425
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "[...aliases].filter",
+          "lineNumber": 426
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "doseSuggestions.add",
+          "lineNumber": 429
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "[...doseSuggestions].filter(Boolean).slice",
+          "lineNumber": 430
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "[...doseSuggestions].filter",
+          "lineNumber": 430
+        },
+        {
+          "caller": "mergeDrugIntoKb",
+          "callee": "Boolean",
+          "lineNumber": 432
+        },
+        {
+          "caller": "interactionMergeKey",
+          "callee": "engine.normalizeName",
+          "lineNumber": 438
+        },
+        {
+          "caller": "interactionMergeKey",
+          "callee": "engine.normalizeName",
+          "lineNumber": 439
+        },
+        {
+          "caller": "interactionMergeKey",
+          "callee": "[left, right].sort().join",
+          "lineNumber": 440
+        },
+        {
+          "caller": "interactionMergeKey",
+          "callee": "[left, right].sort",
+          "lineNumber": 440
+        },
+        {
+          "caller": "interactionMergeKey",
+          "callee": "engine.normalizeName",
+          "lineNumber": 441
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "mergeDrugIntoKb",
+          "lineNumber": 447
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "parsedIdToKbDrug.set",
+          "lineNumber": 448
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "kb.interactions.map",
+          "lineNumber": 451
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "parsedIdToKbDrug.get",
+          "lineNumber": 454
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "parsedIdToKbDrug.get",
+          "lineNumber": 455
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "engine.hashString",
+          "lineNumber": 460
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "interactionMergeKey",
+          "lineNumber": 472
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "existingKeys.has",
+          "lineNumber": 473
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "existingKeys.add",
+          "lineNumber": 474
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "importedInteractions.push",
+          "lineNumber": 475
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "kb.interactions.unshift",
+          "lineNumber": 478
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "kb.interactions.sort",
+          "lineNumber": 479
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "a.drugAName.localeCompare",
+          "lineNumber": 479
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "a.drugBName.localeCompare",
+          "lineNumber": 479
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "kb.drugs.sort",
+          "lineNumber": 480
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 480
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "Array.isArray",
+          "lineNumber": 482
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "parsedIdToKbDrug.get",
+          "lineNumber": 483
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "kb.reports.push",
+          "lineNumber": 484
+        },
+        {
+          "caller": "mergeParsedReport",
+          "callee": "new Date().toISOString",
+          "lineNumber": 490
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "event.preventDefault",
+          "lineNumber": 499
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "file.text",
+          "lineNumber": 510
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "engine.parseReportText",
+          "lineNumber": 511
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "mergeParsedReport",
+          "lineNumber": 512
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "failures.push",
+          "lineNumber": 514
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "persistKb",
+          "lineNumber": 518
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "renderSuggestions",
+          "lineNumber": 519
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "renderDoseSuggestions",
+          "lineNumber": 520
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "renderReviewList",
+          "lineNumber": 521
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "checkNow",
+          "lineNumber": 522
+        },
+        {
+          "caller": "uploadReports",
+          "callee": "failures.join",
+          "lineNumber": 525
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "event.preventDefault",
+          "lineNumber": 530
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "addDrugToKb",
+          "lineNumber": 531
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "addDrugToKb",
+          "lineNumber": 532
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "Date.now().toString",
+          "lineNumber": 534
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "Date.now",
+          "lineNumber": 534
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "kb.interactions.unshift",
+          "lineNumber": 535
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "els.newEffect.value.trim",
+          "lineNumber": 543
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "els.newRecommendation.value.trim",
+          "lineNumber": 544
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "els.newEffect.value.trim",
+          "lineNumber": 547
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "event.target.reset",
+          "lineNumber": 556
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "persistKb",
+          "lineNumber": 557
+        },
+        {
+          "caller": "addInteraction",
+          "callee": "renderReviewList",
+          "lineNumber": 558
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "readJson",
+          "lineNumber": 562
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "audit.map((entry) => `\n      <article class=\"audit-row\">\n        <strong>${escapeHtml(entry.action)} · ${escapeHtml(entry.interactingDrugs.join(\" + \"))}</strong>\n        <span>${escapeHtml(entry.severity)} · ${escapeHtml(entry.knowledgeBaseVersion)} · ${escapeHtml(entry.createdAt)}</span>\n        ${entry.reason ? `<span>Reason: ${escapeHtml(entry.reason)}</span>` : \"\"}\n      </article>\n    `).join",
+          "lineNumber": 567
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "audit.map",
+          "lineNumber": 567
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 569
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 569
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "entry.interactingDrugs.join",
+          "lineNumber": 569
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 570
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 570
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 570
+        },
+        {
+          "caller": "renderAudit",
+          "callee": "escapeHtml",
+          "lineNumber": 571
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "readJson",
+          "lineNumber": 577
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "JSON.stringify",
+          "lineNumber": 578
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "URL.createObjectURL",
+          "lineNumber": 579
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "document.createElement",
+          "lineNumber": 580
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "new Date().toISOString().slice",
+          "lineNumber": 582
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "new Date().toISOString",
+          "lineNumber": 582
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "link.click",
+          "lineNumber": 583
+        },
+        {
+          "caller": "exportAudit",
+          "callee": "URL.revokeObjectURL",
+          "lineNumber": 584
+        },
+        {
+          "caller": "currentResultsExport",
+          "callee": "readJson(STORAGE_KEYS.audit, []).filter",
+          "lineNumber": 588
+        },
+        {
+          "caller": "currentResultsExport",
+          "callee": "readJson",
+          "lineNumber": 588
+        },
+        {
+          "caller": "currentResultsExport",
+          "callee": "engine.checkInteractions",
+          "lineNumber": 589
+        },
+        {
+          "caller": "currentResultsExport",
+          "callee": "new Date().toISOString",
+          "lineNumber": 593
+        },
+        {
+          "caller": "exportResults",
+          "callee": "JSON.stringify",
+          "lineNumber": 602
+        },
+        {
+          "caller": "exportResults",
+          "callee": "currentResultsExport",
+          "lineNumber": 602
+        },
+        {
+          "caller": "exportResults",
+          "callee": "URL.createObjectURL",
+          "lineNumber": 603
+        },
+        {
+          "caller": "exportResults",
+          "callee": "document.createElement",
+          "lineNumber": 604
+        },
+        {
+          "caller": "exportResults",
+          "callee": "link.click",
+          "lineNumber": 607
+        },
+        {
+          "caller": "exportResults",
+          "callee": "URL.revokeObjectURL",
+          "lineNumber": 608
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String(value ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll(\"<\", \"&lt;\")\n      .replaceAll(\">\", \"&gt;\")\n      .replaceAll(\"\\\"\", \"&quot;\")\n      .replaceAll",
+          "lineNumber": 612
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String(value ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll(\"<\", \"&lt;\")\n      .replaceAll(\">\", \"&gt;\")\n      .replaceAll",
+          "lineNumber": 612
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String(value ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll(\"<\", \"&lt;\")\n      .replaceAll",
+          "lineNumber": 612
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String(value ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll",
+          "lineNumber": 612
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String(value ?? \"\")\n      .replaceAll",
+          "lineNumber": 612
+        },
+        {
+          "caller": "escapeHtml",
+          "callee": "String",
+          "lineNumber": 612
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/ddi-engine.js",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 664,
+      "nonEmptyLines": 588,
+      "callGraph": [
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \" \")\n      .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \" \")\n      .replace(/[^a-z0-9+/-]+/g, \" \")\n      .replace(/\\s+/g, \" \")\n      .trim",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \" \")\n      .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \" \")\n      .replace(/[^a-z0-9+/-]+/g, \" \")\n      .replace",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \" \")\n      .replace(/\\b(rx|generic|dsc|all forms|various forms)\\b/g, \" \")\n      .replace",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \" \")\n      .replace",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String(value || \"\")\n      .toLowerCase",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeName",
+          "callee": "String",
+          "lineNumber": 36
+        },
+        {
+          "caller": "normalizeId",
+          "callee": "String(value || \"\").toLowerCase().trim",
+          "lineNumber": 46
+        },
+        {
+          "caller": "normalizeId",
+          "callee": "String(value || \"\").toLowerCase",
+          "lineNumber": 46
+        },
+        {
+          "caller": "normalizeId",
+          "callee": "String",
+          "lineNumber": 46
+        },
+        {
+          "caller": "pairKey",
+          "callee": "normalizeId",
+          "lineNumber": 50
+        },
+        {
+          "caller": "pairKey",
+          "callee": "normalizeId",
+          "lineNumber": 51
+        },
+        {
+          "caller": "pairKey",
+          "callee": "[left, right].sort().join",
+          "lineNumber": 52
+        },
+        {
+          "caller": "pairKey",
+          "callee": "[left, right].sort",
+          "lineNumber": 52
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \"\")\n      .replace(/[^a-z0-9]+/g, \"_\")\n      .replace",
+          "lineNumber": 60
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace(/\\([^)]*\\)/g, \"\")\n      .replace",
+          "lineNumber": 60
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n      .toLowerCase()\n      .replace",
+          "lineNumber": 60
+        },
+        {
+          "caller": "slugify",
+          "callee": "String(value || \"\")\n      .toLowerCase",
+          "lineNumber": 60
+        },
+        {
+          "caller": "slugify",
+          "callee": "String",
+          "lineNumber": 60
+        },
+        {
+          "caller": "hashString",
+          "callee": "String",
+          "lineNumber": 69
+        },
+        {
+          "caller": "hashString",
+          "callee": "input.charCodeAt",
+          "lineNumber": 71
+        },
+        {
+          "caller": "hashString",
+          "callee": "Math.imul",
+          "lineNumber": 72
+        },
+        {
+          "caller": "hashString",
+          "callee": "(hash >>> 0).toString(16).padStart",
+          "lineNumber": 74
+        },
+        {
+          "caller": "hashString",
+          "callee": "(hash >>> 0).toString",
+          "lineNumber": 74
+        },
+        {
+          "caller": "cleanReportLine",
+          "callee": "String(line || \"\")\n      .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n      .replace(/\\s+/g, \" \")\n      .replace(/^[-\\u2022*]\\s*/, \"\")\n      .trim",
+          "lineNumber": 78
+        },
+        {
+          "caller": "cleanReportLine",
+          "callee": "String(line || \"\")\n      .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n      .replace(/\\s+/g, \" \")\n      .replace",
+          "lineNumber": 78
+        },
+        {
+          "caller": "cleanReportLine",
+          "callee": "String(line || \"\")\n      .replace(/\\[[^\\]]*cite:[^\\]]*\\]/gi, \"\")\n      .replace",
+          "lineNumber": 78
+        },
+        {
+          "caller": "cleanReportLine",
+          "callee": "String(line || \"\")\n      .replace",
+          "lineNumber": 78
+        },
+        {
+          "caller": "cleanReportLine",
+          "callee": "String",
+          "lineNumber": 78
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^https?:\\/\\//i.test",
+          "lineNumber": 87
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^\\d+\\/\\d+\\/\\d+,\\s+\\d+:\\d+/i.test",
+          "lineNumber": 88
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^this site is intended/i.test",
+          "lineNumber": 89
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^interaction checker$/i.test",
+          "lineNumber": 90
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^enter a drug name/i.test",
+          "lineNumber": 91
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^no interactions found$/i.test",
+          "lineNumber": 92
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^interactions found$/i.test",
+          "lineNumber": 93
+        },
+        {
+          "caller": "isReportNoiseLine",
+          "callee": "/^all interactions sort by/i.test",
+          "lineNumber": 94
+        },
+        {
+          "caller": "reportDrugIdFor",
+          "callee": "slugify",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reportDrugIdFor",
+          "callee": "normalizeName",
+          "lineNumber": 98
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "normalizeName",
+          "lineNumber": 102
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "reportDrugIdFor",
+          "lineNumber": 104
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "drugs.has",
+          "lineNumber": 105
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "drugs.set",
+          "lineNumber": 106
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "drugs.get",
+          "lineNumber": 116
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "cleanReportLine",
+          "lineNumber": 118
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "drug.aliases.includes",
+          "lineNumber": 119
+        },
+        {
+          "caller": "getOrCreateParsedDrug",
+          "callee": "drug.aliases.push",
+          "lineNumber": 119
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "Array.isArray",
+          "lineNumber": 126
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "cleanReportLine",
+          "lineNumber": 128
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.includes",
+          "lineNumber": 129
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.push",
+          "lineNumber": 130
+        },
+        {
+          "caller": "addDoseSuggestions",
+          "callee": "drug.doseSuggestions.slice",
+          "lineNumber": 133
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "String(raw || \"\").split(/\\r?\\n/).map",
+          "lineNumber": 137
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "String(raw || \"\").split",
+          "lineNumber": 137
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "String",
+          "lineNumber": 137
+        },
+        {
+          "caller": "add",
+          "callee": "cleanReportLine(value)\n        .replace(/\\s*https?:\\/\\/\\S+.*/i, \"\")\n        .replace(/\\s+/g, \" \")\n        .trim",
+          "lineNumber": 142
+        },
+        {
+          "caller": "add",
+          "callee": "cleanReportLine(value)\n        .replace(/\\s*https?:\\/\\/\\S+.*/i, \"\")\n        .replace",
+          "lineNumber": 142
+        },
+        {
+          "caller": "add",
+          "callee": "cleanReportLine(value)\n        .replace",
+          "lineNumber": 142
+        },
+        {
+          "caller": "add",
+          "callee": "cleanReportLine",
+          "lineNumber": 142
+        },
+        {
+          "caller": "add",
+          "callee": "/^(adult|pediatric|geriatric|dosing & uses|dosage forms & strengths)$/i.test",
+          "lineNumber": 147
+        },
+        {
+          "caller": "add",
+          "callee": "suggestions.includes",
+          "lineNumber": 148
+        },
+        {
+          "caller": "add",
+          "callee": "suggestions.push",
+          "lineNumber": 148
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/^interactions\\b/i.test",
+          "lineNumber": 152
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "isReportNoiseLine",
+          "lineNumber": 153
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/^(tablet|capsule|solution|oral solution|injection|suspension|liquid|patch|spray|inhaler|extended release|delayed-release|syrup|powder|film|cream|gel|suppository|vial)\\b/i.test",
+          "lineNumber": 155
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b\\d+(?:\\.\\d+)?\\s*(?:mg|mcg|g|mEq|units?|iu|%)\\b/i.test",
+          "lineNumber": 156
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b\\d+(?:\\.\\d+)?(?:mg|mcg|g|mEq)\\b/i.test",
+          "lineNumber": 156
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "/\\b(?:po|iv|im|subq|qday|qdaily|bid|tid|qid|qhs|q\\d+hr|daily|weekly|monthly|bedtime|initial|maintenance|maximum|not to exceed|dose|dosage|increase|titrate)\\b/i.test",
+          "lineNumber": 157
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "add",
+          "lineNumber": 165
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "add",
+          "lineNumber": 169
+        },
+        {
+          "caller": "extractDoseSuggestions",
+          "callee": "suggestions.slice",
+          "lineNumber": 172
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String(sourceName || \"uploaded-report\").replace",
+          "lineNumber": 176
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String",
+          "lineNumber": 176
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String(raw || \"\").split(/\\r?\\n/).map(cleanReportLine).filter",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String(raw || \"\").split(/\\r?\\n/).map",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String(raw || \"\").split",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "String",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "isReportNoiseLine",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "lines.find",
+          "lineNumber": 178
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "/\\(Rx\\)/i.test",
+          "lineNumber": 178
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "cleanReportLine(drugLine).replace(/\\(Rx\\).*/i, \"\").trim",
+          "lineNumber": 179
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "cleanReportLine(drugLine).replace",
+          "lineNumber": 179
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "cleanReportLine",
+          "lineNumber": 179
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "lines.find",
+          "lineNumber": 180
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "/^brand and other names:/i.test",
+          "lineNumber": 180
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "brandLine.replace",
+          "lineNumber": 184
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "brandText.split",
+          "lineNumber": 185
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "aliases.push",
+          "lineNumber": 185
+        },
+        {
+          "caller": "parseReportHeader",
+          "callee": "alias.trim",
+          "lineNumber": 185
+        },
+        {
+          "caller": "getReportSeverityHeading",
+          "callee": "pattern.test",
+          "lineNumber": 193
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "String(raw || \"\").split(/\\r?\\n/).map",
+          "lineNumber": 199
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "String(raw || \"\").split",
+          "lineNumber": 199
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "String",
+          "lineNumber": 199
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "current.lines.push",
+          "lineNumber": 205
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "isReportNoiseLine",
+          "lineNumber": 208
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "getReportSeverityHeading",
+          "lineNumber": 209
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 211
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "REPORT_STOP_SECTION.test",
+          "lineNumber": 217
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 218
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "current.lines.push",
+          "lineNumber": 222
+        },
+        {
+          "caller": "collectInteractionSections",
+          "callee": "sections.push",
+          "lineNumber": 226
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "cleanReportLine",
+          "lineNumber": 231
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/[.:;]$/.test",
+          "lineNumber": 233
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/^\\d/.test",
+          "lineNumber": 234
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/^(contraindicated|serious|minor|monitor closely|significant)/i.test",
+          "lineNumber": 235
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/\\b(increases|decreases|avoid|monitor|contraindicated|toxicity|levels|effect|recommended|patients|dosing|assay|study|initially|postoperatively|discontinuation|years?|weeks?|daily|tablet|capsule|dose)\\b/i.test",
+          "lineNumber": 236
+        },
+        {
+          "caller": "looksLikeDrugHeading",
+          "callee": "/[a-z]/i.test",
+          "lineNumber": 237
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "looksLikeDrugHeading",
+          "lineNumber": 247
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 248
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 249
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.slice(1).join",
+          "lineNumber": 249
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.slice",
+          "lineNumber": 249
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "blocks.push",
+          "lineNumber": 251
+        },
+        {
+          "caller": "pushBlock",
+          "callee": "block.join",
+          "lineNumber": 251
+        },
+        {
+          "caller": "splitInteractionBlocks",
+          "callee": "pushBlock",
+          "lineNumber": 258
+        },
+        {
+          "caller": "splitInteractionBlocks",
+          "callee": "block.push",
+          "lineNumber": 260
+        },
+        {
+          "caller": "splitInteractionBlocks",
+          "callee": "pushBlock",
+          "lineNumber": 264
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "String(value || \"\").split",
+          "lineNumber": 269
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "String",
+          "lineNumber": 269
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n      .split(/,\\s*|\\s+and\\s+/i)\n      .map((part) => part.replace(/\\([^)]*\\)/g, \"\").trim())\n      .filter",
+          "lineNumber": 270
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n      .split(/,\\s*|\\s+and\\s+/i)\n      .map",
+          "lineNumber": 270
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "beforePeriod\n      .split",
+          "lineNumber": 270
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "part.replace(/\\([^)]*\\)/g, \"\").trim",
+          "lineNumber": 272
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "part.replace",
+          "lineNumber": 272
+        },
+        {
+          "caller": "extractListDrugs",
+          "callee": "looksLikeDrugHeading",
+          "lineNumber": 273
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.indexOf",
+          "lineNumber": 277
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice(0, colon).trim",
+          "lineNumber": 279
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice",
+          "lineNumber": 279
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice(colon + 1).trim",
+          "lineNumber": 280
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "block.slice",
+          "lineNumber": 280
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "/\\(|\\//.test",
+          "lineNumber": 283
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "label.split",
+          "lineNumber": 283
+        },
+        {
+          "caller": "parseBulletRecord",
+          "callee": "extractListDrugs",
+          "lineNumber": 288
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "String(text || \"\").toLowerCase",
+          "lineNumber": 301
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "String",
+          "lineNumber": 301
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 302
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 302
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 303
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 304
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 305
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 306
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 307
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 307
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 308
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 309
+        },
+        {
+          "caller": "inferMechanism",
+          "callee": "lower.includes",
+          "lineNumber": 309
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "String(text || \"\").toLowerCase",
+          "lineNumber": 314
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "String",
+          "lineNumber": 314
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 315
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 318
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 319
+        },
+        {
+          "caller": "inferRecommendation",
+          "callee": "lower.includes",
+          "lineNumber": 320
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "String(text || \"\").toLowerCase",
+          "lineNumber": 328
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "String",
+          "lineNumber": 328
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 330
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 330
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 330
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 331
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 331
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 332
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 332
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 332
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 333
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 333
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 333
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "lower.includes",
+          "lineNumber": 334
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.push",
+          "lineNumber": 334
+        },
+        {
+          "caller": "inferMonitoring",
+          "callee": "monitoring.join",
+          "lineNumber": 335
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "String",
+          "lineNumber": 339
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "value.match",
+          "lineNumber": 340
+        },
+        {
+          "caller": "firstSentence",
+          "callee": "value.slice",
+          "lineNumber": 341
+        },
+        {
+          "caller": "createParsedInteraction",
+          "callee": "hashString",
+          "lineNumber": 347
+        },
+        {
+          "caller": "createParsedInteraction",
+          "callee": "inferMechanism",
+          "lineNumber": 353
+        },
+        {
+          "caller": "createParsedInteraction",
+          "callee": "firstSentence",
+          "lineNumber": 354
+        },
+        {
+          "caller": "createParsedInteraction",
+          "callee": "inferRecommendation",
+          "lineNumber": 355
+        },
+        {
+          "caller": "createParsedInteraction",
+          "callee": "inferMonitoring",
+          "lineNumber": 356
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "parseReportHeader",
+          "lineNumber": 373
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "getOrCreateParsedDrug",
+          "lineNumber": 374
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "addDoseSuggestions",
+          "lineNumber": 390
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "extractDoseSuggestions",
+          "lineNumber": 390
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "collectInteractionSections",
+          "lineNumber": 391
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "splitInteractionBlocks",
+          "lineNumber": 396
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "getOrCreateParsedDrug",
+          "lineNumber": 402
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join(\" \").replace(/\\s+/g, \" \").trim",
+          "lineNumber": 404
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join(\" \").replace",
+          "lineNumber": 404
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "currentParts.join",
+          "lineNumber": 404
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "interactions.push",
+          "lineNumber": 405
+        },
+        {
+          "caller": "flushCurrent",
+          "callee": "createParsedInteraction",
+          "lineNumber": 405
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "parseBulletRecord",
+          "lineNumber": 420
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "flushCurrent",
+          "lineNumber": 422
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "getOrCreateParsedDrug",
+          "lineNumber": 423
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "interactions.push",
+          "lineNumber": 425
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "createParsedInteraction",
+          "lineNumber": 425
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "flushCurrent",
+          "lineNumber": 439
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "getOrCreateParsedDrug",
+          "lineNumber": 441
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "interactions.push",
+          "lineNumber": 443
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "createParsedInteraction",
+          "lineNumber": 443
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "looksLikeDrugHeading",
+          "lineNumber": 457
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "flushCurrent",
+          "lineNumber": 458
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "currentParts.push",
+          "lineNumber": 464
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "flushCurrent",
+          "lineNumber": 467
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "[...drugs.values()].sort",
+          "lineNumber": 472
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "drugs.values",
+          "lineNumber": 472
+        },
+        {
+          "caller": "parseReportText",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 472
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "createEmptyIndex",
+          "lineNumber": 493
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "Array.isArray",
+          "lineNumber": 494
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "Array.isArray",
+          "lineNumber": 495
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.byId.set",
+          "lineNumber": 499
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "normalizeId",
+          "lineNumber": 499
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "[drug.name].concat",
+          "lineNumber": 500
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "normalizeName",
+          "lineNumber": 502
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.byName.set",
+          "lineNumber": 503
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "drugs\n      .map((drug) => ({\n        id: drug.id,\n        name: drug.name,\n        aliases: drug.aliases || [],\n        identityStatus: drug.identityStatus || \"unknown\"\n      }))\n      .sort",
+          "lineNumber": 507
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "drugs\n      .map",
+          "lineNumber": 507
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "a.name.localeCompare",
+          "lineNumber": 514
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "pairKey",
+          "lineNumber": 518
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.interactionsByPair.has",
+          "lineNumber": 519
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.interactionsByPair.set",
+          "lineNumber": 519
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.interactionsByPair.get(key).push",
+          "lineNumber": 520
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.interactionsByPair.get",
+          "lineNumber": 520
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "index.interactionsByPair.values",
+          "lineNumber": 523
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "records.sort",
+          "lineNumber": 524
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "severityRank",
+          "lineNumber": 524
+        },
+        {
+          "caller": "buildIndex",
+          "callee": "severityRank",
+          "lineNumber": 524
+        },
+        {
+          "caller": "resolveDrug",
+          "callee": "normalizeName",
+          "lineNumber": 532
+        },
+        {
+          "caller": "resolveDrug",
+          "callee": "index.byName.get",
+          "lineNumber": 535
+        },
+        {
+          "caller": "resolveDrug",
+          "callee": "normalized.replace",
+          "lineNumber": 538
+        },
+        {
+          "caller": "resolveDrug",
+          "callee": "index.byName.entries",
+          "lineNumber": 539
+        },
+        {
+          "caller": "resolveDrug",
+          "callee": "name.replace",
+          "lineNumber": 540
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "buildIndex",
+          "lineNumber": 548
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "normalizeName",
+          "lineNumber": 549
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions.slice",
+          "lineNumber": 551
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions\n      .map((drug) => {\n        const names = [drug.name].concat(drug.aliases || []).map(normalizeName);\n        const exact = names.some((name) => name === normalized);\n        const startsWith = names.some((name) => name.startsWith(normalized));\n        const contains = names.some((name) => name.includes(normalized));\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort((a, b) => a.score - b.score || a.drug.name.localeCompare(b.drug.name))\n      .slice(0, limit)\n      .map",
+          "lineNumber": 553
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions\n      .map((drug) => {\n        const names = [drug.name].concat(drug.aliases || []).map(normalizeName);\n        const exact = names.some((name) => name === normalized);\n        const startsWith = names.some((name) => name.startsWith(normalized));\n        const contains = names.some((name) => name.includes(normalized));\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort((a, b) => a.score - b.score || a.drug.name.localeCompare(b.drug.name))\n      .slice",
+          "lineNumber": 553
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions\n      .map((drug) => {\n        const names = [drug.name].concat(drug.aliases || []).map(normalizeName);\n        const exact = names.some((name) => name === normalized);\n        const startsWith = names.some((name) => name.startsWith(normalized));\n        const contains = names.some((name) => name.includes(normalized));\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter((row) => row.score < 99)\n      .sort",
+          "lineNumber": 553
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions\n      .map((drug) => {\n        const names = [drug.name].concat(drug.aliases || []).map(normalizeName);\n        const exact = names.some((name) => name === normalized);\n        const startsWith = names.some((name) => name.startsWith(normalized));\n        const contains = names.some((name) => name.includes(normalized));\n        const score = exact ? 0 : startsWith ? 1 : contains ? 2 : 99;\n        return { drug, score };\n      })\n      .filter",
+          "lineNumber": 553
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "index.suggestions\n      .map",
+          "lineNumber": 553
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "[drug.name].concat(drug.aliases || []).map",
+          "lineNumber": 555
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "[drug.name].concat",
+          "lineNumber": 555
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "names.some",
+          "lineNumber": 556
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "names.some",
+          "lineNumber": 557
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "name.startsWith",
+          "lineNumber": 557
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "names.some",
+          "lineNumber": 558
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "name.includes",
+          "lineNumber": 558
+        },
+        {
+          "caller": "suggestDrugs",
+          "callee": "a.drug.name.localeCompare",
+          "lineNumber": 563
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "buildIndex",
+          "lineNumber": 579
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "(Array.isArray(medications) ? medications : []).map",
+          "lineNumber": 580
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "Array.isArray",
+          "lineNumber": 580
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "meds.map",
+          "lineNumber": 581
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "resolveDrug",
+          "lineNumber": 581
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "resolved.filter",
+          "lineNumber": 583
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "normalizeName",
+          "lineNumber": 583
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "index.interactionsByPair.get",
+          "lineNumber": 591
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "pairKey",
+          "lineNumber": 591
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "seen.has",
+          "lineNumber": 594
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "seen.add",
+          "lineNumber": 595
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "alerts.push",
+          "lineNumber": 596
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "alerts.sort",
+          "lineNumber": 617
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "severityRank",
+          "lineNumber": 618
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "severityRank",
+          "lineNumber": 618
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "a.interactingDrugs.join(\" \").localeCompare",
+          "lineNumber": 620
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "a.interactingDrugs.join",
+          "lineNumber": 620
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "b.interactingDrugs.join",
+          "lineNumber": 620
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "new Date().toISOString",
+          "lineNumber": 625
+        },
+        {
+          "caller": "checkInteractions",
+          "callee": "unresolved.map",
+          "lineNumber": 627
+        },
+        {
+          "caller": "createAuditEntry",
+          "callee": "Date.now",
+          "lineNumber": 634
+        },
+        {
+          "caller": "createAuditEntry",
+          "callee": "Math.random().toString(16).slice",
+          "lineNumber": 634
+        },
+        {
+          "caller": "createAuditEntry",
+          "callee": "Math.random().toString",
+          "lineNumber": 634
+        },
+        {
+          "caller": "createAuditEntry",
+          "callee": "Math.random",
+          "lineNumber": 634
+        },
+        {
+          "caller": "createAuditEntry",
+          "callee": "new Date().toISOString",
+          "lineNumber": 646
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/styles.css",
+      "language": "css",
+      "fileCategory": "markup",
+      "totalLines": 480,
+      "nonEmptyLines": 405,
+      "metrics": {}
+    },
+    {
+      "path": "test/ddi-engine.test.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 109,
+      "nonEmptyLines": 99,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "test/ingest.test.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 86,
+      "nonEmptyLines": 72,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "test/ui-source.test.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 32,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

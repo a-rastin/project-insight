@@ -1,0 +1,3294 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "2ad29b87e9f0c13940f7c3809ee28929547bf49f",
+  "generatedAt": "2026-07-11T07:32:37.396Z",
+  "files": {
+    "diagnosis/__init__.py": {
+      "filePath": "diagnosis/__init__.py",
+      "contentHash": "7230d44ad1cfb0e25f6eefc22f93ebd4ee5811f56bd582215aca9f67a4eded42",
+      "functions": [
+        {
+          "name": "get_app",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": ".api",
+          "specifiers": [
+            "router"
+          ]
+        },
+        {
+          "source": ".criteria",
+          "specifiers": [
+            "evaluate",
+            "get_criteria",
+            "meta_contract"
+          ]
+        },
+        {
+          "source": ".readiness",
+          "specifiers": [
+            "check_readiness"
+          ]
+        }
+      ],
+      "exports": [
+        "get_app"
+      ],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/__main__.py": {
+      "filePath": "diagnosis/__main__.py",
+      "contentHash": "bd645eeea087d233821b97ea0685f2346a39e495ec50202def409d2f9ccad773",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 43
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 57,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/api.py": {
+      "filePath": "diagnosis/api.py",
+      "contentHash": "6718d89497661986488408d57ef9d6232b8c13474d6e2d64eba770b81ec8de8c",
+      "functions": [
+        {
+          "name": "_http_selfcheck",
+          "params": [],
+          "exported": true,
+          "lineCount": 54
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "APIRouter"
+          ]
+        },
+        {
+          "source": ".",
+          "specifiers": [
+            "_deps"
+          ]
+        },
+        {
+          "source": ".dashboard",
+          "specifiers": [
+            "_dump_for_audit",
+            "_dashboard_router"
+          ]
+        },
+        {
+          "source": ".diagnosis_api",
+          "specifiers": [
+            "RESULT_FIELDS",
+            "Submission",
+            "_diagnosis_router"
+          ]
+        },
+        {
+          "source": ".page",
+          "specifiers": [
+            "_read_page",
+            "_page_router"
+          ]
+        }
+      ],
+      "exports": [
+        "_http_selfcheck"
+      ],
+      "totalLines": 143,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/app.py": {
+      "filePath": "diagnosis/app.py",
+      "contentHash": "15402736aa2c4473e317919beac27534fba093dbffab14bad95d5a3e308bd70b",
+      "functions": [
+        {
+          "name": "health",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "ready",
+          "params": [],
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "FastAPI"
+          ]
+        },
+        {
+          "source": "fastapi.middleware.cors",
+          "specifiers": [
+            "CORSMiddleware"
+          ]
+        },
+        {
+          "source": "fastapi.responses",
+          "specifiers": [
+            "JSONResponse"
+          ]
+        },
+        {
+          "source": ".api",
+          "specifiers": [
+            "router"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        },
+        {
+          "source": ".readiness",
+          "specifiers": [
+            "check_readiness"
+          ]
+        }
+      ],
+      "exports": [
+        "health",
+        "ready"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/auth.py": {
+      "filePath": "diagnosis/auth.py",
+      "contentHash": "30594069cc5205e80e9cc6fa8431366d46c37a45c9efc9daa14d359ac7586042",
+      "functions": [
+        {
+          "name": "_fetch_session",
+          "params": [
+            "cookie_header"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "_build_session",
+          "params": [
+            "payload"
+          ],
+          "returnType": "Session",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "require_role",
+          "params": [],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "reset_auth_for_tests",
+          "params": [
+            "base_url"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "classes": [
+        {
+          "name": "Session",
+          "methods": [
+            "has_any"
+          ],
+          "properties": [
+            "user_id",
+            "roles",
+            "session_id"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_AuthUnavailable",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "urllib.error",
+          "specifiers": [
+            "urllib.error"
+          ]
+        },
+        {
+          "source": "urllib.request",
+          "specifiers": [
+            "urllib.request"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Iterable"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "Depends",
+            "HTTPException",
+            "Request"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        }
+      ],
+      "exports": [
+        "Session",
+        "_AuthUnavailable",
+        "_fetch_session",
+        "_build_session",
+        "require_role",
+        "reset_auth_for_tests"
+      ],
+      "totalLines": 154,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/config.py": {
+      "filePath": "diagnosis/config.py",
+      "contentHash": "09d3b678c3621fa0ccc234371373cc3f726eac5f57cc38619ee444599894a368",
+      "functions": [
+        {
+          "name": "_env_truthy",
+          "params": [
+            "name"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_env_list",
+          "params": [
+            "name",
+            "default"
+          ],
+          "returnType": "list[str]",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_load",
+          "params": [],
+          "returnType": "Settings",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "_config_selfcheck",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 110
+        }
+      ],
+      "classes": [
+        {
+          "name": "Settings",
+          "methods": [
+            "module_id",
+            "launch_href"
+          ],
+          "properties": [
+            "db_path",
+            "auth_url",
+            "auth_timeout_s",
+            "patient_url",
+            "patient_timeout_s",
+            "patient_lookup",
+            "cors_origins",
+            "mock_auth",
+            "csrf_secret",
+            "csrf_secure",
+            "module_base_path",
+            "host",
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 60
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass",
+            "field"
+          ]
+        }
+      ],
+      "exports": [
+        "_env_truthy",
+        "_env_list",
+        "Settings",
+        "_load",
+        "_config_selfcheck"
+      ],
+      "totalLines": 289,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/criteria.py": {
+      "filePath": "diagnosis/criteria.py",
+      "contentHash": "37fca123856a43f0b58427c0f57dc17a0edc62f70710eabe2a905b93da295cd2",
+      "functions": [
+        {
+          "name": "get_criteria",
+          "params": [],
+          "returnType": "list[dict]",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "meta_contract",
+          "params": [],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "_classify",
+          "params": [
+            "criterion_id"
+          ],
+          "returnType": "dict | None",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "evaluate",
+          "params": [
+            "checked_ids"
+          ],
+          "returnType": "Evaluation",
+          "exported": true,
+          "lineCount": 52
+        },
+        {
+          "name": "_demo",
+          "params": [],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "classes": [
+        {
+          "name": "Evaluation",
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "met",
+            "checked_ids",
+            "a_count",
+            "core_count",
+            "failures",
+            "reason"
+          ],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass",
+            "field"
+          ]
+        }
+      ],
+      "exports": [
+        "Evaluation",
+        "get_criteria",
+        "meta_contract",
+        "_classify",
+        "evaluate",
+        "_demo"
+      ],
+      "totalLines": 215,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/csrf.py": {
+      "filePath": "diagnosis/csrf.py",
+      "contentHash": "1114b4b6f079b85cea1846655610549779cc952c1cec18dbbd609d2f30273331",
+      "functions": [
+        {
+          "name": "_sign",
+          "params": [
+            "raw"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "_verify",
+          "params": [
+            "token"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "mint",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "set_cookie",
+          "params": [
+            "response",
+            "token"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_read_cookie",
+          "params": [
+            "request"
+          ],
+          "returnType": "str | None",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_read_header",
+          "params": [
+            "request"
+          ],
+          "returnType": "str | None",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "require_csrf",
+          "params": [
+            "request"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "reset_secret_for_tests",
+          "params": [
+            "secret"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "secrets",
+          "specifiers": [
+            "secrets"
+          ]
+        },
+        {
+          "source": "hmac",
+          "specifiers": [
+            "hmac"
+          ]
+        },
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "HTTPException",
+            "Request"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        }
+      ],
+      "exports": [
+        "_sign",
+        "_verify",
+        "mint",
+        "set_cookie",
+        "_read_cookie",
+        "_read_header",
+        "require_csrf",
+        "reset_secret_for_tests"
+      ],
+      "totalLines": 156,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/dashboard.py": {
+      "filePath": "diagnosis/dashboard.py",
+      "contentHash": "be20dd238c6c969a435baa3bcdccf131190f62d521d960bb8d8d5eefe3b2db6c",
+      "functions": [
+        {
+          "name": "meta",
+          "params": [
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "csrf_token",
+          "params": [
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "module_routes",
+          "params": [
+            "moduleId",
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 36
+        },
+        {
+          "name": "audit_log",
+          "params": [
+            "code",
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "_dump_for_audit",
+          "params": [
+            "code"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "APIRouter",
+            "Depends",
+            "HTTPException"
+          ]
+        },
+        {
+          "source": "fastapi.responses",
+          "specifiers": [
+            "JSONResponse"
+          ]
+        },
+        {
+          "source": ".auth",
+          "specifiers": [
+            "Session"
+          ]
+        },
+        {
+          "source": ".",
+          "specifiers": [
+            "_csrf"
+          ]
+        },
+        {
+          "source": ".criteria",
+          "specifiers": [
+            "get_criteria",
+            "meta_contract"
+          ]
+        },
+        {
+          "source": ".deps",
+          "specifiers": [
+            "require_psychiatrist_or_admin",
+            "store"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        }
+      ],
+      "exports": [
+        "meta",
+        "csrf_token",
+        "module_routes",
+        "audit_log",
+        "_dump_for_audit"
+      ],
+      "totalLines": 198,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/deps.py": {
+      "filePath": "diagnosis/deps.py",
+      "contentHash": "ffe8b326cbb10b986255f83a5c26afb529ca825ba89a0ce7078d8a092b0a4679",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": ".auth",
+          "specifiers": [
+            "Session",
+            "require_role"
+          ]
+        },
+        {
+          "source": ".",
+          "specifiers": [
+            "_csrf"
+          ]
+        },
+        {
+          "source": ".store",
+          "specifiers": [
+            "DiagnosisStore"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 75,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/diagnosis_api.py": {
+      "filePath": "diagnosis/diagnosis_api.py",
+      "contentHash": "611e944c8628d328e556a315a8d141031bf511fe9e6e7eece023bbe73090fdfa",
+      "functions": [
+        {
+          "name": "init_session",
+          "params": [
+            "code",
+            "request",
+            "_",
+            "__"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "get_session",
+          "params": [
+            "code",
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "put_session",
+          "params": [
+            "code",
+            "body",
+            "request",
+            "_",
+            "__"
+          ],
+          "exported": true,
+          "lineCount": 44
+        }
+      ],
+      "classes": [
+        {
+          "name": "Submission",
+          "methods": [],
+          "properties": [
+            "checked",
+            "decision"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Literal"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "APIRouter",
+            "Depends",
+            "HTTPException",
+            "Request"
+          ]
+        },
+        {
+          "source": "pydantic",
+          "specifiers": [
+            "BaseModel",
+            "Field"
+          ]
+        },
+        {
+          "source": ".auth",
+          "specifiers": [
+            "Session"
+          ]
+        },
+        {
+          "source": ".criteria",
+          "specifiers": [
+            "evaluate"
+          ]
+        },
+        {
+          "source": ".dashboard",
+          "specifiers": [
+            "_dump_for_audit"
+          ]
+        },
+        {
+          "source": ".deps",
+          "specifiers": [
+            "require_psychiatrist",
+            "require_psychiatrist_or_admin",
+            "require_csrf",
+            "store"
+          ]
+        },
+        {
+          "source": ".patient",
+          "specifiers": [
+            "resolve_patient"
+          ]
+        }
+      ],
+      "exports": [
+        "Submission",
+        "init_session",
+        "get_session",
+        "put_session"
+      ],
+      "totalLines": 137,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/page.py": {
+      "filePath": "diagnosis/page.py",
+      "contentHash": "d5f8ea9ed9814c8b2c99fb8635be53ab3aad7a7c704b671f04e62527c42054c2",
+      "functions": [
+        {
+          "name": "_read_page",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "page",
+          "params": [
+            "_"
+          ],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "APIRouter",
+            "Depends"
+          ]
+        },
+        {
+          "source": "fastapi.responses",
+          "specifiers": [
+            "HTMLResponse"
+          ]
+        },
+        {
+          "source": ".auth",
+          "specifiers": [
+            "Session"
+          ]
+        },
+        {
+          "source": ".",
+          "specifiers": [
+            "_csrf"
+          ]
+        },
+        {
+          "source": ".deps",
+          "specifiers": [
+            "require_psychiatrist_or_admin"
+          ]
+        }
+      ],
+      "exports": [
+        "_read_page",
+        "page"
+      ],
+      "totalLines": 59,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/patient.py": {
+      "filePath": "diagnosis/patient.py",
+      "contentHash": "3cb980fb5bfb6d4a30d2c175a12bcdba6150d7e4a1e902a2d2c670867fe0b9bb",
+      "functions": [
+        {
+          "name": "_fetch_patient",
+          "params": [
+            "code",
+            "cookie_header"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "_build_patient",
+          "params": [
+            "payload",
+            "code"
+          ],
+          "returnType": "Patient",
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "resolve_patient",
+          "params": [
+            "code",
+            "cookie_header"
+          ],
+          "returnType": "Patient",
+          "exported": true,
+          "lineCount": 44
+        },
+        {
+          "name": "reset_patient_for_tests",
+          "params": [
+            "base_url"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "_patient_selfcheck",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "classes": [
+        {
+          "name": "Patient",
+          "methods": [],
+          "properties": [
+            "id",
+            "patient_code",
+            "display_name"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_PatientUnavailable",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_PatientNotFound",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 2
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "urllib.error",
+          "specifiers": [
+            "urllib.error"
+          ]
+        },
+        {
+          "source": "urllib.parse",
+          "specifiers": [
+            "urllib.parse"
+          ]
+        },
+        {
+          "source": "urllib.request",
+          "specifiers": [
+            "urllib.request"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass"
+          ]
+        },
+        {
+          "source": "fastapi",
+          "specifiers": [
+            "HTTPException"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        }
+      ],
+      "exports": [
+        "Patient",
+        "_PatientUnavailable",
+        "_fetch_patient",
+        "_PatientNotFound",
+        "_build_patient",
+        "resolve_patient",
+        "reset_patient_for_tests",
+        "_patient_selfcheck"
+      ],
+      "totalLines": 264,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/readiness.py": {
+      "filePath": "diagnosis/readiness.py",
+      "contentHash": "3bedd1c8b35e9d690c71489c59988b9c3f55cdf0ec0dfd92c5302173bbb8e0ae",
+      "functions": [
+        {
+          "name": "_check_db",
+          "params": [],
+          "returnType": "dict[str, Any]",
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "_check_auth",
+          "params": [],
+          "returnType": "dict[str, Any]",
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "_check_patient",
+          "params": [],
+          "returnType": "dict[str, Any]",
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "check_readiness",
+          "params": [],
+          "returnType": "dict[str, Any]",
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "_readiness_selfcheck",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 136
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any"
+          ]
+        }
+      ],
+      "exports": [
+        "_check_db",
+        "_check_auth",
+        "_check_patient",
+        "check_readiness",
+        "_readiness_selfcheck"
+      ],
+      "totalLines": 279,
+      "hasStructuralAnalysis": true
+    },
+    "diagnosis/static/index.html": {
+      "filePath": "diagnosis/static/index.html",
+      "contentHash": "1e81d69220d6dc2483b6d33426e0ce5f6eef5a2ee911fe97d983c3eb11d27daf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 711,
+      "hasStructuralAnalysis": false
+    },
+    "diagnosis/store.py": {
+      "filePath": "diagnosis/store.py",
+      "contentHash": "078eb93a9268ac4b944f61f0f6cc0b17622d1057dd79e6b2e953d21786c66299",
+      "functions": [
+        {
+          "name": "_resolve_path",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_store_selfcheck",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 78
+        }
+      ],
+      "classes": [
+        {
+          "name": "DiagnosisStore",
+          "methods": [
+            "__init__",
+            "_cursor",
+            "_ensure_schema",
+            "init",
+            "exists",
+            "get",
+            "put",
+            "audit_snapshot",
+            "list_audits",
+            "reset"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 151
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sqlite3",
+          "specifiers": [
+            "sqlite3"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextmanager"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Iterator"
+          ]
+        },
+        {
+          "source": ".config",
+          "specifiers": [
+            "settings"
+          ]
+        }
+      ],
+      "exports": [
+        "_resolve_path",
+        "DiagnosisStore",
+        "_store_selfcheck"
+      ],
+      "totalLines": 294,
+      "hasStructuralAnalysis": true
+    },
+    "docs/api-contract.md": {
+      "filePath": "docs/api-contract.md",
+      "contentHash": "b36ad115bb04a70fe24563f5c70029f610a2c48789ebbe333174983b8a0eba1d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 818,
+      "hasStructuralAnalysis": true
+    },
+    "HANDOFF.md": {
+      "filePath": "HANDOFF.md",
+      "contentHash": "0a406dfc1c32cdbe2572bb6d8881ca25544e2ec8ddecbbe0ce3c74ae5e14ba03",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 970,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "d7d62c8f8e2399dd6747ab09a40c212f22111367403684c1740dbf69441c8fac",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 333,
+      "hasStructuralAnalysis": true
+    },
+    "requirements.txt": {
+      "filePath": "requirements.txt",
+      "contentHash": "2948c76ca488030321b5b24c006b00d72714574103172ff9b2650c5710ab6ad7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": false
+    },
+    "test_auth.py": {
+      "filePath": "test_auth.py",
+      "contentHash": "516b7da621ec01cc7debb39fcbf17476e03380cc16ea4d9eccbb5ea7ec6eb091",
+      "functions": [
+        {
+          "name": "_arm_with_csrf",
+          "params": [
+            "c"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_write_headers",
+          "params": [],
+          "returnType": "dict[str, str]",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_free_port",
+          "params": [],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_start_fake_auth",
+          "params": [],
+          "returnType": "tuple[HTTPServer, int]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_cookie_for",
+          "params": [
+            "scenario"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "_client_for",
+          "params": [
+            "scenario",
+            "port"
+          ],
+          "returnType": "TestClient",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_exercise",
+          "params": [
+            "c",
+            "code"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "test_no_cookie_returns_401_on_every_protected_path",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_unauthenticated_payload_returns_401",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "test_nurse_role_is_403_on_every_protected_path",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_psychiatrist_can_read_and_write",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "test_admin_can_read_but_not_write",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "test_admin_can_read_existing_session_after_psychiatrist_seeds_it",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "test_auth_service_down_returns_401",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Handler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 30
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "urllib.request",
+          "specifiers": [
+            "urllib.request"
+          ]
+        },
+        {
+          "source": "http.server",
+          "specifiers": [
+            "BaseHTTPRequestHandler",
+            "HTTPServer"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        }
+      ],
+      "exports": [
+        "_arm_with_csrf",
+        "_write_headers",
+        "_Handler",
+        "_free_port",
+        "_start_fake_auth",
+        "_cookie_for",
+        "_client_for",
+        "_exercise",
+        "test_no_cookie_returns_401_on_every_protected_path",
+        "test_unauthenticated_payload_returns_401",
+        "test_nurse_role_is_403_on_every_protected_path",
+        "test_psychiatrist_can_read_and_write",
+        "test_admin_can_read_but_not_write",
+        "test_admin_can_read_existing_session_after_psychiatrist_seeds_it",
+        "test_auth_service_down_returns_401",
+        "main"
+      ],
+      "totalLines": 323,
+      "hasStructuralAnalysis": true
+    },
+    "test_config.py": {
+      "filePath": "test_config.py",
+      "contentHash": "fdacac2b1799d6fb632416164c530b890200353276bd175827823deab10f1756",
+      "functions": [
+        {
+          "name": "_snapshot_env",
+          "params": [],
+          "returnType": "dict[str, str | None]",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_restore_env",
+          "params": [
+            "snap"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_clear_env",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_reload_config",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "_run",
+          "params": [
+            "name",
+            "fn"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_defaults_match_prior_hardcoded_constants",
+          "params": [],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "test_custom_env_rebuilds_snapshot",
+          "params": [],
+          "exported": true,
+          "lineCount": 38
+        },
+        {
+          "name": "test_settings_frozen_raises_on_mutation",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_cors_origins_star_survives",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "test_cors_origins_blank_falls_back_to_star",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "test_module_id_for_nested_prefix_uses_last_segment",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_auth_module_sourced_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "test_auth_reset_for_tests_restores_to_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_patient_module_sourced_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_patient_reset_for_tests_restores_to_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_csrf_secret_pinned_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "test_csrf_secure_flag_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_dashboard_module_id_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "test_app_cors_reads_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "test_main_argparse_defaults_from_settings",
+          "params": [],
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "test_config_selfcheck_passes",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 27
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "importlib",
+          "specifiers": [
+            "importlib"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "_snapshot_env",
+        "_restore_env",
+        "_clear_env",
+        "_reload_config",
+        "_run",
+        "test_defaults_match_prior_hardcoded_constants",
+        "test_custom_env_rebuilds_snapshot",
+        "test_settings_frozen_raises_on_mutation",
+        "test_cors_origins_star_survives",
+        "test_cors_origins_blank_falls_back_to_star",
+        "test_module_id_for_nested_prefix_uses_last_segment",
+        "test_auth_module_sourced_from_settings",
+        "test_auth_reset_for_tests_restores_to_settings",
+        "test_patient_module_sourced_from_settings",
+        "test_patient_reset_for_tests_restores_to_settings",
+        "test_csrf_secret_pinned_from_settings",
+        "test_csrf_secure_flag_from_settings",
+        "test_dashboard_module_id_from_settings",
+        "test_app_cors_reads_settings",
+        "test_main_argparse_defaults_from_settings",
+        "test_config_selfcheck_passes",
+        "main"
+      ],
+      "totalLines": 440,
+      "hasStructuralAnalysis": true
+    },
+    "test_csrf.py": {
+      "filePath": "test_csrf.py",
+      "contentHash": "d3b5dc1aad89514c855c40c62283fecfc4fd90d723a4ea4365a2b07773738fc2",
+      "functions": [
+        {
+          "name": "_free_port",
+          "params": [],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_start_fake_auth",
+          "params": [],
+          "returnType": "tuple[HTTPServer, int]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_client",
+          "params": [
+            "port"
+          ],
+          "returnType": "TestClient",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "_mint_valid_token",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "_mint_bad_token",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_missing_csrf_blocks_put",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_missing_csrf_blocks_init",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_header_only_blocked",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_cookie_only_blocked",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "test_cookie_header_mismatch_blocked",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "test_bad_signature_blocked",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_valid_token_allows_init",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_valid_token_allows_put",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "test_csrf_route_sets_cookie_and_returns_token",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "test_html_page_carries_meta_token",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "test_bypass_env_skips_csrf",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 44
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Handler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 11
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "urllib.request",
+          "specifiers": [
+            "urllib.request"
+          ]
+        },
+        {
+          "source": "http.server",
+          "specifiers": [
+            "BaseHTTPRequestHandler",
+            "HTTPServer"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_csrf"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        }
+      ],
+      "exports": [
+        "_Handler",
+        "_free_port",
+        "_start_fake_auth",
+        "_client",
+        "_mint_valid_token",
+        "_mint_bad_token",
+        "test_missing_csrf_blocks_put",
+        "test_missing_csrf_blocks_init",
+        "test_header_only_blocked",
+        "test_cookie_only_blocked",
+        "test_cookie_header_mismatch_blocked",
+        "test_bad_signature_blocked",
+        "test_valid_token_allows_init",
+        "test_valid_token_allows_put",
+        "test_csrf_route_sets_cookie_and_returns_token",
+        "test_html_page_carries_meta_token",
+        "test_bypass_env_skips_csrf",
+        "main"
+      ],
+      "totalLines": 299,
+      "hasStructuralAnalysis": true
+    },
+    "test_discovery.py": {
+      "filePath": "test_discovery.py",
+      "contentHash": "2a0c7c5f997fa1c3f89624bc1b53ef2d5f32f1626a59b72c44304f881f427704",
+      "functions": [
+        {
+          "name": "_free_port",
+          "params": [],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_start_fake_auth",
+          "params": [],
+          "returnType": "tuple[HTTPServer, int]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_client",
+          "params": [
+            "port",
+            "role"
+          ],
+          "returnType": "TestClient",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "test_descriptor_shape_and_launch_href",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_admin_can_read_discovery",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_unknown_module_id_returns_404",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_nurse_role_is_403",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_no_cookie_returns_401",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 27
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Handler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "http.server",
+          "specifiers": [
+            "BaseHTTPRequestHandler",
+            "HTTPServer"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        }
+      ],
+      "exports": [
+        "_Handler",
+        "_free_port",
+        "_start_fake_auth",
+        "_client",
+        "test_descriptor_shape_and_launch_href",
+        "test_admin_can_read_discovery",
+        "test_unknown_module_id_returns_404",
+        "test_nurse_role_is_403",
+        "test_no_cookie_returns_401",
+        "main"
+      ],
+      "totalLines": 189,
+      "hasStructuralAnalysis": true
+    },
+    "test_embed.py": {
+      "filePath": "test_embed.py",
+      "contentHash": "88e6edc10377da8ae2d511d87e90452e5e617f0684b06cb8725207629e9bfd1b",
+      "functions": [
+        {
+          "name": "_served_page",
+          "params": [],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "test_read_page_is_embeddable_shell",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "test_served_page_exposes_createDiagnosisModule",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "test_contract_signature_takes_root_and_apiBaseUrl",
+          "params": [],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "test_served_page_drops_back_to_dashboard_placeholder",
+          "params": [],
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "test_served_page_does_not_bake_standalone_topbar_in_body_markup",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "test_embedded_flag_skips_topbar_chrome",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "test_fn_returns_mount_unmount_handle",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "test_csrf_meta_token_still_read_via_meta_tag",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "test_read_page_back_compat_reexport",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_route_layer_unchanged",
+          "params": [],
+          "exported": true,
+          "lineCount": 35
+        },
+        {
+          "name": "test_bypass_serve_path_is_byte_clean",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 38
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "page"
+          ]
+        },
+        {
+          "source": "diagnosis.api",
+          "specifiers": [
+            "_read_page"
+          ]
+        }
+      ],
+      "exports": [
+        "_served_page",
+        "test_read_page_is_embeddable_shell",
+        "test_served_page_exposes_createDiagnosisModule",
+        "test_contract_signature_takes_root_and_apiBaseUrl",
+        "test_served_page_drops_back_to_dashboard_placeholder",
+        "test_served_page_does_not_bake_standalone_topbar_in_body_markup",
+        "test_embedded_flag_skips_topbar_chrome",
+        "test_fn_returns_mount_unmount_handle",
+        "test_csrf_meta_token_still_read_via_meta_tag",
+        "test_read_page_back_compat_reexport",
+        "test_route_layer_unchanged",
+        "test_bypass_serve_path_is_byte_clean",
+        "main"
+      ],
+      "totalLines": 326,
+      "hasStructuralAnalysis": true
+    },
+    "test_patient.py": {
+      "filePath": "test_patient.py",
+      "contentHash": "6f795cd4122360eeeb73610a21eb8cd33651d5cadd5b33a6a1d450c8d39f01d7",
+      "functions": [
+        {
+          "name": "_free_port",
+          "params": [],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_start_fake",
+          "params": [
+            "handler"
+          ],
+          "returnType": "tuple[HTTPServer, int]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_arm_with_csrf",
+          "params": [
+            "c"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_client",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "returnType": "TestClient",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_init_binds_canonical_patient_id",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_put_binds_canonical_patient_id",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_unknown_code_returns_422_not_404",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_registry_404_on_put_returns_422",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "test_empty_code_returns_400",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_missing_canonical_id_returns_422",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "test_registry_bad_json_returns_422",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "test_registry_500_returns_422",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "test_registry_down_returns_422",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "test_lookup_disabled_env_falls_back_to_free_text",
+          "params": [
+            "auth_port",
+            "patient_port"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "classes": [
+        {
+          "name": "_AuthHandler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_PatientHandler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 42
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "urllib.parse",
+          "specifiers": [
+            "urllib.parse"
+          ]
+        },
+        {
+          "source": "http.server",
+          "specifiers": [
+            "BaseHTTPRequestHandler",
+            "HTTPServer"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_patient"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        }
+      ],
+      "exports": [
+        "_AuthHandler",
+        "_PatientHandler",
+        "_free_port",
+        "_start_fake",
+        "_arm_with_csrf",
+        "_client",
+        "test_init_binds_canonical_patient_id",
+        "test_put_binds_canonical_patient_id",
+        "test_unknown_code_returns_422_not_404",
+        "test_registry_404_on_put_returns_422",
+        "test_empty_code_returns_400",
+        "test_missing_canonical_id_returns_422",
+        "test_registry_bad_json_returns_422",
+        "test_registry_500_returns_422",
+        "test_registry_down_returns_422",
+        "test_lookup_disabled_env_falls_back_to_free_text",
+        "main"
+      ],
+      "totalLines": 326,
+      "hasStructuralAnalysis": true
+    },
+    "test_readiness.py": {
+      "filePath": "test_readiness.py",
+      "contentHash": "043edb85269d4b970cb71826b0081d067e0a0e94aa8eb811fd787f6dc6158a02",
+      "functions": [
+        {
+          "name": "test_default_env_is_ready",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "test_bypass_shim_fails_readiness",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "test_auth_base_url_blank_fails",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_patient_lookup_enabled_and_configured",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_patient_lookup_enabled_blank_url_fails",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_db_fault_is_false_without_raising",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "test_response_never_leaks_base_urls",
+          "params": [
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "test_http_ready_200_when_healthy",
+          "params": [
+            "port",
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "test_http_ready_503_when_bypass_on",
+          "params": [
+            "port",
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "test_http_ready_503_when_db_down",
+          "params": [
+            "port",
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "test_http_ready_body_no_url_leak",
+          "params": [
+            "port",
+            "tmpdb"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_set_env",
+          "params": [
+            "bypass",
+            "lookup",
+            "patient_url"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_restore_env",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_swap_store",
+          "params": [
+            "s"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_fresh_tmpdb",
+          "params": [],
+          "returnType": "tuple[DiagnosisStore, str]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_break_tmpdb",
+          "params": [
+            "s"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_heal_tmpdb",
+          "params": [
+            "s"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_cleanup_tmpdb",
+          "params": [
+            "s",
+            "path"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "_free_port",
+          "params": [],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_start_fake_auth",
+          "params": [],
+          "returnType": "tuple[HTTPServer, int]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 43
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Handler",
+          "methods": [
+            "log_message",
+            "do_GET"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "threading",
+          "specifiers": [
+            "threading"
+          ]
+        },
+        {
+          "source": "http.server",
+          "specifiers": [
+            "BaseHTTPRequestHandler",
+            "HTTPServer"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_deps"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_patient"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        },
+        {
+          "source": "diagnosis.readiness",
+          "specifiers": [
+            "check_readiness"
+          ]
+        },
+        {
+          "source": "diagnosis.store",
+          "specifiers": [
+            "DiagnosisStore"
+          ]
+        }
+      ],
+      "exports": [
+        "test_default_env_is_ready",
+        "test_bypass_shim_fails_readiness",
+        "test_auth_base_url_blank_fails",
+        "test_patient_lookup_enabled_and_configured",
+        "test_patient_lookup_enabled_blank_url_fails",
+        "test_db_fault_is_false_without_raising",
+        "test_response_never_leaks_base_urls",
+        "test_http_ready_200_when_healthy",
+        "test_http_ready_503_when_bypass_on",
+        "test_http_ready_503_when_db_down",
+        "test_http_ready_body_no_url_leak",
+        "_set_env",
+        "_restore_env",
+        "_swap_store",
+        "_fresh_tmpdb",
+        "_break_tmpdb",
+        "_heal_tmpdb",
+        "_cleanup_tmpdb",
+        "_Handler",
+        "_free_port",
+        "_start_fake_auth",
+        "main"
+      ],
+      "totalLines": 396,
+      "hasStructuralAnalysis": true
+    },
+    "test_routes.py": {
+      "filePath": "test_routes.py",
+      "contentHash": "dbf6aad48cbd1c2b4fde7a97370d9671bad0e078340bf2137accd0568afba50b",
+      "functions": [
+        {
+          "name": "_paths",
+          "params": [
+            "r"
+          ],
+          "returnType": "set[str]",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "test_page_seam_owns_only_browser_page",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_dashboard_seam_owns_only_discovery_routes",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_diagnosis_seam_owns_only_per_patient_rest",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_composed_router_has_all_paths_from_app_openapi",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "test_literal_routes_precede_parameterized_code_route",
+          "params": [],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "test_dashboard_seam_module_routes_is_in_seam",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "test_audit_seam_is_in_dashboard_seam_only",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_discovery_module_id_constant",
+          "params": [],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "test_back_compat_reexports_from_api_seam",
+          "params": [],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "test_each_seam_shares_one_store_and_policy",
+          "params": [],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_api"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "page",
+            "dashboard",
+            "diagnosis_api"
+          ]
+        }
+      ],
+      "exports": [
+        "_paths",
+        "test_page_seam_owns_only_browser_page",
+        "test_dashboard_seam_owns_only_discovery_routes",
+        "test_diagnosis_seam_owns_only_per_patient_rest",
+        "test_composed_router_has_all_paths_from_app_openapi",
+        "test_literal_routes_precede_parameterized_code_route",
+        "test_dashboard_seam_module_routes_is_in_seam",
+        "test_audit_seam_is_in_dashboard_seam_only",
+        "test_discovery_module_id_constant",
+        "test_back_compat_reexports_from_api_seam",
+        "test_each_seam_shares_one_store_and_policy",
+        "main"
+      ],
+      "totalLines": 251,
+      "hasStructuralAnalysis": true
+    },
+    "test_unittest.py": {
+      "filePath": "test_unittest.py",
+      "contentHash": "a47af89ab25684eb539b657a7b695c46c7f18a9b8f69f784c4a316644529aaef",
+      "functions": [
+        {
+          "name": "_fake_request",
+          "params": [
+            "cookies",
+            "headers"
+          ],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [
+        {
+          "name": "TestCriteriaRules",
+          "methods": [
+            "test_empty_not_met",
+            "test_one_symptom_not_met",
+            "test_two_symptoms_no_duration_no_guards_not_met",
+            "test_two_symptoms_core_duration_all_guards_met",
+            "test_two_non_core_symptoms_not_met_requires_core",
+            "test_missing_one_guard_not_met",
+            "test_a6_duration_does_not_count_as_symptom",
+            "test_a6_required_even_with_two_symptoms_and_core",
+            "test_unknown_ids_kept_in_checked_but_not_counted",
+            "test_duplicate_ids_dont_inflate_counts",
+            "test_get_criteria_returns_copies",
+            "test_criteria_ids_stable",
+            "test_evaluation_to_dict_shape_matches_result_fields",
+            "test_met_contract_only_failures_drives_met",
+            "test_meta_rules_match_engine_every_subset"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 126
+        },
+        {
+          "name": "TestRestContract",
+          "methods": [
+            "setUpClass",
+            "tearDownClass",
+            "test_health_alive",
+            "test_ready_reports_bypass_alarm",
+            "test_meta_returns_nine_criteria",
+            "test_meta_serves_rule_contract",
+            "test_api_contract_doc_lists_every_live_route",
+            "test_dashboard_discovery_descriptor_shape",
+            "test_dashboard_discovery_unknown_module_404",
+            "test_full_init_get_put_contract",
+            "test_bypass_decision_accepted_on_unmet_criteria",
+            "test_put_dedupe_preserves_order_at_api_layer",
+            "test_unknown_code_get_is_404",
+            "test_audit_snapshot_records_and_is_json"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 184
+        },
+        {
+          "name": "TestAuditSeam",
+          "methods": [
+            "setUpClass",
+            "tearDownClass",
+            "test_put_persists_audit_event",
+            "test_init_alone_does_not_audit",
+            "test_each_put_adds_an_audit_row_in_order",
+            "test_audit_route_returns_chronological_trail",
+            "test_audit_route_unknown_code_returns_empty_trail"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 101
+        },
+        {
+          "name": "TestClinicianAuthority",
+          "methods": [
+            "test_met_false_never_implies_a_decision",
+            "test_met_true_is_not_a_confirmed_diagnosis",
+            "setUpClass",
+            "tearDownClass",
+            "_init",
+            "test_bypass_accepted_when_criteria_unmet",
+            "test_bypass_accepted_when_criteria_met",
+            "test_no_auto_confirmation_from_met_true",
+            "test_confirmed_requires_explicit_clinician_decision",
+            "test_decision_not_rewritten_on_later_met_toggle",
+            "test_confirmed_unchanged_when_checklist_later_unmet"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 172
+        },
+        {
+          "name": "TestAuthRejection",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "_dep",
+            "test_no_cookie_transport_fault_maps_to_401",
+            "test_unauthenticated_payload_rejected_401",
+            "test_wrong_role_rejected_403",
+            "test_matching_role_passes",
+            "test_missing_user_id_fails_closed_401"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 62
+        },
+        {
+          "name": "TestCSRF",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "test_sign_and_verify_round_trip",
+            "test_empty_or_no_dot_rejected",
+            "test_bad_signature_rejected",
+            "test_require_csrf_missing_both_blocks",
+            "test_require_csrf_header_only_blocks",
+            "test_require_csrf_cookie_only_blocks",
+            "test_require_csrf_mismatch_blocks",
+            "test_require_csrf_matching_valid_passes",
+            "test_bypass_env_skips_csrf"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 95
+        },
+        {
+          "name": "TestPersistence",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "test_init_creates_then_idempotent",
+            "test_get_returns_empty_session_after_init",
+            "test_get_unknown_is_none",
+            "test_put_persists_checked_decision_and_returns_row",
+            "test_put_creates_row_when_missing",
+            "test_put_preserves_checked_order_and_duplicates_at_store_layer",
+            "test_bypass_decision_accepted_on_unmet",
+            "test_timestamps_monotonic",
+            "test_audit_snapshot_records_and_round_trips",
+            "test_audit_snapshot_missing_code_does_not_crash",
+            "test_durability_across_new_store_instance",
+            "test_reset_clears_rows"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 107
+        },
+        {
+          "name": "TestPatientIdentity",
+          "methods": [
+            "setUp",
+            "tearDown",
+            "test_empty_code_400",
+            "test_whitespace_only_code_400",
+            "test_lookup_disabled_short_uses_free_text",
+            "test_build_patient_missing_id_422",
+            "test_build_patient_falls_back_patient_code_to_free_text",
+            "test_build_patient_display_name_passes_through",
+            "test_lookup_enabled_unknown_code_422",
+            "test_lookup_enabled_transport_fault_422",
+            "test_lookup_enabled_happy_returns_canonical"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 77
+        }
+      ],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "socket",
+          "specifiers": [
+            "socket"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "tempfile",
+          "specifiers": [
+            "tempfile"
+          ]
+        },
+        {
+          "source": "types",
+          "specifiers": [
+            "types"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "unittest"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "unittest",
+          "specifiers": [
+            "mock"
+          ]
+        },
+        {
+          "source": "fastapi.testclient",
+          "specifiers": [
+            "TestClient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_auth"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_csrf"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_patient"
+          ]
+        },
+        {
+          "source": "diagnosis",
+          "specifiers": [
+            "diag_store"
+          ]
+        },
+        {
+          "source": "diagnosis.app",
+          "specifiers": [
+            "app"
+          ]
+        },
+        {
+          "source": "diagnosis.api",
+          "specifiers": [
+            "_dump_for_audit",
+            "api_store"
+          ]
+        },
+        {
+          "source": "diagnosis.criteria",
+          "specifiers": [
+            "CRITERIA",
+            "Evaluation",
+            "evaluate",
+            "get_criteria"
+          ]
+        },
+        {
+          "source": "diagnosis.patient",
+          "specifiers": [
+            "Patient",
+            "_build_patient",
+            "resolve_patient"
+          ]
+        }
+      ],
+      "exports": [
+        "_fake_request",
+        "TestCriteriaRules",
+        "TestRestContract",
+        "TestAuditSeam",
+        "TestClinicianAuthority",
+        "TestAuthRejection",
+        "TestCSRF",
+        "TestPersistence",
+        "TestPatientIdentity"
+      ],
+      "totalLines": 1076,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

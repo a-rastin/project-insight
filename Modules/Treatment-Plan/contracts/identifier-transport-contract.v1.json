@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "contractId": "insight.identifier-transport",
+  "identifiers": {
+    "canonicalUuid": {"serialization": "lowercase RFC 4122 hyphenated UUID", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "generation": "UUIDv4", "nilAllowed": false},
+    "patientId": {"kind": "canonicalUuid", "owner": "Add New Patient", "immutable": true},
+    "encounterId": {"kind": "canonicalUuid", "owner": "Add New Patient", "immutable": true},
+    "requestId": {"kind": "canonicalUuid", "generatedBy": "first receiving module when absent"},
+    "correlationId": {"kind": "canonicalUuid", "generatedBy": "workflow initiator when absent"},
+    "causationId": {"kind": "canonicalUuid", "meaning": "requestId of the request or event that directly caused this request"},
+    "idempotencyKey": {"pattern": "^[A-Za-z0-9._~-]{16,128}$", "scope": ["authenticatedPrincipal", "method", "canonicalRoute", "key"], "payloadFingerprint": "sha256 of canonical request representation", "minimumRetentionHours": 24}
+  },
+  "patientAlias": {
+    "name": "patientCode", "pattern": "^[A-Z0-9]{6}$", "inputNormalization": ["trim ASCII surrounding whitespace", "uppercase ASCII letters"],
+    "owner": "Add New Patient", "unique": true, "immutable": true, "reusable": false, "foreignKeyAllowed": false,
+    "resolution": {
+      "success": "return exactly one patientId; callers persist and exchange patientId, not patientCode",
+      "malformed": {"status": 400, "code": "invalid_patient_code"},
+      "notFound": {"status": 404, "code": "patient_alias_not_found"},
+      "collision": {"status": 409, "code": "patient_alias_collision", "behavior": "fail closed; do not choose a patient"},
+      "creationCollision": {"status": 409, "code": "patient_alias_already_exists"}
+    }
+  },
+  "encounter": {
+    "definition": "one patient-specific episode in which clinical inputs are gathered and one treatment-plan workflow may be performed",
+    "patientBindingImmutable": true, "followUpCreatesNewEncounter": true, "selectionByTimestampForbidden": true,
+    "latestSelectionRequiresExplicitEndpointSemantics": true, "crossEncounterMixingForbidden": true,
+    "mismatch": {"status": 409, "code": "encounter_patient_mismatch"}, "notFound": {"status": 404, "code": "encounter_not_found"}
+  },
+  "time": {
+    "instantFormat": "RFC3339 UTC", "instantPattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?Z$", "utcOffsetRequired": "Z",
+    "timezoneFormat": "IANA TZ database name", "timezonePattern": "^[A-Za-z_+-]+(?:/[A-Za-z0-9_+.-]+)+$", "numericOffsetAsTimezoneForbidden": true,
+    "scheduledLocalTimeRequires": ["instantUtc", "timezone"]
+  },
+  "headers": {
+    "X-Request-ID": {"value": "requestId", "request": "optional", "response": "required"},
+    "X-Correlation-ID": {"value": "correlationId", "request": "optional", "response": "required", "forwardUnchanged": true},
+    "X-Causation-ID": {"value": "causationId", "request": "required for caused internal calls", "response": "optional"},
+    "Idempotency-Key": {"value": "idempotencyKey", "request": "required on replay-safe commands", "response": "echo when supplied"},
+    "X-Schema-Version": {"value": "semantic version", "request": "required for bodies on internal calls", "response": "required for bodies"},
+    "ETag": {"value": "strong opaque entity tag", "response": "required for versioned resources"},
+    "If-Match": {"value": "previous ETag", "request": "required for mutable-resource commands"}
+  },
+  "behavior": {
+    "invalidIdentifier": {"status": 400, "code": "invalid_identifier"}, "invalidHeader": {"status": 400, "code": "invalid_correlation_header"},
+    "unsupportedSchemaVersion": {"status": 422, "code": "unsupported_schema_version"},
+    "idempotentReplay": "same scoped key and payload fingerprint returns the original status, body, and resource identifiers without repeating effects",
+    "idempotencyConflict": {"status": 409, "code": "idempotency_key_reused"}, "etagMismatch": {"status": 412, "code": "etag_mismatch"},
+    "missingPrecondition": {"status": 428, "code": "precondition_required"}, "errorMediaType": "application/problem+json"
+  }
+}

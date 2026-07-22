@@ -1,0 +1,11 @@
+{
+  "type": "https://insight.example/problems/validation-error",
+  "title": "Validation failed",
+  "status": 422,
+  "detail": "Request contains invalid fields.",
+  "instance": "/requests/22222222-2222-4222-8222-222222222222",
+  "code": "VALIDATION_FAILED",
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "correlationId": "33333333-3333-4333-8333-333333333333",
+  "fieldErrors": {"name": ["must not be empty"]}
+}

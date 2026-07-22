@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/module-contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["moduleId", "moduleVersion", "interfaceVersion", "schemaVersion", "basePath", "capabilities", "dependencies", "auth", "compatibilityRoutes", "supportedClinicalScope"],
+  "properties": {
+    "moduleId": {"$ref": "identifiers.schema.json#/$defs/StableCode"},
+    "moduleVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "interfaceVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "schemaVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "basePath": {"type": "string", "pattern": "^/[^ ]*$"},
+    "capabilities": {"type": "array", "items": {"$ref": "identifiers.schema.json#/$defs/StableCode"}, "uniqueItems": true},
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["moduleId", "interfaceVersion", "required"],
+        "properties": {
+          "moduleId": {"$ref": "identifiers.schema.json#/$defs/StableCode"},
+          "interfaceVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+          "required": {"type": "boolean"},
+          "capabilities": {"type": "array", "items": {"$ref": "identifiers.schema.json#/$defs/StableCode"}, "uniqueItems": true}
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "schemes"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "schemes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "compatibilityRoutes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "deprecated"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^/[^ ]*$"},
+          "deprecated": {"type": "boolean"},
+          "replacement": {"type": "string", "pattern": "^/[^ ]*$"}
+        }
+      }
+    },
+    "supportedClinicalScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["declaration", "populations", "workflows"],
+      "properties": {
+        "declaration": {"type": "string", "minLength": 1},
+        "populations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "workflows": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    }
+  }
+}

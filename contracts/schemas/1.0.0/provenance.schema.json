@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/provenance.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceModule", "sourceResourceId", "recordedAt"],
+  "properties": {
+    "sourceModule": {"$ref": "identifiers.schema.json#/$defs/StableCode"},
+    "sourceResourceId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "recordedAt": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"},
+    "recordedBy": {"type": "string", "minLength": 1},
+    "sourceReference": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,1 @@
+{"contractVersion":"1.0.0","released":false,"note":"Set released true and populate sha256 only at controlled release; released artifacts are immutable.","sha256":{}}

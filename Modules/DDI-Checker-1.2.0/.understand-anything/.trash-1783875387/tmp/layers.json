@@ -1,0 +1,49 @@
+[
+  {
+    "id": "layer:project-analysis-config",
+    "name": "Project Analysis Configuration",
+    "description": "Local Understand settings and ignore rules control how this drug-interaction module is analyzed and documented.",
+    "nodeIds": [
+      "file:.understand-anything/.understandignore",
+      "config:.understand-anything/config.json"
+    ]
+  },
+  {
+    "id": "layer:knowledge-base-data",
+    "name": "Knowledge Base Data",
+    "description": "Canonical JSON and browser-ready JavaScript artifacts hold the active versioned drug-interaction knowledge base.",
+    "nodeIds": [
+      "file:data/active-kb.js",
+      "config:data/active-kb.json"
+    ]
+  },
+  {
+    "id": "layer:ingestion-and-validation",
+    "name": "Ingestion and Validation",
+    "description": "Command-line tooling parses source reports, builds knowledge-base revisions, and validates clinical interaction data integrity.",
+    "nodeIds": [
+      "file:scripts/ingest.mjs",
+      "file:scripts/validate-kb.mjs"
+    ]
+  },
+  {
+    "id": "layer:clinical-application",
+    "name": "Clinical Application",
+    "description": "The browser controller, deterministic interaction engine, and responsive stylesheet deliver medication checking, review, audit, and administration workflows.",
+    "nodeIds": [
+      "file:src/app.js",
+      "file:src/ddi-engine.js",
+      "file:src/styles.css"
+    ]
+  },
+  {
+    "id": "layer:test-suite",
+    "name": "Test Suite",
+    "description": "Node-based tests verify the interaction engine, ingestion pipeline, and safety-critical UI source behavior.",
+    "nodeIds": [
+      "file:test/ddi-engine.test.mjs",
+      "file:test/ingest.test.mjs",
+      "file:test/ui-source.test.mjs"
+    ]
+  }
+]

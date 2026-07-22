@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/problem-details.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "title", "status", "detail", "instance", "code", "requestId", "correlationId"],
+  "properties": {
+    "type": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "status": {"type": "integer", "minimum": 400, "maximum": 599},
+    "detail": {"type": "string", "minLength": 1},
+    "instance": {"type": "string", "minLength": 1},
+    "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_.-]{2,63}$"},
+    "requestId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "correlationId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "fieldErrors": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string", "minLength": 1}}}
+  }
+}

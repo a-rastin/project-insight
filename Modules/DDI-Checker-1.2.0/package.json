@@ -1,0 +1,25 @@
+{
+  "name": "insight-ddi-checker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone drug-drug interaction checker module with versioned knowledge-base ingestion and audit support.",
+  "type": "commonjs",
+  "scripts": {
+    "ingest": "node scripts/ingest.mjs",
+    "validate": "node scripts/validate-kb.mjs",
+    "validate:clinical": "node scripts/validate-kb.mjs --clinical-active",
+    "test:unit": "node --test test/*.test.mjs",
+    "test:kb": "node scripts/validate-kb.mjs",
+    "test:ci": "npm run test:unit && npm run test:kb",
+    "test": "npm run test:unit"
+  },
+  "keywords": [
+    "clinical-decision-support",
+    "drug-interactions",
+    "rxnorm",
+    "audit"
+  ],
+  "license": "MIT"
+}
+
+

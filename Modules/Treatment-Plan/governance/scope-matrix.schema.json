@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.local/schemas/governance/treatment-plan-scope-matrix/1.0.0",
+  "title": "INSIGHT Treatment Plan v1 scope matrix",
+  "type": "object",
+  "required": ["schemaVersion", "documentId", "status", "intendedUse", "clinicalScope", "knowledgeAuthority", "clinicalWorkflow", "notSupported", "decisionGates", "owners", "approvals", "regulatoryAssessment", "clinicalValidation"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "documentId": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft_pending_approval", "approved", "withdrawn", "superseded"]},
+    "intendedUse": {"type": "object"},
+    "clinicalScope": {"type": "object"},
+    "knowledgeAuthority": {"type": "object"},
+    "clinicalWorkflow": {"type": "object"},
+    "notSupported": {"type": "array", "items": {"type": "object", "required": ["case", "behavior"], "properties": {"case": {"type": "string", "minLength": 1}, "behavior": {"enum": ["reject_generation", "safety_escalation", "informational_only"]}, "rationale": {"type": "string"}}}},
+    "decisionGates": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"type": "object", "required": ["id", "name", "status", "decision"], "properties": {"id": {"pattern": "^DG-0[1-8]$"}, "name": {"type": "string"}, "status": {"enum": ["unresolved", "approved", "rejected"]}, "decision": {"type": ["string", "null"]}}},
+    "owners": {"type": "object", "required": ["psychiatrist", "clinicalSafetyOfficer", "product", "privacy", "regulatory"]},
+    "approvals": {"type": "array", "items": {"type": "object", "required": ["role", "name", "signedAt", "signatureRef", "scopeHash"], "properties": {"role": {"enum": ["psychiatrist", "clinicalSafetyOfficer", "product", "privacy", "regulatory"]}, "name": {"type": "string", "minLength": 1}, "signedAt": {"type": "string", "format": "date-time"}, "signatureRef": {"type": "string", "minLength": 1}, "scopeHash": {"pattern": "^sha256:[a-f0-9]{64}$"}}}},
+    "regulatoryAssessment": {"type": "object"},
+    "clinicalValidation": {"type": "object"}
+  },
+  "additionalProperties": false
+}

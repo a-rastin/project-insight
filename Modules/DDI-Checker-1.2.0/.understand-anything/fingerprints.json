@@ -1,0 +1,496 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "887c7b753709f09e53051d2ac3b95068f9750942",
+  "generatedAt": "2026-07-12T16:56:02.330Z",
+  "files": {
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "1c81aeaa88b19a37eac238dd6ca6b8073af4455f148122749eb47bf0c1baabd4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": false
+    },
+    ".understand-anything/config.json": {
+      "filePath": ".understand-anything/config.json",
+      "contentHash": "08d37f20ea0af2233ae24f094723759f952381ecb6dd7f2aaa05ef96e95eae6b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
+    },
+    "data/active-kb.js": {
+      "filePath": "data/active-kb.js",
+      "contentHash": "76320d6f462e4e8d69cf6326e9cdde5cbfe70366a7ac8cda30937175287749b4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 560670,
+      "hasStructuralAnalysis": true
+    },
+    "data/active-kb.json": {
+      "filePath": "data/active-kb.json",
+      "contentHash": "bcb398d4b75d39fdf823939ae9ca65345a56151bf8ffac88d5820f4169a9f185",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 560669,
+      "hasStructuralAnalysis": true
+    },
+    "index.html": {
+      "filePath": "index.html",
+      "contentHash": "488468c8160a1b06099170577eb30c72e85d88c5d8168d2cd9234be1f8893a0c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 184,
+      "hasStructuralAnalysis": false
+    },
+    "package.json": {
+      "filePath": "package.json",
+      "contentHash": "bc8abc1cb4ae61e35eed508b5feaf07e68e74649f8ed37a712ab8929d8d687f2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "dc909f613a80981b4575c4a45e0613ba97f97200376cb1aae5e88c644174d2a6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/ingest.mjs": {
+      "filePath": "scripts/ingest.mjs",
+      "contentHash": "20e2959627f3c21df0fa84120b4f8290e998dec1ed26cf4070d9ca54923d9364",
+      "functions": [
+        {
+          "name": "slugify",
+          "params": [
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "cleanLine",
+          "params": [
+            "line"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "isNoiseLine",
+          "params": [
+            "line"
+          ],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "normalizeDrugName",
+          "params": [
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "drugIdFor",
+          "params": [
+            "name"
+          ],
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "getOrCreateDrug",
+          "params": [
+            "drugs",
+            "name"
+          ],
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "addDoseSuggestions",
+          "params": [
+            "drug",
+            "suggestions"
+          ],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "extractDoseSuggestions",
+          "params": [
+            "raw"
+          ],
+          "exported": true,
+          "lineCount": 40
+        },
+        {
+          "name": "readTextFiles",
+          "params": [
+            "sourceDir"
+          ],
+          "exported": false,
+          "lineCount": 24
+        },
+        {
+          "name": "parseDrugHeader",
+          "params": [
+            "raw",
+            "filePath"
+          ],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "getSeverityHeading",
+          "params": [
+            "line"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "collectInteractionSections",
+          "params": [
+            "raw"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "splitBlocks",
+          "params": [
+            "lines"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "looksLikeDrugHeading",
+          "params": [
+            "block"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "extractListDrugs",
+          "params": [
+            "value"
+          ],
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "parseBulletRecord",
+          "params": [
+            "block"
+          ],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "inferMechanism",
+          "params": [
+            "text"
+          ],
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "inferRecommendation",
+          "params": [
+            "severity",
+            "text"
+          ],
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "inferMonitoring",
+          "params": [
+            "text"
+          ],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "firstSentence",
+          "params": [
+            "text"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "createInteraction",
+          "params": [],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "parseReport",
+          "params": [
+            "raw",
+            "filePath",
+            "context"
+          ],
+          "exported": true,
+          "lineCount": 87
+        },
+        {
+          "name": "buildKnowledgeBase",
+          "params": [],
+          "exported": true,
+          "lineCount": 79
+        },
+        {
+          "name": "writeOutputs",
+          "params": [
+            "kb"
+          ],
+          "exported": false,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "node:crypto",
+          "specifiers": [
+            "crypto"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "exports": [
+        "slugify",
+        "cleanLine",
+        "normalizeDrugName",
+        "extractDoseSuggestions",
+        "collectInteractionSections",
+        "splitBlocks",
+        "looksLikeDrugHeading",
+        "parseBulletRecord",
+        "parseReport",
+        "buildKnowledgeBase"
+      ],
+      "totalLines": 621,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/validate-kb.mjs": {
+      "filePath": "scripts/validate-kb.mjs",
+      "contentHash": "a899dd85dbcb6161fbb110f466e2db92314c3ce97b05600f681d3be3a1ed5d6d",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": true
+    },
+    "src/app.js": {
+      "filePath": "src/app.js",
+      "contentHash": "151f707d2836892f6a8a4c0707e259619d21eb852f6832699c4ed080381c214c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 676,
+      "hasStructuralAnalysis": true
+    },
+    "src/ddi-engine.js": {
+      "filePath": "src/ddi-engine.js",
+      "contentHash": "51a037f67c51eb2c67d05cc92dbf00ae7cdb7f79b408712f29f7182548269853",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 665,
+      "hasStructuralAnalysis": true
+    },
+    "src/styles.css": {
+      "filePath": "src/styles.css",
+      "contentHash": "10940dda6f1f45b44f7648a11dc9724bd255235aa3a6f7165aba18145e45a8a5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 481,
+      "hasStructuralAnalysis": false
+    },
+    "test/ddi-engine.test.mjs": {
+      "filePath": "test/ddi-engine.test.mjs",
+      "contentHash": "ffad5c3a03bfa8035aa4398b0988c5bac56d70e58ca27a242f05743e90702153",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:test",
+          "specifiers": [
+            "test"
+          ]
+        },
+        {
+          "source": "node:assert/strict",
+          "specifiers": [
+            "assert"
+          ]
+        },
+        {
+          "source": "node:module",
+          "specifiers": [
+            "createRequire"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": true
+    },
+    "test/ingest.test.mjs": {
+      "filePath": "test/ingest.test.mjs",
+      "contentHash": "ad916f8676ca45e11ecbd48863bf5650a81d30bf5ebab12de34c614d39f59c85",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:test",
+          "specifiers": [
+            "test"
+          ]
+        },
+        {
+          "source": "node:assert/strict",
+          "specifiers": [
+            "assert"
+          ]
+        },
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "../scripts/ingest.mjs",
+          "specifiers": [
+            "buildKnowledgeBase",
+            "extractDoseSuggestions",
+            "parseReport"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "test/ui-source.test.mjs": {
+      "filePath": "test/ui-source.test.mjs",
+      "contentHash": "0fb36c1ef7b15ba22768fd644d9f2bf9e8028ca80cc9100f0374acc471764611",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:test",
+          "specifiers": [
+            "test"
+          ]
+        },
+        {
+          "source": "node:assert/strict",
+          "specifiers": [
+            "assert"
+          ]
+        },
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

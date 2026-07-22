@@ -1,0 +1,18 @@
+{
+  "fixtureStatus": "synthetic-candidate-pending-bn-and-clinical-owner-approval",
+  "snapshotFacts": {
+    "snapshot_id": "00000000-0000-4000-8000-000000000010",
+    "symptom_severity": "high", "suicide_risk": "moderate", "violence_risk": "low",
+    "self_care_capacity": "impaired", "community_support": "limited",
+    "treatment_resistance": "established", "medication_adherence": "partial",
+    "prior_antipsychotic_response": "partial", "metabolic_risk": "high",
+    "decision_making_capacity": "impaired", "accepts_voluntary_treatment": "yes",
+    "prior_suicide_attempt": "no", "clozapine_contraindication": "absent"
+  },
+  "expectedEvidence": {
+    "treatment-setting": {"CommunitySupport":"Limited","SelfCareCapacity":"Impaired","SuicideRisk":"Moderate","SymptomSeverity":"High","ViolenceRisk":"Low"},
+    "pharmacotherapy": {"MedicationAdherence":"Partial","MetabolicRisk":"High","PriorAntipsychoticResponse":"Partial","TreatmentResistance":"Established"},
+    "involuntary-treatment-considerations": {"AcceptsVoluntaryTreatment":"Yes","DecisionMakingCapacity":"Impaired","SelfCareCapacity":"Impaired","SuicideRisk":"Moderate","ViolenceRisk":"Low"},
+    "clozapine-suicide-risk": {"ClozapineContraindication":"Absent","PriorSuicideAttempt":"No","SuicideRisk":"Moderate","TreatmentResistance":"Established"}
+  }
+}

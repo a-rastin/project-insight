@@ -1,0 +1,16 @@
+{
+  "module-contract.json": "module-contract",
+  "identifiers.json": "identifiers",
+  "request-metadata.json": "request-metadata",
+  "resource-version.json": "resource-version",
+  "pagination.json": "pagination",
+  "provenance.json": "provenance",
+  "audit-event.json": "audit-event",
+  "auth-session.json": "auth-session",
+  "success.json": "response-envelope",
+  "validation-error.json": "problem-details",
+  "auth-denial.json": "problem-details",
+  "stale-etag.json": "problem-details",
+  "idempotency-conflict.json": "problem-details",
+  "unavailable-dependency.json": "problem-details"
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/resource-version.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "etag", "updatedAt"],
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "etag": {"type": "string", "pattern": "^\"[^\"]+\"$"},
+    "updatedAt": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"}
+  }
+}

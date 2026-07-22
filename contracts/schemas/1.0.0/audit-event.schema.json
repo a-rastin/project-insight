@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/audit-event.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["resourceType", "id", "recorded", "action", "outcome", "requestId", "correlationId"],
+  "properties": {
+    "resourceType": {"const": "AuditEvent"},
+    "id": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "recorded": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"},
+    "action": {"$ref": "identifiers.schema.json#/$defs/StableCode"},
+    "outcome": {"enum": ["success", "denied", "failure"]},
+    "requestId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "correlationId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "causationId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "actorId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "resourceId": {"$ref": "identifiers.schema.json#/$defs/Uuid"}
+  }
+}

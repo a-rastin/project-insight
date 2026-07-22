@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "authenticated": true,
+  "user": {
+    "id": "66666666-6666-4666-8666-666666666666",
+    "username": "clinician",
+    "roles": ["psychiatrist"],
+    "displayName": "Clinician"
+  },
+  "session": {"id": "77777777-7777-4777-8777-777777777777", "expiresAt": "2026-07-22T13:00:00Z"},
+  "gates": {"disclaimerAccepted": true, "passwordChangeRequired": false}
+}

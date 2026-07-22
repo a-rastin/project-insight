@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight.example/contracts/common/1.0.0/auth-session.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "authenticated", "user", "session", "gates"],
+  "properties": {
+    "schemaVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "authenticated": {"type": "boolean"},
+    "user": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "username", "roles"],
+          "properties": {
+            "id": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+            "username": {"type": "string", "minLength": 1},
+            "roles": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"}, "uniqueItems": true},
+            "displayName": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "session": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "expiresAt"],
+          "properties": {
+            "id": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+            "expiresAt": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"}
+          }
+        }
+      ]
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disclaimerAccepted", "passwordChangeRequired"],
+      "properties": {
+        "disclaimerAccepted": {"type": "boolean"},
+        "passwordChangeRequired": {"type": "boolean"}
+      }
+    }
+  }
+}

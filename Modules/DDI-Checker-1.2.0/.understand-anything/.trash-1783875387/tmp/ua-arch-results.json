@@ -1,0 +1,209 @@
+{
+  "scriptCompleted": true,
+  "directoryGroups": {
+    ".understand-anything": [
+      "file:.understand-anything/.understandignore",
+      "config:.understand-anything/config.json"
+    ],
+    "data": [
+      "file:data/active-kb.js",
+      "config:data/active-kb.json"
+    ],
+    "scripts": [
+      "file:scripts/ingest.mjs",
+      "file:scripts/validate-kb.mjs"
+    ],
+    "src": [
+      "file:src/app.js",
+      "file:src/ddi-engine.js",
+      "file:src/styles.css"
+    ],
+    "test": [
+      "file:test/ddi-engine.test.mjs",
+      "file:test/ingest.test.mjs",
+      "file:test/ui-source.test.mjs"
+    ]
+  },
+  "nodeTypeGroups": {
+    "file": [
+      "file:.understand-anything/.understandignore",
+      "file:data/active-kb.js",
+      "file:scripts/ingest.mjs",
+      "file:scripts/validate-kb.mjs",
+      "file:src/app.js",
+      "file:src/ddi-engine.js",
+      "file:src/styles.css",
+      "file:test/ddi-engine.test.mjs",
+      "file:test/ingest.test.mjs",
+      "file:test/ui-source.test.mjs"
+    ],
+    "config": [
+      "config:.understand-anything/config.json",
+      "config:data/active-kb.json"
+    ]
+  },
+  "crossCategoryEdges": [
+    {
+      "fromType": "file",
+      "toType": "file",
+      "edgeType": "imports",
+      "count": 2
+    },
+    {
+      "fromType": "file",
+      "toType": "file",
+      "edgeType": "tested_by",
+      "count": 3
+    },
+    {
+      "fromType": "file",
+      "toType": "file",
+      "edgeType": "depends_on",
+      "count": 2
+    },
+    {
+      "fromType": "file",
+      "toType": "config",
+      "edgeType": "depends_on",
+      "count": 1
+    },
+    {
+      "fromType": "config",
+      "toType": "file",
+      "edgeType": "related",
+      "count": 1
+    },
+    {
+      "fromType": "file",
+      "toType": "file",
+      "edgeType": "related",
+      "count": 1
+    }
+  ],
+  "interGroupImports": [
+    {
+      "from": "test",
+      "to": "src",
+      "count": 1
+    },
+    {
+      "from": "test",
+      "to": "scripts",
+      "count": 1
+    }
+  ],
+  "intraGroupDensity": {
+    ".understand-anything": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    },
+    "data": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    },
+    "scripts": {
+      "internalEdges": 0,
+      "totalEdges": 1,
+      "density": 0
+    },
+    "src": {
+      "internalEdges": 0,
+      "totalEdges": 1,
+      "density": 0
+    },
+    "test": {
+      "internalEdges": 0,
+      "totalEdges": 2,
+      "density": 0
+    }
+  },
+  "patternMatches": {
+    "data": "data",
+    "scripts": "utility",
+    "src": "service",
+    "test": "test"
+  },
+  "deploymentTopology": {
+    "hasDockerfile": false,
+    "hasCompose": false,
+    "hasK8s": false,
+    "hasTerraform": false,
+    "hasCI": false,
+    "infraFiles": []
+  },
+  "dataPipeline": {
+    "schemaFiles": [],
+    "migrationFiles": [],
+    "dataModelFiles": [
+      "data/active-kb.js",
+      "data/active-kb.json"
+    ],
+    "apiHandlerFiles": []
+  },
+  "docCoverage": {
+    "groupsWithDocs": 0,
+    "totalGroups": 5,
+    "coverageRatio": 0,
+    "undocumentedGroups": [
+      ".understand-anything",
+      "data",
+      "scripts",
+      "src",
+      "test"
+    ]
+  },
+  "dependencyDirection": [
+    {
+      "dependent": "test",
+      "dependsOn": "src"
+    },
+    {
+      "dependent": "test",
+      "dependsOn": "scripts"
+    }
+  ],
+  "fileStats": {
+    "totalFileNodes": 12,
+    "filesPerGroup": {
+      ".understand-anything": 2,
+      "data": 2,
+      "scripts": 2,
+      "src": 3,
+      "test": 3
+    },
+    "nodeTypeCounts": {
+      "file": 10,
+      "config": 2
+    }
+  },
+  "fileFanIn": {
+    "file:.understand-anything/.understandignore": 0,
+    "config:.understand-anything/config.json": 0,
+    "file:data/active-kb.js": 0,
+    "config:data/active-kb.json": 0,
+    "file:scripts/ingest.mjs": 1,
+    "file:scripts/validate-kb.mjs": 0,
+    "file:src/app.js": 0,
+    "file:src/ddi-engine.js": 1,
+    "file:src/styles.css": 0,
+    "file:test/ddi-engine.test.mjs": 0,
+    "file:test/ingest.test.mjs": 0,
+    "file:test/ui-source.test.mjs": 0
+  },
+  "fileFanOut": {
+    "file:.understand-anything/.understandignore": 0,
+    "config:.understand-anything/config.json": 0,
+    "file:data/active-kb.js": 0,
+    "config:data/active-kb.json": 0,
+    "file:scripts/ingest.mjs": 0,
+    "file:scripts/validate-kb.mjs": 0,
+    "file:src/app.js": 0,
+    "file:src/ddi-engine.js": 0,
+    "file:src/styles.css": 0,
+    "file:test/ddi-engine.test.mjs": 1,
+    "file:test/ingest.test.mjs": 1,
+    "file:test/ui-source.test.mjs": 0
+  }
+}

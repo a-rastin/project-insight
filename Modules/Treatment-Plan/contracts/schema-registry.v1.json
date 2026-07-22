@@ -1,0 +1,10 @@
+{
+  "registryVersion": "1.0.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "compatibilityPolicy": "contracts/SCHEMA-VERSIONING.md",
+  "schemas": [
+    "clinical-input-snapshot", "recommendation-run", "primary-plan", "plan-edit", "final-plan",
+    "follow-up-delta", "safety-finding", "problem-details", "audit-provenance"
+  ],
+  "versions": {"1.0.0": {"status": "current", "openapi": "contracts/openapi/treatment-plan.openapi.v1.0.0.json"}}
+}

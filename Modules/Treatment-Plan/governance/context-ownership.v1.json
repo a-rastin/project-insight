@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "entities": [
+    {"entity": "Patient", "owner": "Add New Patient", "id": "patientId", "idKind": "uuid"},
+    {"entity": "Encounter", "owner": "Add New Patient", "id": "encounterId", "idKind": "uuid"},
+    {"entity": "Assessment:diagnosis", "owner": "Diagnosis", "id": "assessmentId", "idKind": "uuid"},
+    {"entity": "Assessment:severity", "owner": "Severity", "id": "assessmentId", "idKind": "uuid"},
+    {"entity": "Assessment:medical_history", "owner": "Medical History", "id": "assessmentId", "idKind": "uuid"},
+    {"entity": "Medication Knowledge", "owner": "DDI Checker", "id": "knowledgeBaseId+knowledgeBaseVersion", "idKind": "stable_versioned"},
+    {"entity": "Recommendation", "owner": "Treatment Plan", "id": "recommendationRunId", "idKind": "uuid"},
+    {"entity": "Final Plan", "owner": "Treatment Plan", "id": "planId+planVersion", "idKind": "stable_versioned"},
+    {"entity": "Audit:treatment_plan_clinical_provenance", "owner": "Treatment Plan", "id": "auditEventId", "idKind": "uuid"},
+    {"entity": "Audit:authentication_security", "owner": "Authentication", "id": "auditEventId", "idKind": "uuid"}
+  ],
+  "relationshipPolicy": {
+    "transport": "internal_rest_only",
+    "stableIdentifiersRequired": true,
+    "crossDatabaseAccessAllowed": false,
+    "crossModuleWritesAllowed": false,
+    "cachedReferencesAllowed": true,
+    "cachedReferencesAreAuthoritative": false,
+    "requiredCacheProvenance": ["sourceModule", "interfaceVersion", "resourceVersionOrETag", "retrievedAt", "responseHash"]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 15,
+    "filesWithImports": 2,
+    "totalEdges": 2
+  },
+  "importMap": {
+    ".understand-anything/.understandignore": [],
+    ".understand-anything/config.json": [],
+    "data/active-kb.js": [],
+    "data/active-kb.json": [],
+    "index.html": [],
+    "package.json": [],
+    "README.md": [],
+    "scripts/ingest.mjs": [],
+    "scripts/validate-kb.mjs": [],
+    "src/app.js": [],
+    "src/ddi-engine.js": [],
+    "src/styles.css": [],
+    "test/ddi-engine.test.mjs": [
+      "src/ddi-engine.js"
+    ],
+    "test/ingest.test.mjs": [
+      "scripts/ingest.mjs"
+    ],
+    "test/ui-source.test.mjs": []
+  }
+}
