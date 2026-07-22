@@ -39,7 +39,7 @@ const STATUS_META = {
 };
 
 let state = {
-  sessionId: params.get("session"),
+  sessionId: null,
   model: null,
   view: "loading",
   error: null,
@@ -57,7 +57,7 @@ const api = {
     });
   },
   workspace() {
-    return request(`/internal/dashboard/workspace?session=${encodeURIComponent(state.sessionId)}`);
+    return request("/internal/dashboard/workspace");
   },
   acceptDisclaimer() {
     return request("/internal/dashboard/disclaimer/accept", { method: "POST" });
@@ -127,8 +127,8 @@ function statusBadge(status) {
   return `<span class="status ${className}"><span aria-hidden="true">${label[0]}</span>${escapeHtml(label)}</span>`;
 }
 
-function setUrlToSession(url) {
-  history.replaceState(null, "", url || `/dashboard/?session=${encodeURIComponent(state.sessionId)}`);
+function setUrlToSession() {
+  history.replaceState(null, "", "/dashboard/");
 }
 
 function clearUrl(extra = "") {

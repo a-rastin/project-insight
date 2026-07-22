@@ -17,9 +17,20 @@ CREATE TABLE IF NOT EXISTS dashboard_sessions (
   user_id TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('ADMIN', 'PSYCHIATRIST')),
   auth_session_id TEXT NOT NULL,
+  auth_expires_at TEXT,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   disclaimer_accepted_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS workflow_contexts (
+  id TEXT PRIMARY KEY,
+  dashboard_session_id TEXT NOT NULL,
+  patient_uuid TEXT NOT NULL,
+  encounter_uuid TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (dashboard_session_id) REFERENCES dashboard_sessions(id)
 );
 
 CREATE TABLE IF NOT EXISTS workspace_events (
@@ -74,6 +85,8 @@ class SQLiteAdapter:
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(dashboard_sessions)").fetchall()}
             if "disclaimer_accepted_at" not in columns:
                 conn.execute("ALTER TABLE dashboard_sessions ADD COLUMN disclaimer_accepted_at TEXT")
+            if "auth_expires_at" not in columns:
+                conn.execute("ALTER TABLE dashboard_sessions ADD COLUMN auth_expires_at TEXT")
 
     def ping(self) -> bool:
         with self.connect() as conn:

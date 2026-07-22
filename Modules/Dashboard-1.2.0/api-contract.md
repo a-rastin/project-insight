@@ -13,10 +13,9 @@ Backend: Python FastAPI. Local state: Dashboard sessions plus optional workspace
 5. Dashboard re-validates local session and calls `GET /api/auth/session` again.
 6. Dashboard returns INSIGHT workspace metadata and live discovery results for configured modules.
 
-Protected Dashboard endpoints accept Dashboard session id through either:
-
-- query: `?session={dashboardSessionId}`
-- header: `X-Dashboard-Session: {dashboardSessionId}`
+Protected Dashboard endpoints accept the Dashboard session through the HttpOnly
+`insight_dashboard_session` cookie or the `X-Dashboard-Session` server-to-server header.
+Dashboard session and patient identifiers are never URL parameters.
 
 ## Auth Verification Contract
 
@@ -107,7 +106,7 @@ Success: `201`
 ```json
 {
   "sessionId": "dashboard-session-uuid",
-  "dashboardUrl": "/dashboard/?session=dashboard-session-uuid",
+  "dashboardUrl": "/dashboard/",
   "user": {
     "id": "psy-1",
     "role": "PSYCHIATRIST",
@@ -128,13 +127,13 @@ Errors:
 ## INSIGHT Workspace Response
 
 ```http
-GET /internal/dashboard/workspace?session={dashboardSessionId}
+GET /internal/dashboard/workspace
 ```
 
 Alias:
 
 ```http
-GET /internal/dashboard/summary?session={dashboardSessionId}
+GET /internal/dashboard/summary
 ```
 
 Before returning workspace metadata, Dashboard:
@@ -254,6 +253,23 @@ Discovery states:
 - `href` is the compatible contract's `basePath`, otherwise `null`.
 - Target module owns data, mutations, permissions beyond entry, UI, and workflow implementation.
 - Dashboard returns no module payload in route discovery.
+
+## Server-Owned Workflow Context
+
+`POST /internal/dashboard/workflow-context` accepts canonical `patientUuid` and
+`encounterUuid` values in the request body and returns only an opaque
+`workflowContextId`. Dashboard stores both identifiers server-side, scoped to
+the authenticated Dashboard session, with the Authentication session expiry.
+
+Modules resolve context server-to-server with
+`GET /internal/dashboard/workflow-context` and the opaque id in
+`X-Workflow-Context`. Module launches retain the module's clean `basePath`; no
+patient code, patient UUID, encounter UUID, or PHI is appended to the URL.
+
+`GET /internal/dashboard/workflow-status` accepts `X-Workflow-Context` and
+returns read-only module `status` and `summary` values obtained from module
+contract and readiness interfaces. Dashboard exposes no clinical mutation
+through either workflow endpoint.
 
 Errors:
 

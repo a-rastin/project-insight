@@ -68,7 +68,11 @@ def normalize_auth_identity(data: dict[str, Any]) -> dict[str, Any] | None:
     role = next((value for value in ("psychiatrist", "admin") if value in roles), None)
     if not role:
         return None
-    return {"authSessionId": session_id, "user": {"id": user["id"], "role": role.upper(), "fullName": user["displayName"], "title": "Dr." if role == "psychiatrist" else ""}}
+    return {
+        "authSessionId": session_id,
+        "authExpiresAt": expires_at.isoformat().replace("+00:00", "Z"),
+        "user": {"id": user["id"], "role": role.upper(), "fullName": user["displayName"], "title": "Dr." if role == "psychiatrist" else ""},
+    }
 
 
 def _fetch_json(endpoint: str, headers: dict[str, str]) -> dict[str, Any] | None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -54,7 +54,7 @@ async def require_auth_identity(request: Request, session: dict[str, Any] | None
 
 
 async def require_session(request: Request) -> dict[str, Any]:
-    session_id = request.query_params.get("session") or request.headers.get("x-dashboard-session")
+    session_id = request.headers.get("x-dashboard-session") or request.cookies.get("insight_dashboard_session")
     session = repo.get_session(session_id)
     if not session:
         raise json_error(401, "dashboard_session_required")
@@ -64,10 +64,13 @@ async def require_session(request: Request) -> dict[str, Any]:
     if user["id"] != session["userId"]:
         raise json_error(401, "authentication_session_mismatch")
 
-    repo.update_session_auth(session["id"], user["id"], user["role"], identity["authSessionId"])
+    repo.update_session_auth(
+        session["id"], user["id"], user["role"], identity["authSessionId"], identity["authExpiresAt"]
+    )
     session["userId"] = user["id"]
     session["role"] = user["role"]
     session["authSessionId"] = identity["authSessionId"]
+    session["authExpiresAt"] = identity["authExpiresAt"]
     session["authUser"] = with_dashboard_fields(user, session)
     return session
 
@@ -145,17 +148,21 @@ async def create_dashboard_session(request: Request) -> JSONResponse:
     await parse_json_body(request)
     identity = await require_auth_identity(request)
     user = identity["user"]
-    session = repo.create_session(str(uuid4()), user["id"], user["role"], identity["authSessionId"])
+    session = repo.create_session(
+        str(uuid4()), user["id"], user["role"], identity["authSessionId"], identity["authExpiresAt"]
+    )
     session["authUser"] = with_dashboard_fields(user, session)
     repo.record_event(session, "session_created")
-    return JSONResponse(
+    response = JSONResponse(
         status_code=201,
         content={
             "sessionId": session["id"],
-            "dashboardUrl": f"/dashboard/?session={session['id']}",
+            "dashboardUrl": "/dashboard/",
             "user": session["authUser"],
         },
     )
+    response.set_cookie("insight_dashboard_session", session["id"], httponly=True, samesite="lax", path="/")
+    return response
 
 
 @app.delete("/internal/dashboard/session")
@@ -165,6 +172,49 @@ async def delete_dashboard_session(session: dict[str, Any] = Depends(require_ses
     return {"ok": True}
 
 
+def canonical_uuid(value: Any) -> str | None:
+    try:
+        return str(UUID(value)) if isinstance(value, str) else None
+    except ValueError:
+        return None
+
+
+@app.post("/internal/dashboard/workflow-context")
+async def create_workflow_context(request: Request, session: dict[str, Any] = Depends(require_session)) -> JSONResponse:
+    body = await parse_json_body(request)
+    patient_uuid = canonical_uuid(body.get("patientUuid"))
+    encounter_uuid = canonical_uuid(body.get("encounterUuid"))
+    if not patient_uuid or not encounter_uuid:
+        raise json_error(422, "workflow_context_invalid")
+    context_id = str(uuid4())
+    repo.create_workflow_context(context_id, session["id"], patient_uuid, encounter_uuid, session["authExpiresAt"])
+    repo.record_event(session, "workflow_context_created")
+    return JSONResponse(status_code=201, content={"workflowContextId": context_id})
+
+
+@app.get("/internal/dashboard/workflow-context")
+async def workflow_context(request: Request, session: dict[str, Any] = Depends(require_session)) -> dict[str, str]:
+    context_id = request.headers.get("x-workflow-context") or request.cookies.get("insight_workflow_context")
+    context = repo.get_workflow_context(context_id, session["id"])
+    if not context:
+        raise json_error(404, "workflow_context_not_available")
+    return context
+
+
+@app.get("/internal/dashboard/workflow-status")
+async def workflow_status(request: Request, session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
+    context_id = request.headers.get("x-workflow-context")
+    if not repo.get_workflow_context(context_id, session["id"]):
+        raise json_error(404, "workflow_context_not_available")
+    modules = await asyncio.gather(*(discover_registered_module(module) for module in modules_for_role(session["role"])))
+    return {
+        "modules": [
+            {"moduleId": module["moduleId"], "status": module["status"], "summary": module["reason"]}
+            for module in modules
+        ]
+    }
+
+
 @app.get("/internal/dashboard/workspace")
 @app.get("/internal/dashboard/summary")
 async def workspace(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
@@ -172,14 +222,22 @@ async def workspace(session: dict[str, Any] = Depends(require_session)) -> dict[
 
 
 @app.get("/internal/dashboard/module-routes/{module_id}")
-async def module_route(module_id: str, session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
+async def module_route(module_id: str, request: Request, session: dict[str, Any] = Depends(require_session)) -> JSONResponse:
     module = next((item for item in modules_for_role(session["role"]) if item.module_id == module_id), None)
     if not module:
         raise json_error(404, "module_route_not_available")
     discovered = await discover_registered_module(module)
     discovered.pop("id")
     discovered.pop("routeDiscovery")
-    return discovered
+    context_id = request.headers.get("x-workflow-context")
+    if context_id:
+        if not repo.get_workflow_context(context_id, session["id"]):
+            raise json_error(404, "workflow_context_not_available")
+        discovered["workflowContextId"] = context_id
+    response = JSONResponse(content=discovered)
+    if context_id:
+        response.set_cookie("insight_workflow_context", context_id, httponly=True, samesite="lax", path="/modules")
+    return response
 
 
 @app.post("/internal/dashboard/disclaimer/accept")

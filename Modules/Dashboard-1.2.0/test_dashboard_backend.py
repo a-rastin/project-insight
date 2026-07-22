@@ -312,7 +312,7 @@ class DashboardBackendTest(unittest.TestCase):
             finally:
                 conn.close()
 
-        self.assertEqual(tables, {"dashboard_sessions", "workspace_events"})
+        self.assertEqual(tables, {"dashboard_sessions", "workflow_contexts", "workspace_events"})
 
     def test_dashboard_creates_sessions_from_authentication_identity_not_body_identity(self) -> None:
         with DashboardServer() as base:
@@ -331,8 +331,8 @@ class DashboardBackendTest(unittest.TestCase):
 
             status, workspace = request_json(
                 base,
-                f"/internal/dashboard/workspace?session={created['sessionId']}",
-                headers={"Cookie": "insight_session=psy-1"},
+                "/internal/dashboard/workspace",
+                headers={"Cookie": "insight_session=psy-1", "x-dashboard-session": created["sessionId"]},
             )
             self.assertEqual(status, 200)
             self.assertEqual(workspace["workspace"]["kind"], "PSYCHIATRIST")
@@ -353,7 +353,7 @@ class DashboardBackendTest(unittest.TestCase):
     def test_psychiatrist_workspace_model_has_exact_buttons_and_route_discovery(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "psy-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
+            status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(created))
 
             self.assertEqual(status, 200)
             self.assertEqual(workspace["displayName"], "Dr. Mina Rahimi")
@@ -372,7 +372,7 @@ class DashboardBackendTest(unittest.TestCase):
     def test_admin_workspace_model_has_exact_buttons_only(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "admin-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
+            status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(created))
 
             self.assertEqual(status, 200)
             self.assertEqual(workspace["displayName"], "Ari Morgan")
@@ -400,7 +400,7 @@ class DashboardBackendTest(unittest.TestCase):
             ]
             base = stack.enter_context(DashboardServer(module_registry=modules))
             created = create_session(base, "psy-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
+            status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(created))
 
             self.assertEqual(status, 200)
             buttons = workspace["workspace"]["buttons"]
@@ -430,6 +430,110 @@ class DashboardBackendTest(unittest.TestCase):
                 self.assertEqual(status, 404)
                 self.assertEqual(data["error"], "module_route_not_available")
 
+    def test_workflow_contexts_are_server_owned_and_independent_across_tabs(self) -> None:
+        patient_one = "00000000-0000-4000-8000-000000000101"
+        encounter_one = "00000000-0000-4000-8000-000000000201"
+        patient_two = "00000000-0000-4000-8000-000000000102"
+        encounter_two = "00000000-0000-4000-8000-000000000202"
+        with MockModuleServer("available") as module:
+            registry = [{"moduleId": "available", "title": "Available", "roles": ["PSYCHIATRIST"], "contractUrl": module.contract_url}]
+            with DashboardServer(module_registry=registry) as base:
+                session = create_session(base, "psy-1")
+                contexts = []
+                for patient_uuid, encounter_uuid in ((patient_one, encounter_one), (patient_two, encounter_two)):
+                    status, context = request_json(
+                        base,
+                        "/internal/dashboard/workflow-context",
+                        method="POST",
+                        headers=session_headers(session),
+                        body={"patientUuid": patient_uuid, "encounterUuid": encounter_uuid},
+                    )
+                    self.assertEqual(status, 201)
+                    contexts.append(context["workflowContextId"])
+
+                self.assertNotEqual(*contexts)
+                for context_id, patient_uuid, encounter_uuid in zip(contexts, (patient_one, patient_two), (encounter_one, encounter_two)):
+                    status, resolved = request_json(
+                        base,
+                        "/internal/dashboard/workflow-context",
+                        headers={**session_headers(session), "x-workflow-context": context_id},
+                    )
+                    self.assertEqual(status, 200)
+                    self.assertEqual(resolved, {"patientUuid": patient_uuid, "encounterUuid": encounter_uuid})
+
+                status, route = request_json(
+                    base,
+                    "/internal/dashboard/module-routes/available",
+                    headers={**session_headers(session), "x-workflow-context": contexts[0]},
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(route["href"], "/modules/available")
+                self.assertEqual(route["workflowContextId"], contexts[0])
+                self.assertNotIn(patient_one, json.dumps(route))
+                self.assertNotIn(encounter_one, json.dumps(route))
+
+                status, summary = request_json(
+                    base,
+                    "/internal/dashboard/workflow-status",
+                    headers={**session_headers(session), "x-workflow-context": contexts[0]},
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(summary, {"modules": [{"moduleId": "available", "status": "available", "summary": "contract and readiness checks passed"}]})
+
+    def test_dashboard_session_cookie_supports_refresh_without_url_state(self) -> None:
+        with DashboardServer() as base:
+            session = create_session(base, "psy-1")
+            status, workspace = request_json(
+                base,
+                "/internal/dashboard/workspace",
+                headers={
+                    "Cookie": f"insight_session=psy-1; insight_dashboard_session={session['sessionId']}"
+                },
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(workspace["user"]["id"], "psy-1")
+
+    def test_workflow_context_expires_when_authentication_is_revoked(self) -> None:
+        with MockAuthenticationServer() as auth:
+            auth.set_payload("auth-psy", auth_payload(session={"id": "auth-psy"}))
+            with DashboardServer(auth.url) as base:
+                headers = {"Cookie": "insight_session=auth-psy"}
+                status, session = request_json(base, "/internal/dashboard/session", method="POST", headers=headers)
+                self.assertEqual(status, 201)
+                status, context = request_json(
+                    base,
+                    "/internal/dashboard/workflow-context",
+                    method="POST",
+                    headers={**headers, "x-dashboard-session": session["sessionId"]},
+                    body={
+                        "patientUuid": "00000000-0000-4000-8000-000000000101",
+                        "encounterUuid": "00000000-0000-4000-8000-000000000201",
+                    },
+                )
+                self.assertEqual(status, 201)
+
+                auth.set_payload("auth-psy", {"authenticated": False}, status=401)
+                status, data = request_json(
+                    base,
+                    "/internal/dashboard/workflow-context",
+                    headers={
+                        **headers,
+                        "x-dashboard-session": session["sessionId"],
+                        "x-workflow-context": context["workflowContextId"],
+                    },
+                )
+                self.assertEqual(status, 401)
+                self.assertEqual(data["error"], "authentication_session_required")
+
+    def test_browser_source_does_not_persist_identifiers_or_put_them_in_history(self) -> None:
+        source = (os.path.dirname(__file__) + "/dashboard.js")
+        with open(source, encoding="utf-8") as handle:
+            javascript = handle.read()
+        self.assertNotIn("localStorage", javascript)
+        self.assertNotIn("?session=", javascript)
+        self.assertNotIn("patientUuid", javascript)
+        self.assertNotIn("encounterUuid", javascript)
+
     def test_dashboard_does_not_own_patient_mutation_endpoint(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "psy-1")
@@ -454,7 +558,7 @@ class DashboardBackendTest(unittest.TestCase):
             )
             self.assertEqual(status, 200)
 
-            status, data = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
+            status, data = request_json(base, "/internal/dashboard/workspace", headers=session_headers(created))
             self.assertEqual(status, 401)
             self.assertEqual(data["error"], "dashboard_session_required")
 
@@ -479,8 +583,8 @@ class DashboardBackendTest(unittest.TestCase):
 
                 status, workspace = request_json(
                     base,
-                    f"/internal/dashboard/workspace?session={created['sessionId']}",
-                    headers=cookie,
+                    "/internal/dashboard/workspace",
+                    headers={**cookie, "x-dashboard-session": created["sessionId"]},
                 )
                 self.assertEqual(status, 200)
                 self.assertEqual(workspace["displayName"], "Dr. Verified Clinician")
@@ -539,8 +643,8 @@ class DashboardBackendTest(unittest.TestCase):
                 auth.set_payload("auth-psy", auth_payload(session={"id": "auth-psy", "expiresAt": "2000-01-01T00:00:00Z"}))
                 status, data = request_json(
                     base,
-                    f"/internal/dashboard/workspace?session={created['sessionId']}",
-                    headers=cookie,
+                    "/internal/dashboard/workspace",
+                    headers={**cookie, "x-dashboard-session": created["sessionId"]},
                 )
 
             self.assertEqual(status, 401)
@@ -569,8 +673,8 @@ class DashboardBackendTest(unittest.TestCase):
 
                 status, workspace = request_json(
                     base,
-                    f"/internal/dashboard/workspace?session={created['sessionId']}",
-                    headers=cookie,
+                    "/internal/dashboard/workspace",
+                    headers={**cookie, "x-dashboard-session": created["sessionId"]},
                 )
                 self.assertEqual(status, 200)
                 self.assertEqual(workspace["workspace"]["kind"], "ADMIN")
