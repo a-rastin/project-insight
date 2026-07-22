@@ -132,8 +132,19 @@ def _is_expired(*parts: dict[str, Any]) -> bool:
 
 def _blocked_auth_session(data: dict[str, Any], session: dict[str, Any], user: dict[str, Any]) -> bool:
     parts = [data, session, user]
+    gates = data.get("gates")
+    if "gates" in data:
+        if not isinstance(gates, dict):
+            return True
+        if not isinstance(gates.get("disclaimerAccepted"), bool):
+            return True
+        if not isinstance(gates.get("passwordChangeRequired"), bool):
+            return True
+        if not gates["disclaimerAccepted"] or gates["passwordChangeRequired"]:
+            return True
     return (
         ("authenticated" in data and _is_falsey(data.get("authenticated")))
+        or ("ok" in data and _is_falsey(data.get("ok")))
         or _is_falsey(session.get("active"))
         or _has_blocked_status(data, session, user)
         or _has_truthy_flag(parts, EXPIRED_FLAGS)
@@ -146,6 +157,29 @@ def _blocked_auth_session(data: dict[str, Any], session: dict[str, Any], user: d
 PSYCHIATRIST_ROLE = "PSYCHIATRIST"
 
 
+def _normalized_roles(data: dict[str, Any], user: dict[str, Any]) -> list[str]:
+    raw_roles: list[Any] = []
+    for part in [user, data]:
+        value = part.get("roles")
+        if isinstance(value, list):
+            raw_roles.extend(value)
+        elif isinstance(value, str):
+            raw_roles.append(value)
+        if part.get("role") is not None:
+            raw_roles.append(part.get("role"))
+
+    roles: list[str] = []
+    for value in raw_roles:
+        if not isinstance(value, str):
+            continue
+        role = value.strip().lower()
+        if role == "user":
+            role = "psychiatrist"
+        if role and role not in roles:
+            roles.append(role)
+    return roles
+
+
 def normalize_authenticated_session(data: dict[str, Any]) -> dict[str, Any] | None:
     session = data.get("session") or {}
     if not isinstance(session, dict):
@@ -153,19 +187,36 @@ def normalize_authenticated_session(data: dict[str, Any]) -> dict[str, Any] | No
     user = data.get("user") or data
     if not isinstance(user, dict):
         return None
-    auth_session_id = session.get("id") or data.get("sessionId") or data.get("authSessionId")
+    auth_session_id = (
+        session.get("id")
+        or session.get("session_uuid")
+        or session.get("sessionId")
+        or data.get("sessionId")
+        or data.get("authSessionId")
+        or data.get("session_uuid")
+        or data.get("session_id")
+    )
     if not auth_session_id or _blocked_auth_session(data, session, user):
         return None
-    user_id = user.get("id") or user.get("userId")
-    role = user.get("role")
-    if not user_id:
+
+    user_id = (
+        user.get("id")
+        or user.get("user_uuid")
+        or user.get("userId")
+        or data.get("user_uuid")
+        or data.get("user_id")
+    )
+    roles = _normalized_roles(data, user)
+    if not user_id or not roles:
         return None
+    role = "psychiatrist" if "psychiatrist" in roles else roles[0]
     return {
         "authSessionId": auth_session_id,
         "user": {
             "id": user_id,
-            "role": role,
-            "fullName": user.get("fullName") or user.get("name") or "Authenticated User",
+            "role": role.upper(),
+            "roles": [value.upper() for value in roles],
+            "fullName": user.get("fullName") or user.get("displayName") or user.get("name") or user.get("username") or data.get("username") or "Authenticated User",
             "title": user.get("title") or "Dr.",
         },
     }
@@ -173,7 +224,7 @@ def normalize_authenticated_session(data: dict[str, Any]) -> dict[str, Any] | No
 
 def normalize_psychiatrist_session(data: dict[str, Any]) -> dict[str, Any] | None:
     identity = normalize_authenticated_session(data)
-    if not identity or identity["user"].get("role") != PSYCHIATRIST_ROLE:
+    if not identity or "PSYCHIATRIST" not in identity["user"].get("roles", []):
         return None
     return identity
 

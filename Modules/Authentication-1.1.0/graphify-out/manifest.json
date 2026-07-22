@@ -1,0 +1,87 @@
+{
+  "disclaimer_contract.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "bc6836425ccbf502e723d495e92343ac",
+    "semantic_hash": "bc6836425ccbf502e723d495e92343ac"
+  },
+  "main.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "f6a19fe725df32052eb6af009f6b3563",
+    "semantic_hash": "f6a19fe725df32052eb6af009f6b3563"
+  },
+  "router.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "371a0c273f6b4d5c0dbf48a7ed25e909",
+    "semantic_hash": "371a0c273f6b4d5c0dbf48a7ed25e909"
+  },
+  "security.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "1593ecc99a62da2fcd698a39a5685380",
+    "semantic_hash": "1593ecc99a62da2fcd698a39a5685380"
+  },
+  "tests/_support.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "50200b728669a4058a281b33ee81d050",
+    "semantic_hash": "50200b728669a4058a281b33ee81d050"
+  },
+  "tests/test_contract.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "1c78dac3a41cb344969dd58289710f61",
+    "semantic_hash": "1c78dac3a41cb344969dd58289710f61"
+  },
+  "tests/test_migrations.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "6acd200791a398682560dab13a665c6b",
+    "semantic_hash": "6acd200791a398682560dab13a665c6b"
+  },
+  "tests/test_routes_auth.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "132aa73c2b89b679a9cf51fd4420f6b1",
+    "semantic_hash": "132aa73c2b89b679a9cf51fd4420f6b1"
+  },
+  "tests/test_security_behavior.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "63736a0cf0e2243f3504eaecafb5036c",
+    "semantic_hash": "63736a0cf0e2243f3504eaecafb5036c"
+  },
+  "tests/test_unit_security.py": {
+    "mtime": 1783391307.0,
+    "ast_hash": "3199e55492ff80989fa789f23bbe9e0b",
+    "semantic_hash": "3199e55492ff80989fa789f23bbe9e0b"
+  },
+  "DESIGN.md": {
+    "mtime": 1783391307.0,
+    "ast_hash": "d3abb522a74038e6f89e590722e21067",
+    "semantic_hash": "d3abb522a74038e6f89e590722e21067"
+  },
+  "README.md": {
+    "mtime": 1783391307.0,
+    "ast_hash": "e4f820875a590ec3f7e3a139de0535df",
+    "semantic_hash": "e4f820875a590ec3f7e3a139de0535df"
+  },
+  "docs/Authentication v1 Contract.md": {
+    "mtime": 1783391307.0,
+    "ast_hash": "25bf0f6ce6f1caeec3fd350a62c82dc0",
+    "semantic_hash": "25bf0f6ce6f1caeec3fd350a62c82dc0"
+  },
+  "docs/Executive Summary.md": {
+    "mtime": 1783391307.0,
+    "ast_hash": "631bef57466aa0b8dbe38c51763d72c7",
+    "semantic_hash": "631bef57466aa0b8dbe38c51763d72c7"
+  },
+  "requirements.txt": {
+    "mtime": 1783391307.0,
+    "ast_hash": "ef98821a556b05c75111c7a12581f5d1",
+    "semantic_hash": "ef98821a556b05c75111c7a12581f5d1"
+  },
+  "static/index.html": {
+    "mtime": 1783391307.0,
+    "ast_hash": "9b796d3aae39bd820e76983fab676f4f",
+    "semantic_hash": "9b796d3aae39bd820e76983fab676f4f"
+  },
+  "static/logo.png": {
+    "mtime": 1783391307.0,
+    "ast_hash": "8cce011b23bd48fa1ca5fb63acf2c0f7",
+    "semantic_hash": "8cce011b23bd48fa1ca5fb63acf2c0f7"
+  }
+}
