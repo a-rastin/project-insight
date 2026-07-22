@@ -1,0 +1,5 @@
+{
+  "moduleId": "ddi-checker",
+  "dataDirectory": "data/ddi-checker",
+  "databasePath": "data/ddi-checker.sqlite3"
+}

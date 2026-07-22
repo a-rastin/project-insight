@@ -1,0 +1,5 @@
+{
+  "moduleId": "diagnosis",
+  "dataDirectory": "data/diagnosis",
+  "databasePath": "data/diagnosis.sqlite3"
+}

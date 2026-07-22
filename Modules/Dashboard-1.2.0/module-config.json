@@ -1,0 +1,5 @@
+{
+  "moduleId": "dashboard",
+  "dataDirectory": "data/dashboard",
+  "databasePath": "data/dashboard.sqlite3"
+}

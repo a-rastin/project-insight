@@ -1,0 +1,5 @@
+{
+  "moduleId": "severity",
+  "dataDirectory": "data/severity",
+  "databasePath": "data/severity.sqlite3"
+}

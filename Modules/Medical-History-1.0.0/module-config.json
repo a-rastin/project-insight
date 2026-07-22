@@ -1,0 +1,5 @@
+{
+  "moduleId": "medical-history",
+  "dataDirectory": "data/medical-history",
+  "databasePath": "data/medical-history.sqlite3"
+}

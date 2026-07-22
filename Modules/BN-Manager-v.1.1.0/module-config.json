@@ -1,0 +1,5 @@
+{
+  "moduleId": "bn-manager",
+  "dataDirectory": "data/bn-manager",
+  "databasePath": "data/bn-manager.sqlite3"
+}
