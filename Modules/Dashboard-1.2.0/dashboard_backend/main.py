@@ -20,13 +20,6 @@ repo.initialize()
 
 app = FastAPI(title="Dashboard Backend")
 
-MOCK_AUTH_USERS = {
-    "psy-1": {"id": "psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Mina Rahimi"},
-    "admin-1": {"id": "admin-1", "username": "admin", "roles": ["admin"], "displayName": "Ari Morgan"},
-}
-MOCK_AUTH_SESSIONS: dict[str, str] = {}
-
-
 def json_error(status_code: int, error: str, detail: str | None = None) -> HTTPException:
     payload: dict[str, Any] = {"error": error}
     if detail:
@@ -145,28 +138,6 @@ async def readyz() -> Any:
     except Exception as error:
         return JSONResponse(status_code=503, content={"ok": False, "error": str(error)})
     return {"ok": True}
-
-
-@app.get("/api/auth/session")
-async def mock_auth_session(request: Request) -> JSONResponse:
-    if not settings.use_mock_auth:
-        return JSONResponse(status_code=404, content={"error": "not_found"})
-
-    requested_user = request.headers.get("x-demo-auth-user")
-    if requested_user:
-        user = MOCK_AUTH_USERS.get(requested_user)
-        if not user:
-            return JSONResponse(status_code=401, content={"authenticated": False})
-        session_id = f"mock-auth-{user['id']}"
-        MOCK_AUTH_SESSIONS[session_id] = user["id"]
-        return JSONResponse(content={"schemaVersion": "1.0.0", "authenticated": True, "session": {"id": session_id, "expiresAt": "2099-01-01T00:00:00Z"}, "user": user, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False}})
-
-    session_id = request.headers.get("x-auth-session") or request.headers.get("x-auth-session-id")
-    user_id = MOCK_AUTH_SESSIONS.get(session_id or "")
-    user = MOCK_AUTH_USERS.get(user_id or "")
-    if not user:
-        return JSONResponse(status_code=401, content={"authenticated": False})
-    return JSONResponse(content={"schemaVersion": "1.0.0", "authenticated": True, "session": {"id": session_id, "expiresAt": "2099-01-01T00:00:00Z"}, "user": user, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False}})
 
 
 @app.post("/internal/dashboard/session")

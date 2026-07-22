@@ -37,7 +37,14 @@ class MockAuthenticationServer:
             def do_GET(self) -> None:
                 cookie = self.headers.get("Cookie") or self.headers.get("cookie") or ""
                 token = next((part.split("=", 1)[1] for part in cookie.split(";") if part.strip().startswith("insight_session=")), "")
-                owner.requests.append({"path": self.path, "cookie": cookie})
+                owner.requests.append(
+                    {
+                        "path": self.path,
+                        "cookie": cookie,
+                        "correlationId": self.headers.get("X-Correlation-ID") or "",
+                        "unexpected": self.headers.get("X-Dashboard-User") or "",
+                    }
+                )
                 status, payload = owner.payloads.get(token, (401, {"authenticated": False}))
                 body = json.dumps(payload).encode("utf-8")
                 self.send_response(status)
@@ -126,18 +133,29 @@ class DashboardServer:
 
     def __enter__(self) -> str:
         self.tempdir = tempfile.TemporaryDirectory()
+        self.auth_server = None
+        if not self.auth_session_url:
+            self.auth_server = MockAuthenticationServer().__enter__()
+            self.auth_server.set_payload(
+                "psy-1",
+                auth_payload(session={"id": "psy-1"}, user={"displayName": "Mina Rahimi"}),
+            )
+            self.auth_server.set_payload(
+                "admin-1",
+                auth_payload(
+                    session={"id": "admin-1"},
+                    user={"id": "admin-1", "username": "admin", "roles": ["admin"], "displayName": "Ari Morgan"},
+                ),
+            )
+            self.auth_session_url = self.auth_server.url
         self.db_path = os.path.join(self.tempdir.name, "dashboard.sqlite3")
         os.environ["DASHBOARD_DB_PATH"] = self.db_path
         if self.module_registry is None:
             os.environ.pop("DASHBOARD_MODULE_REGISTRY", None)
         else:
             os.environ["DASHBOARD_MODULE_REGISTRY"] = json.dumps(self.module_registry)
-        if self.auth_session_url:
-            os.environ["AUTH_SESSION_URL"] = self.auth_session_url
-            os.environ["DASHBOARD_MOCK_AUTH"] = "0"
-        else:
-            os.environ.pop("AUTH_SESSION_URL", None)
-            os.environ.pop("DASHBOARD_MOCK_AUTH", None)
+        os.environ["AUTH_SESSION_URL"] = self.auth_session_url
+        os.environ["DASHBOARD_MOCK_AUTH"] = "0"
         os.environ.pop("AUTH_BASE_URL", None)
         for name in list(sys.modules):
             if name == "dashboard_backend" or name.startswith("dashboard_backend."):
@@ -166,6 +184,8 @@ class DashboardServer:
         self.server.should_exit = True
         self.thread.join(timeout=5)
         self.tempdir.cleanup()
+        if self.auth_server:
+            self.auth_server.__exit__()
 
 
 def request_json(base: str, path: str, method: str = "GET", headers: dict[str, str] | None = None, body: dict | None = None) -> tuple[int, dict]:
@@ -194,11 +214,16 @@ def create_session(base: str, user_id: str) -> dict:
         base,
         "/internal/dashboard/session",
         method="POST",
-        headers={"x-demo-auth-user": user_id},
+        headers={"Cookie": f"insight_session={user_id}"},
         body={"device": "Test"},
     )
     assert status == 201
+    data["_authHeaders"] = {"Cookie": f"insight_session={user_id}"}
     return data
+
+
+def session_headers(session: dict) -> dict[str, str]:
+    return {"x-dashboard-session": session["sessionId"], **session["_authHeaders"]}
 
 
 def future_iso() -> str:
@@ -251,6 +276,19 @@ class AuthSessionNormalizationTest(unittest.TestCase):
             with self.subTest(payload=payload):
                 self.assertIsNone(normalize_auth_identity(payload))
 
+    def test_auth_identity_rejects_legacy_identity_shapes(self) -> None:
+        from dashboard_backend.auth import normalize_auth_identity
+
+        legacy_payloads = [
+            {"ok": True, "user_id": "psy-1", "session_id": "auth-1", "role": "PSYCHIATRIST"},
+            {"authenticated": True, "userId": "psy-1", "sessionId": "auth-1", "role": "PSYCHIATRIST"},
+            {"schemaVersion": "0.9.0", "authenticated": True, "identity": {"id": "psy-1"}},
+        ]
+
+        for payload in legacy_payloads:
+            with self.subTest(payload=payload):
+                self.assertIsNone(normalize_auth_identity(payload))
+
 
 class DashboardBackendTest(unittest.TestCase):
     def test_health_and_readiness(self) -> None:
@@ -282,7 +320,7 @@ class DashboardBackendTest(unittest.TestCase):
                 base,
                 "/internal/dashboard/session",
                 method="POST",
-                headers={"x-demo-auth-user": "psy-1"},
+                headers={"Cookie": "insight_session=psy-1"},
                 body={"userId": "admin-1", "role": "ADMIN", "fullName": "Spoofed Admin"},
             )
 
@@ -291,7 +329,11 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(created["user"]["role"], "PSYCHIATRIST")
             self.assertEqual(created["user"]["fullName"], "Mina Rahimi")
 
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
+            status, workspace = request_json(
+                base,
+                f"/internal/dashboard/workspace?session={created['sessionId']}",
+                headers={"Cookie": "insight_session=psy-1"},
+            )
             self.assertEqual(status, 200)
             self.assertEqual(workspace["workspace"]["kind"], "PSYCHIATRIST")
             self.assertEqual(workspace["workspace"]["title"], "Workspace")
@@ -311,7 +353,7 @@ class DashboardBackendTest(unittest.TestCase):
     def test_psychiatrist_workspace_model_has_exact_buttons_and_route_discovery(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "psy-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
+            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
 
             self.assertEqual(status, 200)
             self.assertEqual(workspace["displayName"], "Dr. Mina Rahimi")
@@ -330,7 +372,7 @@ class DashboardBackendTest(unittest.TestCase):
     def test_admin_workspace_model_has_exact_buttons_only(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "admin-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
+            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
 
             self.assertEqual(status, 200)
             self.assertEqual(workspace["displayName"], "Ari Morgan")
@@ -358,7 +400,7 @@ class DashboardBackendTest(unittest.TestCase):
             ]
             base = stack.enter_context(DashboardServer(module_registry=modules))
             created = create_session(base, "psy-1")
-            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}")
+            status, workspace = request_json(base, f"/internal/dashboard/workspace?session={created['sessionId']}", headers=created["_authHeaders"])
 
             self.assertEqual(status, 200)
             buttons = workspace["workspace"]["buttons"]
@@ -372,7 +414,7 @@ class DashboardBackendTest(unittest.TestCase):
             status, route = request_json(
                 base,
                 "/internal/dashboard/module-routes/available",
-                headers={"x-dashboard-session": created["sessionId"]},
+                headers=session_headers(created),
             )
             self.assertEqual(status, 200)
             self.assertEqual(route["status"], "available")
@@ -384,7 +426,7 @@ class DashboardBackendTest(unittest.TestCase):
             registry = [{"moduleId": "logs", "title": "Logs", "roles": ["ADMIN"], "contractUrl": module.contract_url}]
             with DashboardServer(module_registry=registry) as base:
                 psychiatrist = create_session(base, "psy-1")
-                status, data = request_json(base, "/internal/dashboard/module-routes/logs", headers={"x-dashboard-session": psychiatrist["sessionId"]})
+                status, data = request_json(base, "/internal/dashboard/module-routes/logs", headers=session_headers(psychiatrist))
                 self.assertEqual(status, 404)
                 self.assertEqual(data["error"], "module_route_not_available")
 
@@ -395,7 +437,7 @@ class DashboardBackendTest(unittest.TestCase):
                 base,
                 "/internal/dashboard/patients",
                 method="POST",
-                headers={"x-dashboard-session": created["sessionId"]},
+                headers=session_headers(created),
                 body={"name": "Boundary Patient"},
             )
 
@@ -408,7 +450,7 @@ class DashboardBackendTest(unittest.TestCase):
                 base,
                 "/internal/dashboard/session",
                 method="DELETE",
-                headers={"x-dashboard-session": created["sessionId"]},
+                headers=session_headers(created),
             )
             self.assertEqual(status, 200)
 
@@ -446,6 +488,27 @@ class DashboardBackendTest(unittest.TestCase):
         self.assertTrue(auth.requests)
         self.assertEqual({request["path"] for request in auth.requests}, {"/api/auth/session"})
         self.assertTrue(any("insight_session=auth-psy" in request["cookie"] for request in auth.requests))
+
+    def test_auth_adapter_forwards_only_session_cookie_and_correlation_metadata(self) -> None:
+        with MockAuthenticationServer() as auth:
+            auth.set_payload("auth-psy", auth_payload(session={"id": "auth-psy"}))
+            with DashboardServer(auth.url) as base:
+                status, _ = request_json(
+                    base,
+                    "/internal/dashboard/session",
+                    method="POST",
+                    headers={
+                        "Cookie": "theme=dark; insight_csrf=secret; insight_session=auth-psy; patient=patient-1",
+                        "X-Correlation-ID": "00000000-0000-4000-8000-000000000042",
+                        "X-Dashboard-User": "spoofed-user",
+                    },
+                )
+
+        self.assertEqual(status, 201)
+        self.assertEqual(len(auth.requests), 1)
+        self.assertEqual(auth.requests[0]["cookie"], "insight_session=auth-psy")
+        self.assertEqual(auth.requests[0]["correlationId"], "00000000-0000-4000-8000-000000000042")
+        self.assertEqual(auth.requests[0]["unexpected"], "")
 
     def test_invalid_auth_session_returns_401(self) -> None:
         with MockAuthenticationServer() as auth:

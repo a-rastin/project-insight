@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime
+from http.cookies import SimpleCookie
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request as UrlRequest, urlopen
@@ -28,14 +29,14 @@ def auth_session_url(request: Request) -> str:
 
 def forwarded_auth_headers(request: Request, session: dict[str, Any] | None = None) -> dict[str, str]:
     headers = {"accept": "application/json"}
-    cookie = request.headers.get("cookie")
-    if cookie:
-        headers["cookie"] = cookie
-    demo_user = request.headers.get("x-demo-auth-user")
-    if settings.use_mock_auth and not demo_user and session:
-        demo_user = session.get("userId")
-    if settings.use_mock_auth and demo_user:
-        headers["x-demo-auth-user"] = demo_user
+    cookies = SimpleCookie()
+    cookies.load(request.headers.get("cookie", ""))
+    auth_cookie = cookies.get("insight_session")
+    if auth_cookie:
+        headers["cookie"] = f"insight_session={auth_cookie.value}"
+    correlation_id = request.headers.get("x-correlation-id")
+    if correlation_id:
+        headers["x-correlation-id"] = correlation_id
     return headers
 
 
