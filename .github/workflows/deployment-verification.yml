@@ -1,0 +1,128 @@
+name: deployment-verification
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "deployment/**"
+      - "scripts/check_deployment.py"
+      - "scripts/verify_unified_deployment.py"
+      - "Modules/Treatment-Plan/scripts/package_release.py"
+      - "Modules/Treatment-Plan/scripts/verify_deployment.py"
+      - "Modules/Treatment-Plan/treatment_plan/deployment.py"
+      - "Modules/Treatment-Plan/tests/test_tp22_deployment.py"
+      - "tests/test_deployment_contract.py"
+      - "tests/test_unified_image.py"
+      - "tests/test_tp22_unified_verification.py"
+      - ".github/workflows/deployment-verification.yml"
+  pull_request:
+    paths:
+      - "deployment/**"
+      - "scripts/check_deployment.py"
+      - "scripts/verify_unified_deployment.py"
+      - "Modules/Treatment-Plan/scripts/**"
+      - "Modules/Treatment-Plan/treatment_plan/deployment.py"
+      - "Modules/Treatment-Plan/tests/test_tp22_deployment.py"
+      - "tests/test_deployment_contract.py"
+      - "tests/test_unified_image.py"
+      - "tests/test_tp22_unified_verification.py"
+      - ".github/workflows/deployment-verification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contracts:
+    name: offline deployment contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Deployment contract
+        run: python scripts/check_deployment.py
+
+      - name: Unified offline topology matrix
+        run: python scripts/verify_unified_deployment.py offline
+
+      - name: Monorepo deployment unit tests
+        run: |
+          python -m unittest \
+            tests.test_deployment_contract \
+            tests.test_unified_image \
+            tests.test_tp22_unified_verification \
+            -v
+
+      - name: Treatment-Plan TP22.4 unit tests
+        working-directory: Modules/Treatment-Plan
+        run: |
+          PYTHONPATH=. python -m unittest tests.test_tp22_deployment -v
+          PYTHONPATH=. python scripts/verify_deployment.py integrity
+
+  image-scan:
+    name: optional unified image build and Trivy scan
+    runs-on: ubuntu-latest
+    needs: offline-contracts
+    # Build is optional when Docker layer cache or secrets are unavailable.
+    # Offline contracts remain the required gate for every PR.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build unified image
+        id: build
+        run: |
+          set -euo pipefail
+          IMAGE_LOCAL="insight-unified:ci"
+          docker buildx build \
+            --file deployment/Dockerfile \
+            --load \
+            --tag "${IMAGE_LOCAL}" \
+            .
+          DIGEST="$(docker image inspect --format='{{index .RepoDigests 0}}' "${IMAGE_LOCAL}" 2>/dev/null || true)"
+          if [[ -z "${DIGEST}" || "${DIGEST}" != *@sha256:* ]]; then
+            # Local load may not populate RepoDigests; fall back to config digest.
+            CONFIG_DIGEST="$(docker image inspect --format='{{.Id}}' "${IMAGE_LOCAL}")"
+            if [[ "${CONFIG_DIGEST}" != sha256:* ]]; then
+              echo "unable to resolve image digest" >&2
+              exit 1
+            fi
+            DIGEST="insight-unified@${CONFIG_DIGEST}"
+          fi
+          echo "image=${DIGEST}" >> "${GITHUB_OUTPUT}"
+          echo "Resolved immutable image reference: ${DIGEST}"
+
+      - name: Install Trivy
+        run: |
+          set -euo pipefail
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Trivy scan HIGH/CRITICAL with digest evidence
+        run: |
+          set -euo pipefail
+          IMAGE="${{ steps.build.outputs.image }}"
+          mkdir -p artifacts/scans
+          python scripts/verify_unified_deployment.py scan --image "${IMAGE}" --evidence-root .
+          ls -la artifacts/scans
+
+      - name: Upload scan evidence by digest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-evidence
+          path: artifacts/scans/
+          if-no-files-found: warn
