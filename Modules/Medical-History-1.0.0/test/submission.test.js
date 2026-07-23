@@ -3,10 +3,99 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { MedicalHistorySubmissionStore } = require("../medical-history-submission.js");
+const {
+  MedicalHistorySubmissionStore,
+  structureCondition,
+  structureMedication,
+  unresolvedCoding,
+} = require("../medical-history-submission.js");
 
 const patientId = "11111111-1111-4111-8111-111111111111";
 const encounterId = "22222222-2222-4222-8222-222222222222";
+
+test("structures conditions with original text and explicit unresolved coding", () => {
+  assert.deepEqual(structureCondition("Hypertension"), {
+    originalText: "Hypertension",
+    coding: unresolvedCoding("Hypertension"),
+  });
+  assert.deepEqual(
+    structureCondition({
+      originalText: "Asthma",
+      coding: {
+        system: "http://snomed.info/sct",
+        code: "195967001",
+        display: "Asthma",
+        resolutionStatus: "approved",
+      },
+    }),
+    {
+      originalText: "Asthma",
+      coding: {
+        system: "http://snomed.info/sct",
+        code: "195967001",
+        display: "Asthma",
+        resolutionStatus: "approved",
+      },
+    },
+  );
+  assert.equal(structureCondition({ originalText: "Other" }).coding.resolutionStatus, "unresolved");
+  assert.equal(structureCondition({ originalText: "Other" }).coding.system, null);
+  assert.equal(structureCondition({ originalText: "Other" }).coding.code, null);
+});
+
+test("structures medications with original text, RxNorm, dose amount/unit, route, and frequency", () => {
+  assert.deepEqual(
+    structureMedication({
+      name: "Lithium",
+      dose: "300 mg",
+      route: "Oral",
+      frequency: "Daily",
+    }),
+    {
+      originalText: "Lithium",
+      rxNorm: {
+        system: null,
+        code: null,
+        display: "Lithium",
+        resolutionStatus: "unresolved",
+      },
+      doseAmount: null,
+      doseUnit: null,
+      dose: "300 mg",
+      route: "Oral",
+      frequency: "Daily",
+    },
+  );
+  assert.deepEqual(
+    structureMedication({
+      originalText: "Sertraline",
+      rxNorm: {
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "36437",
+        display: "sertraline",
+        resolutionStatus: "approved",
+      },
+      doseAmount: 50,
+      doseUnit: "mg",
+      route: "Oral",
+      frequency: "Daily",
+    }),
+    {
+      originalText: "Sertraline",
+      rxNorm: {
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "36437",
+        display: "sertraline",
+        resolutionStatus: "approved",
+      },
+      doseAmount: 50,
+      doseUnit: "mg",
+      dose: "",
+      route: "Oral",
+      frequency: "Daily",
+    },
+  );
+});
 
 test("creates a versioned submission resource with identity metadata", async () => {
   const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "medical-history-submission-"));

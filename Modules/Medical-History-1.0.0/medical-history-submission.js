@@ -44,6 +44,86 @@ function calculateEtag(resource) {
   return `"${crypto.createHash("sha256").update(source).digest("hex")}"`;
 }
 
+function unresolvedCoding(text) {
+  return {
+    system: null,
+    code: null,
+    display: text,
+    resolutionStatus: "unresolved",
+  };
+}
+
+function isApprovedCoding(coding) {
+  return Boolean(
+    coding
+    && typeof coding === "object"
+    && coding.resolutionStatus === "approved"
+    && typeof coding.system === "string"
+    && coding.system.trim() !== ""
+    && typeof coding.code === "string"
+    && coding.code.trim() !== ""
+    && typeof coding.display === "string"
+    && coding.display.trim() !== "",
+  );
+}
+
+function normalizeCoding(coding, fallbackText) {
+  if (isApprovedCoding(coding)) {
+    return {
+      system: String(coding.system).trim(),
+      code: String(coding.code).trim(),
+      display: String(coding.display).trim(),
+      resolutionStatus: "approved",
+    };
+  }
+  const display = coding && typeof coding.display === "string" && coding.display.trim() !== ""
+    ? coding.display.trim()
+    : fallbackText;
+  return unresolvedCoding(display);
+}
+
+function structureCondition(entry) {
+  if (typeof entry === "string") {
+    const originalText = entry.trim();
+    return { originalText, coding: unresolvedCoding(originalText) };
+  }
+  if (!entry || typeof entry !== "object") {
+    throw new SubmissionValidationError("condition entry must be a string or object");
+  }
+  const originalText = String(entry.originalText ?? entry.text ?? entry.name ?? "").trim();
+  if (!originalText) throw new SubmissionValidationError("condition originalText is required");
+  return {
+    originalText,
+    coding: normalizeCoding(entry.coding, originalText),
+  };
+}
+
+function structureMedication(drug = {}) {
+  if (!drug || typeof drug !== "object") {
+    throw new SubmissionValidationError("medication entry must be an object");
+  }
+  const originalText = String(drug.originalText ?? drug.name ?? "").trim();
+  if (!originalText) throw new SubmissionValidationError("medication originalText is required");
+  const doseAmount = drug.doseAmount === null || drug.doseAmount === undefined || drug.doseAmount === ""
+    ? null
+    : Number(drug.doseAmount);
+  if (doseAmount !== null && !Number.isFinite(doseAmount)) {
+    throw new SubmissionValidationError("medication doseAmount must be a finite number when provided");
+  }
+  const doseUnit = drug.doseUnit === null || drug.doseUnit === undefined || drug.doseUnit === ""
+    ? null
+    : String(drug.doseUnit).trim();
+  return {
+    originalText,
+    rxNorm: normalizeCoding(drug.rxNorm ?? drug.coding, originalText),
+    doseAmount,
+    doseUnit,
+    dose: drug.dose ? String(drug.dose).trim() : "",
+    route: drug.route ? String(drug.route).trim() : "",
+    frequency: drug.frequency ? String(drug.frequency).trim() : "",
+  };
+}
+
 class MedicalHistorySubmissionStore {
   constructor({ filePath, now = () => new Date(), uuid = crypto.randomUUID } = {}) {
     if (!filePath) throw new Error("filePath is required");
@@ -147,4 +227,7 @@ module.exports = {
   SubmissionValidationError,
   SUBMISSION_SCHEMA_VERSION,
   isCanonicalUuid,
+  unresolvedCoding,
+  structureCondition,
+  structureMedication,
 };

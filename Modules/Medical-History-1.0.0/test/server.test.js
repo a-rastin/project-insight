@@ -57,12 +57,68 @@ test("saves complete conditional history correlated with normalized code", async
   const saved = await request("/api/internal/medical-history/submissions", { method: "POST", body: JSON.stringify(payload) });
   assert.equal(saved.status, 201);
   assert.equal(saved.body.code, "AB12CD");
-  assert.deepEqual(saved.body.pastMedicalHistory, payload.pastMedicalHistory);
-  assert.deepEqual(saved.body.drugs, payload.drugs);
+  assert.deepEqual(saved.body.pastMedicalHistory, [
+    { originalText: "Hypertension", coding: { system: null, code: null, display: "Hypertension", resolutionStatus: "unresolved" } },
+    { originalText: "Asthma", coding: { system: null, code: null, display: "Asthma", resolutionStatus: "unresolved" } },
+  ]);
+  assert.deepEqual(saved.body.drugs, [{
+    originalText: "Lithium",
+    rxNorm: { system: null, code: null, display: "Lithium", resolutionStatus: "unresolved" },
+    doseAmount: null,
+    doseUnit: null,
+    dose: "300 mg",
+    route: "Oral",
+    frequency: "Daily",
+  }]);
   assert.equal(saved.body.antipsychotic, "Risperidone");
   const lookup = await request("/api/internal/medical-history/submissions?code=ab12cd");
   assert.equal(lookup.body.length, 1);
   assert.equal(lookup.body[0].submissionId, saved.body.submissionId);
+});
+
+test("preserves approved medication and condition coding when provided", async () => {
+  const patientId = crypto.randomUUID();
+  const encounterId = crypto.randomUUID();
+  const payload = {
+    patientId,
+    encounterId,
+    author: "clinician-1",
+    pastMedicalHistory: [{
+      originalText: "Asthma",
+      coding: {
+        system: "http://snomed.info/sct",
+        code: "195967001",
+        display: "Asthma",
+        resolutionStatus: "approved",
+      },
+    }],
+    drugs: [{
+      originalText: "Sertraline",
+      rxNorm: {
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "36437",
+        display: "sertraline",
+        resolutionStatus: "approved",
+      },
+      doseAmount: 50,
+      doseUnit: "mg",
+      route: "Oral",
+      frequency: "Daily",
+    }],
+    substantialSuicideRisk: false,
+    priorAntipsychoticTherapy: false,
+    clozapineContraindication: false,
+    clozapineContraindications: [],
+    recurrentNonAdherenceDeterioration: false,
+  };
+  const saved = await request("/api/internal/medical-history/submissions", { method: "POST", body: JSON.stringify(payload) });
+  assert.equal(saved.status, 201);
+  assert.deepEqual(saved.body.pastMedicalHistory[0].coding, payload.pastMedicalHistory[0].coding);
+  assert.equal(saved.body.pastMedicalHistory[0].originalText, "Asthma");
+  assert.deepEqual(saved.body.drugs[0].rxNorm, payload.drugs[0].rxNorm);
+  assert.equal(saved.body.drugs[0].doseAmount, 50);
+  assert.equal(saved.body.drugs[0].doseUnit, "mg");
+  assert.equal(saved.body.drugs[0].originalText, "Sertraline");
 });
 
 test("defaults-compatible no answers persist null conditional therapy data", async () => {
@@ -109,7 +165,8 @@ test("supports deep UUID submission identity, latest lookup, and immutable histo
   const latest = await request(`/api/internal/medical-history/submissions/latest?patientId=${patientId}&encounterId=${encounterId}`);
   assert.equal(latest.status, 200);
   assert.equal(latest.body.id, second.body.id);
-  assert.equal(latest.body.pastMedicalHistory[0], "Asthma");
+  assert.equal(latest.body.pastMedicalHistory[0].originalText, "Asthma");
+  assert.equal(latest.body.pastMedicalHistory[0].coding.resolutionStatus, "unresolved");
   assert.equal(latest.etag, latest.body.etag);
 
   const history = await request(`/api/internal/medical-history/submissions/history?patientId=${patientId}&encounterId=${encounterId}`);

@@ -2,7 +2,12 @@
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { MedicalHistorySubmissionStore, isCanonicalUuid } = require("./medical-history-submission.js");
+const {
+  MedicalHistorySubmissionStore,
+  isCanonicalUuid,
+  structureCondition,
+  structureMedication,
+} = require("./medical-history-submission.js");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT_DIR = __dirname;
@@ -188,11 +193,26 @@ function validateSubmission(body, { requireCode = true } = {}) {
   if (!Array.isArray(body.pastMedicalHistory)) errors.push("pastMedicalHistory must be an array");
   if (!Array.isArray(body.drugs)) errors.push("drugs must be an array");
   const history = Array.isArray(body.pastMedicalHistory) ? body.pastMedicalHistory : [];
-  if (history.some((condition) => !COMORBIDITY_OPTIONS.includes(condition))) errors.push("pastMedicalHistory contains an unsupported condition");
+  const historyTexts = history.map((condition) => (
+    typeof condition === "string"
+      ? condition
+      : condition && typeof condition === "object"
+        ? String(condition.originalText ?? condition.text ?? condition.name ?? "")
+        : ""
+  ));
+  if (historyTexts.some((condition) => !COMORBIDITY_OPTIONS.includes(condition))) {
+    errors.push("pastMedicalHistory contains an unsupported condition");
+  }
   const drugs = Array.isArray(body.drugs) ? body.drugs : [];
   if (drugs.length > 20) errors.push("drugs cannot contain more than 20 entries");
   drugs.forEach((drug, index) => {
-    if (!drug || typeof drug.name !== "string" || drug.name.trim().length === 0) errors.push(`drugs[${index}].name is required`);
+    const originalText = drug && typeof drug === "object"
+      ? String(drug.originalText ?? drug.name ?? "").trim()
+      : "";
+    if (!originalText) errors.push(`drugs[${index}].name is required`);
+    if (drug && drug.doseAmount !== undefined && drug.doseAmount !== null && drug.doseAmount !== "" && !Number.isFinite(Number(drug.doseAmount))) {
+      errors.push(`drugs[${index}].doseAmount must be a finite number when provided`);
+    }
   });
   ["substantialSuicideRisk", "priorAntipsychoticTherapy", "clozapineContraindication", "recurrentNonAdherenceDeterioration"].forEach((field) => {
     if (typeof body[field] !== "boolean") errors.push(`${field} must be a boolean`);
@@ -213,13 +233,8 @@ function validateSubmission(body, { requireCode = true } = {}) {
 
 function submissionData(body) {
   return {
-    pastMedicalHistory: body.pastMedicalHistory.map(String),
-    drugs: body.drugs.map((drug) => ({
-      name: String(drug.name).trim(),
-      dose: drug.dose ? String(drug.dose).trim() : "",
-      route: drug.route ? String(drug.route).trim() : "",
-      frequency: drug.frequency ? String(drug.frequency).trim() : ""
-    })),
+    pastMedicalHistory: body.pastMedicalHistory.map(structureCondition),
+    drugs: body.drugs.map(structureMedication),
     substantialSuicideRisk: body.substantialSuicideRisk,
     priorAntipsychoticTherapy: body.priorAntipsychoticTherapy,
     priorAntipsychoticTherapySuccessful: body.priorAntipsychoticTherapy ? body.priorAntipsychoticTherapySuccessful : null,

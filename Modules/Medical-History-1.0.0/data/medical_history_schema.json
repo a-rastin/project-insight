@@ -17,7 +17,7 @@
     "etag": { "type": "etag", "required": true },
     "data": { "type": "object", "required": true },
     "code": { "type": "string", "length": 6, "required": false, "compatibilityAdapter": true },
-    "pastMedicalHistory": { "type": "string_array", "required": true, "optionsSource": "GET /api/internal/medical-history/options" },
+    "pastMedicalHistory": { "type": "object_array", "required": true, "itemSchema": "condition_entry", "optionsSource": "GET /api/internal/medical-history/options", "acceptsLegacyStrings": true },
     "drugs": { "type": "object_array", "required": true, "maxItems": 20, "itemSchema": "drug_entry" },
     "substantialSuicideRisk": { "type": "boolean", "required": true, "default": false },
     "priorAntipsychoticTherapy": { "type": "boolean", "required": true, "default": false },
@@ -27,7 +27,27 @@
     "clozapineContraindications": { "type": "string_array", "required": true, "minItemsWhen": "1 when clozapineContraindication=true", "options": ["Severe neutropenia", "Clozapine-induced myocarditis", "Unmanaged seizure disorder"] },
     "recurrentNonAdherenceDeterioration": { "type": "boolean", "required": true, "default": false }
   },
-  "objectSchemas": { "drug_entry": { "name": { "type": "string", "required": true, "maxLength": 160 }, "dose": { "type": "string" }, "route": { "type": "string" }, "frequency": { "type": "string" } } },
+  "objectSchemas": {
+    "coding": {
+      "system": { "type": ["string", "null"], "required": true },
+      "code": { "type": ["string", "null"], "required": true },
+      "display": { "type": "string", "required": true },
+      "resolutionStatus": { "type": "string", "enum": ["unresolved", "approved"], "required": true }
+    },
+    "condition_entry": {
+      "originalText": { "type": "string", "required": true },
+      "coding": { "type": "object", "required": true, "itemSchema": "coding" }
+    },
+    "drug_entry": {
+      "originalText": { "type": "string", "required": true, "maxLength": 160, "legacyAlias": "name" },
+      "rxNorm": { "type": "object", "required": true, "itemSchema": "coding" },
+      "doseAmount": { "type": ["number", "null"], "required": true },
+      "doseUnit": { "type": ["string", "null"], "required": true },
+      "dose": { "type": "string", "required": false, "description": "Optional free-text dose retained for UI compatibility" },
+      "route": { "type": "string" },
+      "frequency": { "type": "string" }
+    }
+  },
   "internalRestApi": [
     { "method": "POST", "path": "/api/internal/medical-history/activate" },
     { "method": "GET", "path": "/api/internal/medical-history/activation/{code}" },
