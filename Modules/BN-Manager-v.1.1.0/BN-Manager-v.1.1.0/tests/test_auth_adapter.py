@@ -58,6 +58,51 @@ class AuthenticationGuardTests(unittest.TestCase):
         self.assertRegex(evaluation["bindingHash"], r"^sha256:[a-f0-9]{64}$")
         self.assertEqual(evaluation["engineVersion"].split("/")[0], "clinical_graph_models")
 
+    def test_treatment_plan_adapter_uses_shared_evaluation_interface(self) -> None:
+        client = self._client(
+            {
+                "schemaVersion": "1.0.0",
+                "authenticated": True,
+                "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                "session": {"id": "session-tp", "expiresAt": "2099-01-01T00:00:00Z"},
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+            }
+        )
+
+        response = client.post(
+            "/api/bn-manager/v1/treatment-plan/evaluate",
+            json={"model": {"model_id": "bnm.clozapine-suicide-risk"}},
+            headers={"x-csrf-token": "csrf-tp", "Cookie": "csrf_token=csrf-tp"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["surface"], "Treatment Plan")
+
+    def test_evaluation_adapters_enforce_caller_specific_roles(self) -> None:
+        cases = (
+            ("intake", ["intakeclinician"], "/api/bn-manager/v1/add-new-patient/evaluate", 200),
+            ("intake", ["intakeclinician"], "/api/bn-manager/v1/dashboard/evaluate", 403),
+            ("care", ["careteam"], "/api/bn-manager/v1/follow-up/evaluate", 200),
+            ("care", ["careteam"], "/api/bn-manager/v1/add-new-patient/evaluate", 403),
+        )
+        for name, roles, path, expected_status in cases:
+            with self.subTest(name=name, path=path):
+                client = self._client(
+                    {
+                        "schemaVersion": "1.0.0",
+                        "authenticated": True,
+                        "user": {"id": f"{name}-1", "roles": roles},
+                        "session": {"id": f"session-{name}", "expiresAt": "2099-01-01T00:00:00Z"},
+                        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+                    }
+                )
+                response = client.post(
+                    path,
+                    json={"model": {"model_id": "bnm.clozapine-suicide-risk"}},
+                    headers={"x-csrf-token": "csrf", "Cookie": "csrf_token=csrf"},
+                )
+                self.assertEqual(response.status_code, expected_status)
+
     def test_evaluate_idempotent_retry_returns_same_record(self) -> None:
         store = InMemoryEvaluationStore()
         client = TestClient(

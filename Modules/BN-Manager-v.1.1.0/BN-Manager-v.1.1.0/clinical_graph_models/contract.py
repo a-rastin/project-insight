@@ -62,7 +62,7 @@ XMLBIF_TARGET = XmlBifTarget(
     ),
 )
 
-_SURFACES = ("Dashboard", "Add New Patient", "Follow-up")
+_SURFACES = ("Dashboard", "Add New Patient", "Follow-up", "Treatment Plan")
 TARGET_NODES: tuple[TargetNodeContract, ...] = (
     TargetNodeContract("pharmacotherapy", "management_recommendation", "chance", _SURFACES),
     TargetNodeContract("treatment_setting", "management_recommendation", "chance", _SURFACES),
@@ -85,6 +85,7 @@ PERMISSIONS = {
     "evaluate_dashboard": "bnm:dashboard:evaluate",
     "evaluate_add_new_patient": "bnm:add-new-patient:evaluate",
     "evaluate_follow_up": "bnm:follow-up:evaluate",
+    "evaluate_treatment_plan": "bnm:treatment-plan:evaluate",
     "validate_model": "bnm:model:validate",
 }
 
@@ -94,6 +95,7 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         PERMISSIONS["evaluate_dashboard"],
         PERMISSIONS["evaluate_add_new_patient"],
         PERMISSIONS["evaluate_follow_up"],
+        PERMISSIONS["evaluate_treatment_plan"],
     ),
     "Clinician": (
         PERMISSIONS["read_contract"],
@@ -145,6 +147,13 @@ ROUTES: tuple[RouteContract, ...] = (
         f"{ROUTE_PREFIX}/follow-up/evaluate",
         PERMISSIONS["evaluate_follow_up"],
         "Evaluate follow-up evidence against a supplied XML Bayesian Network.",
+    ),
+    RouteContract(
+        "Treatment Plan",
+        "POST",
+        f"{ROUTE_PREFIX}/treatment-plan/evaluate",
+        PERMISSIONS["evaluate_treatment_plan"],
+        "Evaluate treatment-plan evidence against a supplied XML Bayesian Network.",
     ),
     RouteContract(
         "Model Management",

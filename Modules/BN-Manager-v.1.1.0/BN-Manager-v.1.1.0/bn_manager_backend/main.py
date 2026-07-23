@@ -12,6 +12,8 @@ from clinical_graph_models import (
     DECISION_IDS,
     ERROR_CODES,
     MODULE_ID,
+    PERMISSIONS,
+    ROLE_PERMISSIONS,
     XmlBifCompileError,
     compile_xmlbif,
     contract_payload,
@@ -39,7 +41,6 @@ from .model_registry import (
     read_registry_schema,
 )
 
-EVALUATION_ROLES = frozenset({"psychiatrist", "admin"})
 ADMIN_ROLES = frozenset({"admin"})
 DASHBOARD_DISCOVERY_PATH = "/internal/dashboard/module-routes/bn-manager"
 
@@ -117,6 +118,14 @@ def create_app(
             return session
 
         return dependency
+
+    def require_permission(permission: str):
+        allowed_roles = frozenset(
+            role.lower()
+            for role, permissions in ROLE_PERMISSIONS.items()
+            if permission in permissions
+        )
+        return require_roles(allowed_roles)
 
     @app.get(f"{settings.api_prefix}/health")
     def health() -> dict[str, Any]:
@@ -220,25 +229,33 @@ def create_app(
     def dashboard_evaluate(
         request: Request,
         payload: dict[str, Any] = Body(...),
-        session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
+        session: SessionState = Depends(require_permission(PERMISSIONS["evaluate_dashboard"])),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Dashboard", session, request)
+        return evaluate_payload(payload, "Dashboard", session, request)
 
     @app.post("/api/bn-manager/v1/add-new-patient/evaluate")
     def add_new_patient_evaluate(
         request: Request,
         payload: dict[str, Any] = Body(...),
-        session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
+        session: SessionState = Depends(require_permission(PERMISSIONS["evaluate_add_new_patient"])),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Add New Patient", session, request)
+        return evaluate_payload(payload, "Add New Patient", session, request)
 
     @app.post("/api/bn-manager/v1/follow-up/evaluate")
     def follow_up_evaluate(
         request: Request,
         payload: dict[str, Any] = Body(...),
-        session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
+        session: SessionState = Depends(require_permission(PERMISSIONS["evaluate_follow_up"])),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Follow-up", session, request)
+        return evaluate_payload(payload, "Follow-up", session, request)
+
+    @app.post("/api/bn-manager/v1/treatment-plan/evaluate")
+    def treatment_plan_evaluate(
+        request: Request,
+        payload: dict[str, Any] = Body(...),
+        session: SessionState = Depends(require_permission(PERMISSIONS["evaluate_treatment_plan"])),
+    ) -> dict[str, Any]:
+        return evaluate_payload(payload, "Treatment Plan", session, request)
 
     @app.post("/api/bn-manager/v1/models/validate")
     def model_validate(
@@ -316,7 +333,7 @@ def _evidence_schema_for_registry(entry: ModelRegistryEntry, text: str) -> dict[
         ) from exc
 
 
-def _evaluate_payload(
+def evaluate_payload(
     payload: dict[str, Any],
     surface: str,
     session: SessionState,

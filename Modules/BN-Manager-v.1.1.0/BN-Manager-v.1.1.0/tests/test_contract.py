@@ -41,6 +41,7 @@ class BnManagerContractTests(unittest.TestCase):
         self.assertEqual(by_surface["Dashboard"].path, f"{ROUTE_PREFIX}/dashboard/evaluate")
         self.assertEqual(by_surface["Add New Patient"].path, f"{ROUTE_PREFIX}/add-new-patient/evaluate")
         self.assertEqual(by_surface["Follow-up"].path, f"{ROUTE_PREFIX}/follow-up/evaluate")
+        self.assertEqual(by_surface["Treatment Plan"].path, f"{ROUTE_PREFIX}/treatment-plan/evaluate")
         self.assertTrue(all(route.permission in PERMISSIONS.values() for route in ROUTES))
         self.assertFalse(any("convert" in route.path for route in ROUTES))
         self.assertNotIn("convert_model", PERMISSIONS)
@@ -61,6 +62,8 @@ class BnManagerContractTests(unittest.TestCase):
         self.assertIn(PERMISSIONS["evaluate_dashboard"], ROLE_PERMISSIONS["Psychiatrist"])
         self.assertIn(PERMISSIONS["evaluate_add_new_patient"], ROLE_PERMISSIONS["IntakeClinician"])
         self.assertIn(PERMISSIONS["evaluate_follow_up"], ROLE_PERMISSIONS["CareTeam"])
+        self.assertIn(PERMISSIONS["evaluate_treatment_plan"], ROLE_PERMISSIONS["Psychiatrist"])
+        self.assertNotIn(PERMISSIONS["evaluate_treatment_plan"], ROLE_PERMISSIONS["CareTeam"])
         self.assertIn(PERMISSIONS["validate_model"], ROLE_PERMISSIONS["ModelManager"])
         self.assertEqual(set(ROLE_PERMISSIONS["Admin"]), set(PERMISSIONS.values()))
 
@@ -133,5 +136,4 @@ class BnManagerContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
 
