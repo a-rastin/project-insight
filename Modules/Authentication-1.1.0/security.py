@@ -806,14 +806,29 @@ _AUDIT_ACTIONS = {
     "enable",
     "role_update",
     "disclaimer_accept",
+    "audit_retrieve",
 }
 
 
 _AUDIT_REDACTED = "[REDACTED]"
 _SENSITIVE_AUDIT_KEYS = {"password", "password_hash", "token", "jwt", "secret", "authorization", "cookie"}
+_PHI_AUDIT_KEYS = {
+    "address", "dateofbirth", "diagnosis", "encounter", "genetic", "medication", "medicalrecordnumber",
+    "mrn", "patient", "phone", "prescription", "ssn", "symptom",
+}
+
+
+def _is_sensitive_audit_key(key: str) -> bool:
+    normalized = key.casefold().replace("_", "").replace("-", "")
+    if normalized in {item.replace("_", "") for item in _SENSITIVE_AUDIT_KEYS}:
+        return True
+    if normalized.endswith(("password", "passwordhash", "token", "jwt", "secret", "authorization", "cookie", "apikey")):
+        return True
+    return any(term in normalized for term in _PHI_AUDIT_KEYS)
+
 
 def _redact_audit_value(value, key: str | None = None):
-    if key and key.casefold() in _SENSITIVE_AUDIT_KEYS:
+    if key and _is_sensitive_audit_key(key):
         return _AUDIT_REDACTED
     if isinstance(value, dict):
         return {str(k): _redact_audit_value(v, str(k)) for k, v in value.items()}
@@ -1250,9 +1265,6 @@ def resolve_session(
 
 def username_eq(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
-
-
-
 
 
 

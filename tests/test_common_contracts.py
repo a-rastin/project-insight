@@ -103,6 +103,17 @@ class CommonContractTests(unittest.TestCase):
         example = load_json(CONTRACTS / "examples" / "1.0.0" / "success.json")
         validate_instance(example, schema, CONTRACTS / "schemas" / "1.0.0" / "response-envelope.schema.json")
 
+    def test_provenance_requires_source_version_and_content_hash(self):
+        schema_path = CONTRACTS / "schemas" / "1.0.0" / "provenance.schema.json"
+        schema = load_json(schema_path)
+        example = load_json(CONTRACTS / "examples" / "1.0.0" / "provenance.json")
+        validate_instance(example, schema, schema_path)
+        for field in ("sourceVersion", "contentHash"):
+            missing = dict(example)
+            missing.pop(field)
+            with self.assertRaises(ValueError):
+                validate_instance(missing, schema, schema_path)
+
 
 if __name__ == "__main__":
     unittest.main()

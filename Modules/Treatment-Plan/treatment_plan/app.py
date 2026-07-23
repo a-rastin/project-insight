@@ -62,7 +62,10 @@ def create_app(
 
     @app.middleware("http")
     async def correlate(request: Request, call_next):
-        with observability.bind(request.headers.get("x-correlation-id")) as correlation_id:
+        with observability.bind(
+            request.headers.get("x-correlation-id"),
+            request_id=request.headers.get("x-request-id"),
+        ) as correlation_id:
             started = time.monotonic()
             try:
                 response = await call_next(request)
@@ -74,6 +77,7 @@ def create_app(
             observability.metric("tp_http_latency_ms", (time.monotonic() - started) * 1000,
                                  labels={"module": "app", "outcome": outcome})
             response.headers["X-Correlation-ID"] = correlation_id
+            response.headers["X-Request-ID"] = observability.request_id
             return response
 
     if security is None and settings.authentication_session_url:
@@ -326,7 +330,6 @@ def create_app(
 
 
 app = create_app()
-
 
 
 

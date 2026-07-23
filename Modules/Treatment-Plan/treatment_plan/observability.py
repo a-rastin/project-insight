@@ -10,12 +10,13 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterator, Mapping
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 _NAME = re.compile(r"^[a-z][a-z0-9_.-]{0,63}$")
 _LABEL = re.compile(r"^[A-Za-z0-9_.:-]{1,96}$")
 _ALLOWED_LABELS = frozenset({"category", "dependency", "kind", "model", "module", "outcome", "policy_version", "version"})
 _correlation: ContextVar[str] = ContextVar("tp_correlation_id", default="")
+_request: ContextVar[str] = ContextVar("tp_request_id", default="")
 _current: ContextVar["Observability | None"] = ContextVar("tp_observability", default=None)
 
 
@@ -24,6 +25,24 @@ def safe_correlation_id(value: str | None) -> str:
         return str(UUID(str(value)))
     except (ValueError, TypeError, AttributeError):
         return str(uuid4())
+
+
+def safe_request_id(value: str | None) -> str:
+    try:
+        return str(UUID(str(value)))
+    except (ValueError, TypeError, AttributeError):
+        return str(uuid4())
+
+
+def contract_uuid(value: str) -> str:
+    """Expose arbitrary internal IDs as stable, non-PHI contract identifiers."""
+    try:
+        parsed = UUID(str(value))
+        if parsed.int and str(parsed) == str(value):
+            return str(parsed)
+    except (ValueError, TypeError, AttributeError):
+        pass
+    return str(uuid5(NAMESPACE_URL, f"insight-treatment-plan:{value}"))
 
 
 def opaque_id(value: str | None) -> str | None:
@@ -56,16 +75,18 @@ class AuditEvent:
     actor_id: str | None
     entity_id: str | None
     correlation_id: str
+    request_id: str
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "resourceType": "AuditEvent", "id": self.event_id, "recorded": self.recorded_at,
-            "action": self.action, "outcome": self.outcome, "correlationId": self.correlation_id,
+            "action": self.action, "outcome": self.outcome, "requestId": self.request_id,
+            "correlationId": self.correlation_id,
         }
         if self.actor_id:
-            result["agent"] = {"who": {"identifier": {"value": self.actor_id}}}
+            result["actorId"] = contract_uuid(self.actor_id)
         if self.entity_id:
-            result["entity"] = [{"what": {"identifier": {"value": self.entity_id}}}]
+            result["resourceId"] = contract_uuid(self.entity_id)
         return result
 
 
@@ -80,19 +101,26 @@ class Observability:
         self._audit: list[AuditEvent] = []
 
     @contextmanager
-    def bind(self, correlation_id: str | None) -> Iterator[str]:
+    def bind(self, correlation_id: str | None, *, request_id: str | None = None) -> Iterator[str]:
         correlation = safe_correlation_id(correlation_id)
+        request = safe_request_id(request_id)
         correlation_token = _correlation.set(correlation)
+        request_token = _request.set(request)
         observer_token = _current.set(self)
         try:
             yield correlation
         finally:
             _current.reset(observer_token)
+            _request.reset(request_token)
             _correlation.reset(correlation_token)
 
     @property
     def correlation_id(self) -> str:
         return _correlation.get() or safe_correlation_id(None)
+
+    @property
+    def request_id(self) -> str:
+        return _request.get() or safe_request_id(None)
 
     def metric(self, name: str, value: float = 1.0, *, labels: Mapping[str, str] | None = None) -> None:
         if not self._enabled:
@@ -113,6 +141,7 @@ class Observability:
             str(actor_id).strip() if actor_id and str(actor_id).strip() else None,
             str(entity_id).strip() if entity_id and str(entity_id).strip() else None,
             self.correlation_id,
+            self.request_id,
         )
         if self._enabled:
             with self._lock:

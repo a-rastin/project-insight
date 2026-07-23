@@ -77,6 +77,14 @@ class Auth03SecurityTests(AuthTestCase):
         self.assertNotIn("jwt-secret", entry["metadata"])
         self.assertIn("safe", entry["metadata"])
 
+        security.record_audit(
+            "login",
+            metadata={"patient_name": "Alice Patient", "access_token": "secret-token"},
+        )
+        redacted = security.list_audit_entries(limit=1)[0]["metadata"]
+        self.assertNotIn("Alice Patient", redacted)
+        self.assertNotIn("secret-token", redacted)
+
         conn = security.get_conn()
         with self.assertRaises(sqlite3.IntegrityError):
             conn.execute("UPDATE audit_log SET status = 'failure' WHERE id = ?", (entry["id"],))

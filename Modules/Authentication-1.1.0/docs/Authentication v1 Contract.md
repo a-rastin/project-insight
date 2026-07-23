@@ -23,6 +23,8 @@ Authentication v1 owns:
 - disclaimer gating for psychiatrist accounts;
 - SQLite schema migrations for auth-owned persistence;
 - session verification for downstream modules.
+- append-only authentication lifecycle and security audit logging;
+- admin-only retrieval of PHI-redacted authentication security events.
 
 Authentication v1 does not own dashboard rendering. Dashboard routes belong to
 other modules at `/dashboard/admin` and `/dashboard/user`.
@@ -60,6 +62,7 @@ All current API routes are mounted under `/api/auth`.
 | `POST` | `/api/auth/logout` | Current | No | Revoke the current server-side session and expire the configured session cookie. |
 | `POST` | `/api/auth/register` | Current | Accepted `admin` session | Create an `admin` or `psychiatrist` account. |
 | `GET` | `/api/auth/admin/users` | Current | Accepted `admin` session | List accounts without password hashes. |
+| `GET` | `/api/auth/admin/audit` | Current | Accepted `admin` session | List PHI-redacted, auth-owned security events newest-first. |
 | `POST` | `/api/auth/admin/users/{user_id}/disable` | Current | Accepted `admin` session | Disable an account and revoke its sessions. |
 | `POST` | `/api/auth/admin/users/{user_id}/enable` | Current | Accepted `admin` session | Re-enable a disabled account. |
 | `POST` | `/api/auth/admin/users/{user_id}/reset-password` | Current | Accepted `admin` session | Set or generate a temporary password and revoke sessions. |
@@ -82,12 +85,21 @@ contract and must not be assumed by downstream modules:
 - anonymous or self-service registration;
 - anonymous or unauthenticated password reset;
 - account deletion;
-- audit log retrieval;
 - refresh tokens;
 - session introspection beyond `/api/auth/session`.
 
 If any of these capabilities are added after v1, they must be documented in a
 new versioned contract before downstream modules consume them.
+
+### `GET /api/auth/admin/audit`
+
+Returns Authentication-owned security and lifecycle events. The route requires
+an accepted `admin` session and supports `limit` (1-1000, default 200) and
+`offset` (default 0) query parameters. Results are newest-first.
+
+Authentication stores audit events append-only. Responses exclude raw client
+identifiers and redact secrets and clinical identifiers from metadata. This
+route does not return Treatment Plan provenance or Treatment Plan audit events.
 
 ## `POST /api/auth/login`
 

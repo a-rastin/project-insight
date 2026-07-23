@@ -3,10 +3,12 @@
   "$id": "https://insight.example/contracts/common/1.0.0/provenance.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["sourceModule", "sourceResourceId", "recordedAt"],
+  "required": ["sourceModule", "sourceResourceId", "sourceVersion", "contentHash", "recordedAt"],
   "properties": {
     "sourceModule": {"$ref": "identifiers.schema.json#/$defs/StableCode"},
     "sourceResourceId": {"$ref": "identifiers.schema.json#/$defs/Uuid"},
+    "sourceVersion": {"$ref": "identifiers.schema.json#/$defs/SemVer"},
+    "contentHash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
     "recordedAt": {"$ref": "identifiers.schema.json#/$defs/UtcTimestamp"},
     "recordedBy": {"type": "string", "minLength": 1},
     "sourceReference": {"type": "string", "minLength": 1}

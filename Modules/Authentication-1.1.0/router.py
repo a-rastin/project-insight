@@ -1,6 +1,6 @@
 ﻿from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
 
 try:
@@ -466,6 +466,24 @@ def register(body: RegisterRequest, request: Request):
 def list_accounts(request: Request):
     _require_admin(request)
     return AccountListResponse(ok=True, users=[_account_response(row) for row in security.list_users()])
+
+
+@router.get("/admin/audit", response_model=AuditListResponse)
+def list_audit(request: Request, limit: int = Query(default=200, ge=1, le=1000), offset: int = Query(default=0, ge=0)):
+    """Return auth-owned security events to accepted administrators only."""
+    payload = _require_admin(request)
+    entries = security.list_audit_entries(limit=limit, offset=offset)
+    _audit(
+        request,
+        "audit_retrieve",
+        actor={"id": int(payload["sub"]), "username": payload.get("username")},
+        metadata={"limit": limit, "offset": offset},
+    )
+    return AuditListResponse(
+        ok=True,
+        entries=[AuditEntry(**{**entry, "client_ip": None}) for entry in entries],
+        count=len(entries),
+    )
 
 
 @router.post("/admin/users/{user_id}/disable", response_model=MessageResponse)

@@ -122,6 +122,28 @@ class AuthRouteTests(AuthTestCase):
         self.assertEqual(body["clinical_role"], "psychiatrist")
         self.assertEqual(body["legacy_role"], "user")
 
+    def test_admin_audit_route_is_protected_and_phi_safe(self):
+        anonymous = self.client().get("/api/auth/admin/audit")
+        self.assertEqual(anonymous.status_code, 401)
+
+        client = self.login_admin()
+        security.record_audit(
+            "login",
+            actor={"id": 1, "username": "Admin"},
+            metadata={"patientName": "Alice Patient", "reason": "invalid_credentials"},
+        )
+        response = client.get("/api/auth/admin/audit?limit=1&offset=0")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["ok"])
+        self.assertEqual(body["count"], 1)
+        entry = body["entries"][0]
+        self.assertEqual(entry["action"], "login")
+        self.assertNotIn("Alice Patient", response.text)
+        self.assertNotIn("password", response.text.lower())
+        self.assertNotIn("token", response.text.lower())
+        self.assertEqual("audit_retrieve", security.list_audit_entries(limit=1)[0]["action"])
+
 
 if __name__ == "__main__":
     import unittest

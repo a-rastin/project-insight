@@ -108,7 +108,23 @@ class TP20ObservabilityTests(unittest.TestCase):
             self.assertEqual(200, metrics.status_code)
             self.assertIn("tp_dependency_failure_total", metrics.text)
 
+    def test_audit_event_matches_common_contract_and_request_context(self):
+        observer = Observability(logger=logging.getLogger("tp20-contract"))
+        observer._logger.disabled = True
+        request_id = "00000000-0000-4000-8000-000000000022"
+        with observer.bind(CORRELATION_ID, request_id=request_id):
+            event = observer.audit("plan.finalize", "success", actor_id="opaque-actor", entity_id=PLAN_ID)
+
+        body = event.to_dict()
+        self.assertEqual(
+            {"resourceType", "id", "recorded", "action", "outcome", "requestId", "correlationId", "actorId", "resourceId"},
+            set(body),
+        )
+        self.assertEqual(request_id, body["requestId"])
+        self.assertEqual(CORRELATION_ID, body["correlationId"])
+        for key in ("id", "requestId", "correlationId", "actorId", "resourceId"):
+            self.assertRegex(body[key], r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+
 
 if __name__ == "__main__":
     unittest.main()
-
