@@ -3,7 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { createApp, createJsonAssessmentStore, createMemoryAssessmentStore } from "./server.js";
+import {
+  createApp,
+  createJsonAssessmentStore,
+  createMemoryAssessmentStore,
+  createSqliteAssessmentStore,
+  migrateAssessmentsJson,
+} from "./server.js";
 
 const assessmentMetadata = {
   patientId: "11111111-1111-4111-8111-111111111111",
@@ -215,6 +221,66 @@ test("HTTP interface works with an isolated production JSON adapter", async () =
       assert.equal(response.status, 200);
       assert.equal((await response.json()).status, "completed");
     });
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("SQLite adapter persists the repository contract and conditionally updates atomically", async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "severity-sqlite-"));
+  const resource = {
+    assessmentId: "44444444-4444-4444-8444-444444444444",
+    patientId: assessmentMetadata.patientId,
+    encounterId: assessmentMetadata.encounterId,
+    scale: "PANSS",
+    scaleVersion: "1.0.0",
+    rater: "rater-1",
+    assessedAt: assessmentMetadata.assessedAt,
+    status: "in_progress",
+    version: 1,
+    etag: '"v1"',
+    updatedAt: assessmentMetadata.assessedAt,
+    provenance: assessmentMetadata.provenance,
+  };
+  try {
+    const first = createSqliteAssessmentStore({ dataDir });
+    assert.equal(first.insert(resource), true);
+    assert.deepEqual(first.get(resource.assessmentId), resource);
+
+    const updated = first.update(resource.assessmentId, '"v1"', current => ({
+      ...current,
+      rater: "rater-2",
+      version: 2,
+      etag: '"v2"',
+    }));
+    assert.equal(updated.rater, "rater-2");
+    assert.equal(first.update(resource.assessmentId, '"v1"', current => current), null);
+
+    const second = createSqliteAssessmentStore({ dataDir });
+    assert.equal(second.get(resource.assessmentId).rater, "rater-2");
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("SQLite adapter migrates the legacy assessments.json map into the configured data directory", async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "severity-migration-"));
+  const sourceFile = path.join(dataDir, "legacy-assessments.json");
+  const legacy = {
+    "TEST-PATIENT-99": {
+      patient_code: "TEST-PATIENT-99",
+      status: "completed",
+      scores: { total: 37, positive: 4, negative: 2, general: 1 },
+      items: { P1: 4, N1: 2, G1: 1 },
+      updated_at: "2026-07-22T13:01:43.543Z",
+    },
+  };
+  fs.writeFileSync(sourceFile, JSON.stringify(legacy));
+  try {
+    const store = createSqliteAssessmentStore({ dataDir, databaseFile: "migrated.sqlite" });
+    assert.equal(migrateAssessmentsJson({ sourceFile, store }), 1);
+    assert.deepEqual(store.get("TEST-PATIENT-99"), legacy["TEST-PATIENT-99"]);
+    assert.equal(migrateAssessmentsJson({ sourceFile, store }), 0);
   } finally {
     fs.rmSync(dataDir, { recursive: true, force: true });
   }

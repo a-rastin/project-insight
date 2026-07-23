@@ -3,6 +3,12 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { AssessmentError, computePanssScores, createSeverityAssessmentModule } from "./severity-assessment.js";
+import {
+  createJsonAssessmentStore,
+  createMemoryAssessmentStore,
+  createSqliteAssessmentStore,
+  migrateAssessmentsJson,
+} from "./assessment-repository.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,52 +19,19 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-export function createJsonAssessmentStore({
-  dataDir = process.env.SEVERITY_DATA_DIR || DEFAULT_DATA_DIR,
-  fileName = "assessments.json"
-} = {}) {
-  const dataFile = path.join(dataDir, fileName);
-  fs.mkdirSync(dataDir, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, JSON.stringify({}, null, 2));
-  }
+export { createJsonAssessmentStore, createMemoryAssessmentStore, createSqliteAssessmentStore, migrateAssessmentsJson };
 
-  return {
-    read() {
-      try {
-        const parsed = JSON.parse(fs.readFileSync(dataFile, "utf8"));
-        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-      } catch (error) {
-        console.error("Error reading database:", error);
-        return {};
-      }
-    },
-    write(data) {
-      try {
-        fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
-        return true;
-      } catch (error) {
-        console.error("Error writing database:", error);
-        return false;
-      }
-    }
-  };
+function createDefaultAssessmentStore() {
+  const dataDir = process.env.SEVERITY_DATA_DIR || DEFAULT_DATA_DIR;
+  const store = createSqliteAssessmentStore({ dataDir });
+  migrateAssessmentsJson({
+    sourceFile: path.join(dataDir, "assessments.json"),
+    store,
+  });
+  return store;
 }
 
-export function createMemoryAssessmentStore(initial = {}) {
-  let state = clone(initial);
-  return {
-    read() {
-      return clone(state);
-    },
-    write(data) {
-      state = clone(data);
-      return true;
-    }
-  };
-}
-
-export function createApp({ assessmentStore = createJsonAssessmentStore() } = {}) {
+export function createApp({ assessmentStore = createDefaultAssessmentStore() } = {}) {
   const app = express();
   const severityAssessments = createSeverityAssessmentModule({ assessmentStore });
 
