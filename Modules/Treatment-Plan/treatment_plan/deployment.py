@@ -34,7 +34,10 @@ def settings_from_environment() -> Settings:
 
 def migration_gate(settings: Settings) -> tuple[str, ...]:
     repository = SQLiteRepository(settings.database_path)
-    changed = repository.migrate()
+    try:
+        changed = repository.migrate()
+    except (sqlite3.Error, OSError, ValueError) as exc:
+        raise RuntimeError("migration gate found a partial or unexpected schema") from exc
     expected = tuple(migration.version for migration in MigrationRunner(repository.migrations, "sqlite").migrations())
     with closing(sqlite3.connect(settings.database_path)) as connection:
         actual = tuple(row[0] for row in connection.execute("SELECT version FROM schema_migrations ORDER BY version"))

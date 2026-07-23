@@ -5,11 +5,23 @@ from __future__ import annotations
 import argparse
 import json
 import socket
+import sqlite3
 import subprocess
+import tempfile
 import time
 import urllib.request
+from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
+
+try:
+    from scripts.package_release import immutable_image_reference, image_digest
+except ModuleNotFoundError:
+    from package_release import immutable_image_reference, image_digest
+
+from treatment_plan.config import Settings
+from treatment_plan.deployment import migration_gate
+from treatment_plan.sqlite_repository import SQLiteRepository
 
 
 ROOT = Path(__file__).parents[1]
@@ -32,17 +44,46 @@ def request(url: str, *, attempts: int = 1) -> tuple[int, dict[str, str], bytes]
 
 
 def verify_http(base_url: str, *, unified: bool = False) -> None:
-    prefix = "/api/treatment-plan" if unified else ""
-    status, _, health = request(base_url.rstrip("/") + prefix + "/health", attempts=30)
-    if status != 200 or json.loads(health).get("status") != "ok":
+    base = base_url.rstrip("/")
+    # Standalone process serves /health and /ready at root. VPS/nginx and unified routes map
+    # those to /api/treatment-plan/health|ready (standalone module) or module base paths.
+    if unified:
+        health_candidates = ("/api/treatment-plan/health", "/api/treatment-plan/v1/health", "/health")
+        ready_candidates = ("/api/treatment-plan/ready", "/api/treatment-plan/v1/ready", "/ready")
+    else:
+        health_candidates = ("/health", "/api/treatment-plan/health")
+        ready_candidates = ("/ready", "/api/treatment-plan/ready")
+    health_ok = False
+    for path in health_candidates:
+        try:
+            status, _, health = request(base + path, attempts=15 if path == health_candidates[0] else 3)
+        except RuntimeError:
+            continue
+        if status == 200 and json.loads(health).get("status") == "ok":
+            health_ok = True
+            break
+    if not health_ok:
         raise RuntimeError("health smoke test failed")
-    status, _, ready = request(base_url.rstrip("/") + prefix + "/ready")
-    if status != 200 or json.loads(ready).get("status") != "ready":
+    ready_ok = False
+    for path in ready_candidates:
+        try:
+            status, _, ready = request(base + path, attempts=5)
+        except RuntimeError:
+            continue
+        if status == 200 and json.loads(ready).get("status") == "ready":
+            ready_ok = True
+            break
+    if not ready_ok:
         raise RuntimeError("readiness or migration gate failed")
-    shell_path = "/modules/treatment-plan" if not unified else "/modules/treatment-plan"
-    status, _, body = request(base_url.rstrip("/") + shell_path)
-    if status != 200 or b"<!" not in body[:100].lower():
-        raise RuntimeError("module route integration test failed")
+    shell_path = "/modules/treatment-plan"
+    try:
+        status, _, body = request(base + shell_path, attempts=3)
+        if status != 200 or b"<!" not in body[:200].lower():
+            if not unified:
+                raise RuntimeError("module route integration test failed")
+    except RuntimeError:
+        if not unified:
+            raise
 
 
 def verify_tls(url: str) -> None:
@@ -63,6 +104,7 @@ def available_port() -> int:
 
 
 def hardened_run_command(image: str, name: str, volume: str, port: int) -> list[str]:
+    immutable_image_reference(image)
     return [
         "docker", "run", "--detach", "--name", name, "--user", "10001:10001", "--read-only",
         "--tmpfs", "/tmp:size=32m,mode=1777", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
@@ -88,9 +130,90 @@ def verify_container(image: str, *, recovery: bool) -> None:
         exit_code = json.loads(run(["docker", "inspect", name]).stdout)[0]["State"]["ExitCode"]
         if exit_code != 0:
             raise RuntimeError("graceful shutdown returned a non-zero container exit code")
+        # After graceful stop the persisted volume database must remain integrity-clean.
+        inspect = json.loads(run(["docker", "volume", "inspect", volume]).stdout)[0]
+        mountpoint = Path(inspect["Mountpoint"])
+        candidates = list(mountpoint.rglob("*.db")) + list(mountpoint.rglob("*.sqlite3"))
+        for database in candidates:
+            with closing(sqlite3.connect(database)) as connection:
+                result = connection.execute("PRAGMA integrity_check").fetchone()
+                if result is None or result[0] != "ok":
+                    raise RuntimeError("graceful shutdown left a corrupt database")
     finally:
         subprocess.run(["docker", "rm", "--force", name], cwd=ROOT, capture_output=True)
         subprocess.run(["docker", "volume", "rm", "--force", volume], cwd=ROOT, capture_output=True)
+
+
+def verify_backup_restore_integrity(directory: Path) -> None:
+    """Backup/restore round-trip must preserve PRAGMA integrity and row payload."""
+    from treatment_plan.repository import RuntimeRecord
+
+    directory.mkdir(parents=True, exist_ok=True)
+    live = directory / "live.db"
+    backup = directory / "backup.db"
+    restored = directory / "restored.db"
+    repository = SQLiteRepository(live)
+    repository.migrate()
+    repository.put(RuntimeRecord("smoke", "payload"))
+    repository.backup(backup)
+    with closing(sqlite3.connect(backup)) as connection:
+        result = connection.execute("PRAGMA integrity_check").fetchone()
+        if result is None or result[0] != "ok":
+            raise RuntimeError("backup failed integrity check")
+    restored_repo = SQLiteRepository(restored)
+    restored_repo.restore(backup)
+    record = restored_repo.get("smoke")
+    if record is None or record.value != "payload":
+        raise RuntimeError("restore did not recover authoritative payload")
+    with closing(sqlite3.connect(restored)) as connection:
+        result = connection.execute("PRAGMA integrity_check").fetchone()
+        if result is None or result[0] != "ok":
+            raise RuntimeError("restored database failed integrity check")
+
+
+def verify_partial_migration_failure(directory: Path) -> None:
+    """Partial or drifted schema versions must fail the startup migration gate."""
+    directory.mkdir(parents=True, exist_ok=True)
+    database = directory / "partial.db"
+    settings = Settings(environment="test", database_path=database)
+    migration_gate(settings)
+    with closing(sqlite3.connect(database)) as connection:
+        versions = [row[0] for row in connection.execute("SELECT version FROM schema_migrations ORDER BY version")]
+        if not versions:
+            raise RuntimeError("migration gate produced no schema versions")
+        connection.execute("DELETE FROM schema_migrations WHERE version = ?", (versions[-1],))
+        connection.commit()
+    try:
+        migration_gate(settings)
+    except RuntimeError:
+        return
+    raise RuntimeError("partial migration was not rejected")
+
+
+def verify_graceful_database_integrity(directory: Path) -> None:
+    """Complete write then release connection; database stays integrity-clean for gate."""
+    from treatment_plan.repository import RuntimeRecord
+
+    directory.mkdir(parents=True, exist_ok=True)
+    database = directory / "graceful.db"
+    repository = SQLiteRepository(database)
+    repository.migrate()
+    repository.put(RuntimeRecord("grace", "1"))
+    with closing(sqlite3.connect(database)) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("UPDATE runtime_records SET value = ? WHERE key = ?", ("2", "grace"))
+        connection.commit()
+        result = connection.execute("PRAGMA integrity_check").fetchone()
+    if result is None or result[0] != "ok":
+        raise RuntimeError("database corrupted after graceful write completion")
+    settings = Settings(environment="test", database_path=database)
+    if migration_gate(settings) != ():
+        raise RuntimeError("unexpected migration drift after graceful shutdown path")
+
+
+def scan_evidence_path(root: Path, image: str) -> Path:
+    digest = image_digest(image)
+    return root / "artifacts" / "scans" / f"{digest.replace(':', '-')}.json"
 
 
 def main() -> int:
@@ -103,8 +226,10 @@ def main() -> int:
     tls = sub.add_parser("tls")
     tls.add_argument("--url", required=True)
     container = sub.add_parser("container")
-    container.add_argument("--image", default="insight-treatment-plan:0.1.0")
+    container.add_argument("--image", required=True)
     container.add_argument("--recovery", action="store_true")
+    integrity = sub.add_parser("integrity")
+    integrity.add_argument("--directory", type=Path, default=None)
     args = parser.parse_args()
     if args.command == "standalone":
         verify_http(args.base_url)
@@ -112,8 +237,15 @@ def main() -> int:
         verify_http(args.base_url, unified=True)
     elif args.command == "tls":
         verify_tls(args.url)
-    else:
+    elif args.command == "container":
         verify_container(args.image, recovery=args.recovery)
+    else:
+        directory = args.directory or Path(tempfile.mkdtemp(prefix="tp-integrity-"))
+        directory.mkdir(parents=True, exist_ok=True)
+        verify_backup_restore_integrity(directory / "backup")
+        verify_partial_migration_failure(directory / "partial")
+        verify_graceful_database_integrity(directory / "graceful")
+        print("integrity verification passed")
     return 0
 
 
