@@ -189,6 +189,68 @@ function resolveMedication(input, kb) {
   return engine.resolveDrug(input, index);
 }
 
+// DDI-02 request/response contract helpers.
+//
+// Request (`request` shape passed to interactionCheck):
+//   - medications[]: originalText, normalized identity when known
+//     (medicationCode/codeSystem), dose, route, frequency.
+//   - optional patientId/encounterId accepted only when persist === true.
+//   - idempotencyKey REQUIRED (enforced by the route handler).
+//
+// Response shape (built here):
+//   - normalizedMedications[] / unresolvedMedications[] (ambiguous + unknown).
+//   - pairsChecked[] : every normalized-pair the engine actually examined.
+//   - alerts[]      : severity, mechanism, evidence[], recommendation
+//                     (and the TP-13 alias recommendedAction).
+//   - knowledgeBaseId / knowledgeBaseVersion / medicationSetHash.
+//   - coverage      : { medicationCount, resolved, unresolved, pairsExpected,
+//                       pairsChecked, complete }.
+//   - outcome       : "no-interactions" | "interactions-identified"
+//                      | "indeterminate".
+//                      "indeterminate" is required by DDI-02 when zero alerts
+//                      accompany ANY unresolved identity OR incomplete pair
+//                      coverage — never "no interactions".
+//   - persisted     : true only when persistence actually wrote a durable
+//                      check record (a later packet); DDI-02 only validates
+//                      the request flag and echoes persisted=false explicitly
+//                      so callers do not mistake absence for success.
+
+function pairCount(medicationCount) {
+  return (medicationCount * (medicationCount - 1)) / 2;
+}
+
+function buildCandidate(drug) {
+  return { conceptId: drug.id, codeSystem: null, display: drug.name };
+}
+
+function identityStatus(resolution, medicationName) {
+  if (resolution.status === "resolved") return "resolved";
+  if (resolution.status === "ambiguous") return "ambiguous";
+  if (medicationName && resolution.status === "unknown") return "unknown";
+  if (!medicationName) return "missing-original-text";
+  return "unknown";
+}
+
+function buildCoverage({ medicationCount, resolvedCount, unresolvedCount, pairsExpected, pairsChecked }) {
+  return {
+    medicationCount,
+    resolved: resolvedCount,
+    unresolved: unresolvedCount,
+    pairsExpected,
+    pairsChecked,
+    complete:
+      resolvedCount + unresolvedCount === medicationCount
+      && unresolvedCount === 0
+      && pairsChecked === pairsExpected,
+  };
+}
+
+function buildOutcome({ unresolvedCount, alertCount, coverage }) {
+  if (unresolvedCount > 0 || !coverage.complete) return "indeterminate";
+  if (alertCount > 0) return "interactions-identified";
+  return "no-interactions";
+}
+
 function interactionCheck(request, kb) {
   const meds = Array.isArray(request.medications) ? request.medications : [];
   const engineMeds = meds.map(medicationInputToEngine);
@@ -196,38 +258,45 @@ function interactionCheck(request, kb) {
   const resolutions = engineMeds.map((med) => engine.resolveDrug(med.name, index));
   const result = engine.checkInteractions(engineMeds, kb);
 
-  const normalizedMedications = engineMeds.map((med, inputIndex) => {
+  const normalizedMedications = [];
+  const unresolvedMedications = [];
+  const resolvedIndexes = [];
+
+  engineMeds.forEach((med, inputIndex) => {
     const resolution = resolutions[inputIndex];
-    const identity = {
+    const status = identityStatus(resolution, med.name);
+    const baseIdentity = {
       inputIndex,
       originalText: med.name,
       codeSystem: med.codeSystem || null,
     };
-    if (resolution.status === "resolved") {
-      identity.conceptId = resolution.drug.id;
-      identity.display = resolution.drug.name;
-    } else if (resolution.status === "ambiguous") {
-      identity.conceptId = null;
-      identity.candidates = resolution.candidates.map((drug) => ({ id: drug.id, name: drug.name }));
+    if (status === "resolved") {
+      normalizedMedications.push({
+        ...baseIdentity,
+        conceptId: resolution.drug.id,
+        display: resolution.drug.name,
+      });
+      resolvedIndexes.push(inputIndex);
+    } else if (status === "ambiguous") {
+      unresolvedMedications.push({
+        ...baseIdentity,
+        reason: "ambiguous",
+        candidates: resolution.candidates.map(buildCandidate),
+      });
+    } else if (status === "unknown") {
+      unresolvedMedications.push({
+        ...baseIdentity,
+        reason: "unknown",
+        candidates: [],
+      });
     } else {
-      identity.conceptId = null;
+      unresolvedMedications.push({
+        ...baseIdentity,
+        reason: status,
+        candidates: [],
+      });
     }
-    return identity;
   });
-
-  const unresolvedMedications = resolutions
-    .map((resolution, inputIndex) => ({
-      resolution,
-      inputIndex,
-      medication: engineMeds[inputIndex],
-    }))
-    .filter((row) => row.resolution.status === "unknown" && row.medication.name);
-
-  const unresolvedInputIndexes = new Set(unresolvedMedications.map((row) => row.inputIndex));
-  const resolvedIndexes = resolutions
-    .map((resolution, idx) => ({ resolution, idx }))
-    .filter((row) => row.resolution.status === "resolved")
-    .map((row) => row.idx);
 
   const pairsChecked = [];
   for (let left = 0; left < resolvedIndexes.length; left += 1) {
@@ -256,6 +325,7 @@ function interactionCheck(request, kb) {
       severity: alert.severity,
       mechanism: alert.mechanism || null,
       recommendedAction: alert.recommendedAction,
+      recommendation: alert.recommendedAction,
       evidence: [
         { source: alert.evidenceSource || "knowledge-base", excerpt: alert.evidenceExcerpt || "" },
       ],
@@ -263,12 +333,18 @@ function interactionCheck(request, kb) {
     };
   });
 
-  const unresolved = unresolvedMedications.map((row) => ({
-    inputIndex: row.inputIndex,
-    originalText: row.medication.name,
-    codeSystem: row.medication.codeSystem || null,
-    candidates: [],
-  }));
+  const medicationCount = engineMeds.length;
+  const resolvedCount = resolvedIndexes.length;
+  const unresolvedCount = unresolvedMedications.length;
+  const coverage = buildCoverage({
+    medicationCount,
+    resolvedCount,
+    unresolvedCount,
+    pairsExpected: pairCount(resolvedCount),
+    pairsChecked: pairsChecked.length,
+  });
+  const outcome = buildOutcome({ unresolvedCount, alertCount: alerts.length, coverage });
+  const persistence = buildPersistenceResponse(request);
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -278,10 +354,32 @@ function interactionCheck(request, kb) {
     knowledgeBaseId: `${MODULE_ID}:${kb.version}`,
     knowledgeBaseVersion: kb.version,
     normalizedMedications,
-    unresolvedMedications: unresolved,
+    unresolvedMedications,
     pairsChecked,
     alerts,
+    coverage,
+    outcome,
+    ...persistence,
   };
+}
+
+// DDI-02 persistence contract helper. actual persistence wiring (writing a
+// durable check record keyed by checkId against patientId/encounterId) is a
+// later packet. here we only validate the request flag and explicitly return
+// persisted:false so callers cannot mistake an absent field for success.
+// invalid requests throw an Error carrying the problem code; the route wraps
+// it into the 400 problem-details response.
+function buildPersistenceResponse(request) {
+  if (!request || request.persist !== true) return {};
+  const patientId = request.patientId;
+  const encounterId = request.encounterId;
+  if (typeof patientId !== "string" || !patientId.trim()) {
+    throw Object.assign(new Error("patientId is required when persist=true"), { code: "INVALID_REQUEST" });
+  }
+  if (typeof encounterId !== "string" || !encounterId.trim()) {
+    throw Object.assign(new Error("encounterId is required when persist=true"), { code: "INVALID_REQUEST" });
+  }
+  return { persisted: false };
 }
 
 function requireAuth(request, auth, options = {}) {
@@ -411,7 +509,13 @@ function createDdiServer(options = {}) {
     }
     const kb = await loadActiveKb(activeVersion);
     if (!kb) return pivotalProblem(request, 503, "KNOWLEDGE_BASE_UNAVAILABLE", "No active knowledge base is loaded.");
-    const result = interactionCheck(body, kb);
+    let result;
+    try {
+      result = interactionCheck(body, kb);
+    } catch (error) {
+      const code = error && error.code ? String(error.code) : "INVALID_REQUEST";
+      return pivotalProblem(request, 400, code, error?.message || "Invalid request.");
+    }
     return ok(request, result, 200);
   }
 

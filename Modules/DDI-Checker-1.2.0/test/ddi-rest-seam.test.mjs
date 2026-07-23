@@ -168,6 +168,13 @@ test("POST /api/ddi-checker/v1/interaction-checks fulfils the TP-13 contract", a
   assert.equal(body.alerts.length, 1);
   assert.equal(body.alerts[0].severity, "contraindicated");
   assert.deepEqual(body.alerts[0].medicationInputIndexes, [0, 1]);
+  // DDI-02: the alert carries recommendation (canonical) alongside recommendedAction.
+  assert.equal(body.alerts[0].recommendation, body.alerts[0].recommendedAction);
+  // DDI-02: response carries a coverage object and an explicit outcome for an
+  // all-resolved set with one identified alert.
+  assert.equal(body.outcome, "interactions-identified");
+  assert.equal(body.coverage.complete, true);
+  assert.equal(body.coverage.pairsChecked, body.coverage.pairsExpected);
 });
 
 test("POST /api/ddi-checker/v1/interaction-checks fails fast when idempotency-key is missing", async () => {
@@ -196,6 +203,11 @@ test("successful no-interaction check returns a TP13-distinguishable knowledgeBa
   assert.equal(body.unresolvedMedications.length, 0);
   assert.ok(body.knowledgeBaseId);
   assert.equal(body.knowledgeBaseVersion, "ikb-test");
+  // DDI-02: a clean check (no alerts, no unresolved, complete coverage) is
+  // declared outcome "no-interactions" — never "indeterminate".
+  assert.equal(body.outcome, "no-interactions");
+  assert.equal(body.coverage.complete, true);
+  assert.equal(body.persisted, undefined);
 });
 
 test("GET /api/ddi-checker/v1/knowledge-bases/{version} returns the active KB summary", async () => {
