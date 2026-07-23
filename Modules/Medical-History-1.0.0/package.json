@@ -1,15 +1,18 @@
-﻿{
-    "name":  "medical-history-module",
-    "version":  "1.0.0",
-    "private":  true,
-    "description":  "Standalone Medical History module with internal REST API communication.",
-    "main":  "server.js",
-    "scripts":  {
-                    "start":  "node server.js",
-                    "dev":  "node server.js",
-                    "test":  "node --test"
-                },
-    "engines":  {
-                    "node":  "\u003e=18"
-                }
+{
+    "name": "medical-history-module",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Standalone Medical History module with internal REST API communication.",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js",
+        "test": "node --test"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "dependencies": {
+        "better-sqlite3": "^9.6.0"
+    }
 }

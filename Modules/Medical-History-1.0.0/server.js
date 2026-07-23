@@ -8,15 +8,14 @@ const {
   structureCondition,
   structureMedication,
 } = require("./medical-history-submission.js");
+const {
+  createDefaultMedicalHistoryRepository,
+} = require("./repository.js");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const DATA_DIR = process.env.MEDICAL_HISTORY_DATA_DIR || path.join(ROOT_DIR, "data");
-const SESSIONS_FILE = path.join(DATA_DIR, "activation_sessions.json");
-const SUBMISSIONS_FILE = path.join(DATA_DIR, "medical_history_submissions.json");
 const SCHEMA_FILE = path.join(ROOT_DIR, "data", "medical_history_schema.json");
-const submissionStore = new MedicalHistorySubmissionStore({ filePath: SUBMISSIONS_FILE });
 
 const COMORBIDITY_OPTIONS = [
   "Diabetes mellitus",
@@ -54,32 +53,29 @@ function normalizeCode(code) {
   return String(code || "").trim().toUpperCase();
 }
 
-async function ensureDataFiles() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await ensureJsonFile(SESSIONS_FILE, []);
-  await submissionStore.ensure();
-}
-
-async function ensureJsonFile(filePath, defaultValue) {
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, JSON.stringify(defaultValue, null, 2));
+function corsOrigins() {
+  const raw = process.env.MEDICAL_HISTORY_CORS_ORIGINS;
+  if (raw && raw.trim()) {
+    return raw.split(",").map((part) => part.trim()).filter(Boolean);
   }
+  if (process.env.NODE_ENV === "production") return [];
+  return ["*"];
 }
 
-async function readJson(filePath, fallback) {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw || "null") ?? fallback;
-  } catch (error) {
-    if (error.code === "ENOENT") return fallback;
-    throw error;
+function applyCors(res, req) {
+  const origins = corsOrigins();
+  const requestOrigin = req.headers.origin;
+  if (origins.includes("*")) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  } else if (requestOrigin && origins.includes(requestOrigin)) {
+    res.setHeader("Access-Control-Allow-Origin", requestOrigin);
+    res.setHeader("Vary", "Origin");
   }
-}
-
-async function writeJson(filePath, value) {
-  await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token");
+  if (process.env.MEDICAL_HISTORY_CORS_CREDENTIALS === "1") {
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
 }
 
 async function parseBody(req) {
@@ -107,84 +103,18 @@ async function parseBody(req) {
   });
 }
 
-function sendJson(res, status, payload, headers = {}) {
+function sendJson(res, req, status, payload, headers = {}) {
+  applyCors(res, req);
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
     ...headers,
   });
   res.end(JSON.stringify(payload, null, 2));
 }
 
-function sendError(res, status, message, details) {
-  sendJson(res, status, { error: { message, details } });
-}
-
-async function activateMedicalHistory(req, res) {
-  const body = await parseBody(req);
-  if (!isValidCode(body.code)) {
-    sendError(res, 422, "Activation code must be exactly 6 alphanumeric characters.");
-    return;
-  }
-
-  const code = normalizeCode(body.code);
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-  const sessions = await readJson(SESSIONS_FILE, []);
-  const existingIndex = sessions.findIndex((session) => session.code === code && session.status !== "expired");
-  const activation = {
-    activationId: crypto.randomUUID(),
-    code,
-    status: "active",
-    receivedAt: now.toISOString(),
-    expiresAt: expiresAt.toISOString(),
-    context: {
-      patientId: body.patientId || null,
-      encounterId: body.encounterId || null,
-      requestedByModule: body.requestedByModule || null,
-      returnUrl: body.returnUrl || null
-    }
-  };
-
-  if (existingIndex >= 0) {
-    sessions[existingIndex] = activation;
-  } else {
-    sessions.push(activation);
-  }
-
-  await writeJson(SESSIONS_FILE, sessions);
-  sendJson(res, 201, {
-    ...activation,
-    launchUrl: `/?code=${encodeURIComponent(code)}`
-  });
-}
-
-async function getActivation(req, res, code) {
-  if (!isValidCode(code)) {
-    sendError(res, 422, "Activation code must be exactly 6 alphanumeric characters.");
-    return;
-  }
-
-  const normalizedCode = normalizeCode(code);
-  const sessions = await readJson(SESSIONS_FILE, []);
-  const activation = sessions.find((session) => session.code === normalizedCode);
-
-  if (!activation) {
-    sendError(res, 404, "No active Medical History session found for this code.");
-    return;
-  }
-
-  if (new Date(activation.expiresAt).getTime() < Date.now()) {
-    activation.status = "expired";
-    await writeJson(SESSIONS_FILE, sessions);
-    sendError(res, 410, "This Medical History activation code has expired.");
-    return;
-  }
-
-  sendJson(res, 200, activation);
+function sendError(res, req, status, message, details) {
+  sendJson(res, req, status, { error: { message, details } });
 }
 
 function validateSubmission(body, { requireCode = true } = {}) {
@@ -265,198 +195,350 @@ function identityFromUrl(url) {
   return { patientId, encounterId };
 }
 
-async function sendSubmission(req, res, submission, status = 200) {
-  if (!submission) {
-    sendError(res, 404, "Medical History submission was not found.");
-    return;
-  }
-  sendJson(res, status, submission, { ETag: submission.etag });
-}
+function createServer(options = {}) {
+  const repository = options.repository || createDefaultMedicalHistoryRepository({
+    dataDir: options.dataDir || process.env.MEDICAL_HISTORY_DATA_DIR || path.join(ROOT_DIR, "data"),
+  });
+  const submissionStore = options.submissionStore || new MedicalHistorySubmissionStore({ repository });
+  const security = options.security || null;
+  const readiness = options.readiness || (() => ({
+    ok: true,
+    checks: {
+      database: (() => {
+        try {
+          repository.ping();
+          return "ok";
+        } catch {
+          return "blocked";
+        }
+      })(),
+      authentication: security?.authConfigured ? "ok" : "disabled",
+      csrf: security?.csrfConfigured ? "ok" : "disabled",
+    },
+  }));
 
-async function submitMedicalHistory(req, res) {
-  const body = await parseBody(req);
-  const legacy = Object.prototype.hasOwnProperty.call(body, "code");
-  const errors = validateSubmission(body, { requireCode: legacy });
-  if (!legacy && !isCanonicalUuid(body.patientId)) errors.push("patientId must be a canonical non-nil UUID");
-  if (!legacy && !isCanonicalUuid(body.encounterId)) errors.push("encounterId must be a canonical non-nil UUID");
-  if (errors.length) {
-    sendError(res, 422, "Medical History submission failed validation.", errors);
-    return;
-  }
-
-  const data = submissionData(body);
-  let submission;
-  let sessions;
-  let activation;
-  if (legacy) {
-    const code = normalizeCode(body.code);
-    sessions = await readJson(SESSIONS_FILE, []);
-    activation = sessions.find((session) => session.code === code);
-    if (!activation || activation.status === "expired") {
-      sendError(res, 404, "Submit requires an active Medical History activation code.");
+  async function sendSubmission(req, res, submission, status = 200) {
+    if (!submission) {
+      sendError(res, req, 404, "Medical History submission was not found.");
       return;
     }
-    const patientId = isCanonicalUuid(activation.context.patientId) ? activation.context.patientId : null;
-    const encounterId = isCanonicalUuid(activation.context.encounterId) ? activation.context.encounterId : null;
-    submission = await submissionStore.createLegacy({
-      patientId,
-      encounterId,
-      legacyPatientId: activation.context.patientId,
-      legacyEncounterId: activation.context.encounterId,
-      author: body.submittedBy || "standalone-ui",
-      data,
+    sendJson(res, req, status, submission, { ETag: submission.etag });
+  }
+
+  async function activateMedicalHistory(req, res) {
+    const body = await parseBody(req);
+    if (!isValidCode(body.code)) {
+      sendError(res, req, 422, "Activation code must be exactly 6 alphanumeric characters.");
+      return;
+    }
+
+    const code = normalizeCode(body.code);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const activation = {
+      activationId: crypto.randomUUID(),
       code,
+      status: "active",
+      receivedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      context: {
+        patientId: body.patientId || null,
+        encounterId: body.encounterId || null,
+        requestedByModule: body.requestedByModule || null,
+        returnUrl: body.returnUrl || null
+      }
+    };
+
+    await repository.upsertActivation(activation);
+    if (typeof repository.appendAudit === "function") {
+      repository.appendAudit({
+        action: "activation.upsert",
+        actor: req.auth?.userId || "anonymous",
+        role: req.auth?.roles?.[0] || null,
+        detail: { code },
+      });
+    }
+    sendJson(res, req, 201, {
+      ...activation,
+      launchUrl: `/?code=${encodeURIComponent(code)}`
+    });
+  }
+
+  async function getActivation(req, res, code) {
+    if (!isValidCode(code)) {
+      sendError(res, req, 422, "Activation code must be exactly 6 alphanumeric characters.");
+      return;
+    }
+
+    const normalizedCode = normalizeCode(code);
+    const activation = repository.getActivationByCode(normalizedCode);
+
+    if (!activation) {
+      sendError(res, req, 404, "No active Medical History session found for this code.");
+      return;
+    }
+
+    if (new Date(activation.expiresAt).getTime() < Date.now()) {
+      activation.status = "expired";
+      await repository.replaceActivation(activation);
+      sendError(res, req, 410, "This Medical History activation code has expired.");
+      return;
+    }
+
+    sendJson(res, req, 200, activation);
+  }
+
+  async function submitMedicalHistory(req, res) {
+    const body = await parseBody(req);
+    const legacy = Object.prototype.hasOwnProperty.call(body, "code");
+    const errors = validateSubmission(body, { requireCode: legacy });
+    if (!legacy && !isCanonicalUuid(body.patientId)) errors.push("patientId must be a canonical non-nil UUID");
+    if (!legacy && !isCanonicalUuid(body.encounterId)) errors.push("encounterId must be a canonical non-nil UUID");
+    if (errors.length) {
+      sendError(res, req, 422, "Medical History submission failed validation.", errors);
+      return;
+    }
+
+    const data = submissionData(body);
+    let submission;
+    if (legacy) {
+      const code = normalizeCode(body.code);
+      const activation = repository.getActivationByCode(code);
+      if (!activation || activation.status === "expired") {
+        sendError(res, req, 404, "Submit requires an active Medical History activation code.");
+        return;
+      }
+      const patientId = isCanonicalUuid(activation.context.patientId) ? activation.context.patientId : null;
+      const encounterId = isCanonicalUuid(activation.context.encounterId) ? activation.context.encounterId : null;
+      const resource = submissionStore.buildResource({
+        patientId,
+        encounterId,
+        legacyPatientId: activation.context.patientId,
+        legacyEncounterId: activation.context.encounterId,
+        author: body.submittedBy || "standalone-ui",
+        data,
+        code,
+        source: body.source || "medical-history-module",
+        allowLegacyIdentity: true,
+      });
+      activation.status = "submitted";
+      activation.submissionId = resource.submissionId;
+      activation.submittedAt = resource.submittedAt;
+      const result = await repository.submitLegacyWithActivation({
+        activation,
+        submission: resource,
+      });
+      submission = result.submission;
+      if (typeof repository.appendAudit === "function") {
+        repository.appendAudit({
+          action: "submission.create",
+          actor: req.auth?.userId || resource.author,
+          role: req.auth?.roles?.[0] || null,
+          patientId: resource.patientId,
+          submissionId: resource.submissionId,
+          detail: { mode: "legacy", code },
+        });
+      }
+      await sendSubmission(req, res, legacySubmissionResponse(submission), 201);
+      return;
+    }
+
+    submission = await submissionStore.create({
+      patientId: body.patientId,
+      encounterId: body.encounterId,
+      author: body.author || body.submittedBy,
+      data,
+      status: body.status || "submitted",
       source: body.source || "medical-history-module",
     });
-    activation.status = "submitted";
-    activation.submissionId = submission.submissionId;
-    activation.submittedAt = submission.submittedAt;
-    await writeJson(SESSIONS_FILE, sessions);
-    await sendSubmission(req, res, legacySubmissionResponse(submission), 201);
-    return;
+    if (typeof repository.appendAudit === "function") {
+      repository.appendAudit({
+        action: "submission.create",
+        actor: req.auth?.userId || submission.author,
+        role: req.auth?.roles?.[0] || null,
+        patientId: submission.patientId,
+        submissionId: submission.submissionId,
+        detail: { mode: "canonical" },
+      });
+    }
+    await sendSubmission(req, res, submission, 201);
   }
 
-  submission = await submissionStore.create({
-    patientId: body.patientId,
-    encounterId: body.encounterId,
-    author: body.author || body.submittedBy,
-    data,
-    status: body.status || "submitted",
-    source: body.source || "medical-history-module",
-  });
-  await sendSubmission(req, res, submission, 201);
-}
-
-async function listSubmissions(req, res, url) {
-  const submissions = await readJson(SUBMISSIONS_FILE, []);
-  const code = url.searchParams.get("code");
-  if (code) {
-    sendJson(res, 200, submissions.filter((submission) => submission.code === normalizeCode(code)));
-    return;
-  }
-  sendJson(res, 200, submissions);
-}
-
-async function getLatestSubmission(req, res, url) {
-  const submission = await submissionStore.getLatest(identityFromUrl(url));
-  await sendSubmission(req, res, submission);
-}
-
-async function getSubmissionHistory(req, res, url) {
-  const history = await submissionStore.getHistory(identityFromUrl(url));
-  sendJson(res, 200, history, history.length ? { ETag: history[history.length - 1].etag } : {});
-}
-
-async function getSubmission(req, res, id) {
-  await sendSubmission(req, res, await submissionStore.findById(id));
-}
-
-async function serveStatic(req, res, url) {
-  const requestedPath = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
-  const filePath = path.normalize(path.join(PUBLIC_DIR, requestedPath));
-
-  if (!filePath.startsWith(PUBLIC_DIR)) {
-    sendError(res, 403, "Forbidden path.");
-    return;
+  async function listSubmissions(req, res, url) {
+    const code = url.searchParams.get("code");
+    const submissions = repository.listSubmissions(code ? { code: normalizeCode(code) } : {});
+    sendJson(res, req, 200, submissions);
   }
 
-  try {
-    const body = await fs.readFile(filePath);
-    const contentType = MIME_TYPES[path.extname(filePath)] || "application/octet-stream";
-    res.writeHead(200, { "Content-Type": contentType });
-    res.end(body);
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      res.writeHead(302, { Location: "/" });
-      res.end();
+  async function getLatestSubmission(req, res, url) {
+    const submission = await submissionStore.getLatest(identityFromUrl(url));
+    await sendSubmission(req, res, submission);
+  }
+
+  async function getSubmissionHistory(req, res, url) {
+    const history = await submissionStore.getHistory(identityFromUrl(url));
+    sendJson(res, req, 200, history, history.length ? { ETag: history[history.length - 1].etag } : {});
+  }
+
+  async function getSubmission(req, res, id) {
+    await sendSubmission(req, res, await submissionStore.findById(id));
+  }
+
+  async function serveStatic(req, res, url) {
+    const requestedPath = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+    const filePath = path.normalize(path.join(PUBLIC_DIR, requestedPath));
+
+    if (!filePath.startsWith(PUBLIC_DIR)) {
+      sendError(res, req, 403, "Forbidden path.");
       return;
     }
-    throw error;
-  }
-}
 
-async function route(req, res) {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
-  if (req.method === "OPTIONS") {
-    sendJson(res, 204, {});
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/health") {
-    sendJson(res, 200, { status: "ok", module: "Medical History" });
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/options") {
-    sendJson(res, 200, { pastMedicalHistory: COMORBIDITY_OPTIONS, antipsychotics: ANTIPSYCHOTIC_OPTIONS, clozapineContraindications: CLOZAPINE_CONTRAINDICATION_OPTIONS });
-    return;
+    try {
+      const body = await fs.readFile(filePath);
+      const contentType = MIME_TYPES[path.extname(filePath)] || "application/octet-stream";
+      applyCors(res, req);
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(body);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        res.writeHead(302, { Location: "/" });
+        res.end();
+        return;
+      }
+      throw error;
+    }
   }
 
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/schema") {
-    sendJson(res, 200, await readJson(SCHEMA_FILE, {}));
-    return;
+  async function authorize(req, res, roles, { csrf = false } = {}) {
+    if (!security) return true;
+    if (roles && roles.length) {
+      const ok = await security.enforceRole(req, res, roles);
+      if (!ok) return false;
+    }
+    if (csrf) {
+      const ok = security.enforceCsrf(req, res);
+      if (!ok) return false;
+    }
+    return true;
   }
 
-  if (req.method === "POST" && url.pathname === "/api/internal/medical-history/activate") {
-    await activateMedicalHistory(req, res);
-    return;
+  async function route(req, res) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+
+    if (req.method === "OPTIONS") {
+      sendJson(res, req, 204, {});
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/health") {
+      sendJson(res, req, 200, { status: "ok", module: "Medical History" });
+      return;
+    }
+
+    if (req.method === "GET" && (url.pathname === "/ready" || url.pathname === "/api/internal/medical-history/ready")) {
+      const result = typeof readiness === "function" ? readiness() : readiness;
+      sendJson(res, req, result.ok ? 200 : 503, result);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/csrf") {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"]))) return;
+      if (!security) {
+        sendError(res, req, 503, "CSRF is not configured.");
+        return;
+      }
+      security.issueToken(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/options") {
+      sendJson(res, req, 200, { pastMedicalHistory: COMORBIDITY_OPTIONS, antipsychotics: ANTIPSYCHOTIC_OPTIONS, clozapineContraindications: CLOZAPINE_CONTRAINDICATION_OPTIONS });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/schema") {
+      sendJson(res, req, 200, JSON.parse(await fs.readFile(SCHEMA_FILE, "utf8")));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/internal/medical-history/activate") {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"], { csrf: true }))) return;
+      await activateMedicalHistory(req, res);
+      return;
+    }
+
+    const activationMatch = url.pathname.match(/^\/api\/internal\/medical-history\/activation\/([A-Za-z0-9]{1,20})$/);
+    if (req.method === "GET" && activationMatch) {
+      if (!(await authorize(req, res, ["psychiatrist", "admin", "nurse"]))) return;
+      await getActivation(req, res, activationMatch[1]);
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/internal/medical-history/submissions") {
+      if (!(await authorize(req, res, ["psychiatrist"], { csrf: true }))) return;
+      await submitMedicalHistory(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions") {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"]))) return;
+      await listSubmissions(req, res, url);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/latest") {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"]))) return;
+      await getLatestSubmission(req, res, url);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/history") {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"]))) return;
+      await getSubmissionHistory(req, res, url);
+      return;
+    }
+
+    const submissionMatch = url.pathname.match(/^\/api\/internal\/medical-history\/submissions\/([^/]+)$/);
+    if (req.method === "GET" && submissionMatch) {
+      if (!(await authorize(req, res, ["psychiatrist", "admin"]))) return;
+      await getSubmission(req, res, submissionMatch[1]);
+      return;
+    }
+
+    if (req.method === "GET") {
+      await serveStatic(req, res, url);
+      return;
+    }
+
+    sendError(res, req, 405, "Method not allowed.");
   }
 
-  const activationMatch = url.pathname.match(/^\/api\/internal\/medical-history\/activation\/([A-Za-z0-9]{1,20})$/);
-  if (req.method === "GET" && activationMatch) {
-    await getActivation(req, res, activationMatch[1]);
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/internal/medical-history/submissions") {
-    await submitMedicalHistory(req, res);
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions") {
-    await listSubmissions(req, res, url);
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/latest") {
-    await getLatestSubmission(req, res, url);
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/history") {
-    await getSubmissionHistory(req, res, url);
-    return;
-  }
-
-  const submissionMatch = url.pathname.match(/^\/api\/internal\/medical-history\/submissions\/([^/]+)$/);
-  if (req.method === "GET" && submissionMatch) {
-    await getSubmission(req, res, submissionMatch[1]);
-    return;
-  }
-
-  if (req.method === "GET") {
-    await serveStatic(req, res, url);
-    return;
-  }
-
-  sendError(res, 405, "Method not allowed.");
-}
-
-ensureDataFiles()
-  .then(() => {
-    http
-      .createServer((req, res) => {
-        route(req, res).catch((error) => {
-          const status = error.status || 500;
-          sendError(res, status, error.message || "Internal server error");
-        });
-      })
-      .listen(PORT, () => {
-        console.log(`Medical History module running at http://localhost:${PORT}`);
-      });
-  })
-  .catch((error) => {
-    console.error("Failed to start Medical History module:", error);
-    process.exit(1);
+  const server = http.createServer((req, res) => {
+    route(req, res).catch((error) => {
+      const status = error.status || 500;
+      sendError(res, req, status, error.message || "Internal server error");
+    });
   });
+
+  server.repository = repository;
+  server.submissionStore = submissionStore;
+  return server;
+}
+
+function start(port = PORT) {
+  const server = createServer();
+  server.listen(port, () => {
+    console.log(`Medical History module running at http://localhost:${port}`);
+  });
+  return server;
+}
+
+if (require.main === module) {
+  start();
+}
+
+module.exports = {
+  createServer,
+  start,
+  corsOrigins,
+};

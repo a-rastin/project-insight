@@ -1,6 +1,4 @@
 const crypto = require("crypto");
-const fs = require("fs/promises");
-const path = require("path");
 
 const SUBMISSION_SCHEMA_VERSION = "1.0.0";
 
@@ -125,36 +123,14 @@ function structureMedication(drug = {}) {
 }
 
 class MedicalHistorySubmissionStore {
-  constructor({ filePath, now = () => new Date(), uuid = crypto.randomUUID } = {}) {
-    if (!filePath) throw new Error("filePath is required");
-    this.filePath = filePath;
+  constructor({ repository, now = () => new Date(), uuid = crypto.randomUUID } = {}) {
+    if (!repository) throw new Error("repository is required");
+    this.repository = repository;
     this.now = now;
     this.uuid = uuid;
   }
 
-  async ensure() {
-    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
-    try {
-      await fs.access(this.filePath);
-    } catch {
-      await fs.writeFile(this.filePath, "[]\n");
-    }
-  }
-
-  async readAll() {
-    await this.ensure();
-    const raw = await fs.readFile(this.filePath, "utf8");
-    const records = JSON.parse(raw || "[]");
-    if (!Array.isArray(records)) throw new Error("Medical History submissions must be stored as an array");
-    return records;
-  }
-
-  async writeAll(records) {
-    await this.ensure();
-    await fs.writeFile(this.filePath, `${JSON.stringify(records, null, 2)}\n`);
-  }
-
-  async create({ patientId, encounterId, author, data = {}, status = "submitted", code, source, allowLegacyIdentity = false, legacyPatientId, legacyEncounterId } = {}) {
+  buildResource({ patientId, encounterId, author, data = {}, status = "submitted", code, source, allowLegacyIdentity = false, legacyPatientId, legacyEncounterId } = {}) {
     if (!allowLegacyIdentity) {
       assertUuid(patientId, "patientId");
       assertUuid(encounterId, "encounterId");
@@ -190,11 +166,12 @@ class MedicalHistorySubmissionStore {
     if (legacyPatientId !== undefined) resource.legacyPatientId = legacyPatientId;
     if (legacyEncounterId !== undefined) resource.legacyEncounterId = legacyEncounterId;
     resource.etag = calculateEtag(resource);
+    return resource;
+  }
 
-    const records = await this.readAll();
-    records.push(resource);
-    await this.writeAll(records);
-    return freeze(clone(resource));
+  async create(options = {}) {
+    const resource = this.buildResource(options);
+    return this.repository.appendSubmission(resource);
   }
 
   async createLegacy(options = {}) {
@@ -202,18 +179,13 @@ class MedicalHistorySubmissionStore {
   }
 
   async findById(id) {
-    const records = await this.readAll();
-    const record = records.find((candidate) => candidate.id === id || candidate.submissionId === id);
-    return record ? freeze(clone(record)) : null;
+    return this.repository.findSubmissionById(id);
   }
 
   async getHistory({ patientId, encounterId }) {
     assertUuid(patientId, "patientId");
     assertUuid(encounterId, "encounterId");
-    const records = await this.readAll();
-    return records
-      .filter((record) => record.patientId === patientId && record.encounterId === encounterId)
-      .map((record) => freeze(clone(record)));
+    return this.repository.getSubmissionHistory({ patientId, encounterId });
   }
 
   async getLatest(identity) {

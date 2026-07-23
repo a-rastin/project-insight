@@ -1,14 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs/promises");
-const os = require("node:os");
-const path = require("node:path");
 const {
   MedicalHistorySubmissionStore,
   structureCondition,
   structureMedication,
   unresolvedCoding,
 } = require("../medical-history-submission.js");
+const { createMemoryMedicalHistoryRepository } = require("../repository.js");
 
 const patientId = "11111111-1111-4111-8111-111111111111";
 const encounterId = "22222222-2222-4222-8222-222222222222";
@@ -98,9 +96,8 @@ test("structures medications with original text, RxNorm, dose amount/unit, route
 });
 
 test("creates a versioned submission resource with identity metadata", async () => {
-  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "medical-history-submission-"));
   const store = new MedicalHistorySubmissionStore({
-    filePath: path.join(dataDir, "submissions.json"),
+    repository: createMemoryMedicalHistoryRepository(),
     now: () => new Date("2026-07-23T12:00:00.000Z"),
   });
 
@@ -125,15 +122,12 @@ test("creates a versioned submission resource with identity metadata", async () 
   assert.equal(submission.version, 1);
   assert.deepEqual(submission.data, { pastMedicalHistory: ["Hypertension"] });
   assert.deepEqual(submission.pastMedicalHistory, submission.data.pastMedicalHistory);
-
-  await fs.rm(dataDir, { recursive: true, force: true });
 });
 
 test("latest lookup does not replace immutable history", async () => {
-  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "medical-history-submission-"));
   let tick = 0;
   const store = new MedicalHistorySubmissionStore({
-    filePath: path.join(dataDir, "submissions.json"),
+    repository: createMemoryMedicalHistoryRepository(),
     now: () => new Date(`2026-07-23T12:00:0${tick++}.000Z`),
   });
 
@@ -144,6 +138,4 @@ test("latest lookup does not replace immutable history", async () => {
   assert.deepEqual((await store.getHistory({ patientId, encounterId })).map((item) => item.id), [first.id, second.id]);
   assert.equal((await store.findById(first.id)).data.answer, "first");
   assert.equal(typeof store.update, "undefined");
-
-  await fs.rm(dataDir, { recursive: true, force: true });
 });
