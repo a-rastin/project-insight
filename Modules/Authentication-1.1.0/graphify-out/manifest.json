@@ -5,19 +5,19 @@
     "semantic_hash": "bc6836425ccbf502e723d495e92343ac"
   },
   "main.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "f6a19fe725df32052eb6af009f6b3563",
-    "semantic_hash": "f6a19fe725df32052eb6af009f6b3563"
+    "mtime": 1784755652.145259,
+    "ast_hash": "e082d9d2ff3dec1961433e917889eefc",
+    "semantic_hash": "e082d9d2ff3dec1961433e917889eefc"
   },
   "router.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "371a0c273f6b4d5c0dbf48a7ed25e909",
-    "semantic_hash": "371a0c273f6b4d5c0dbf48a7ed25e909"
+    "mtime": 1784757686.453741,
+    "ast_hash": "a825878ff0b3835a709e847da5f5f9fd",
+    "semantic_hash": "a825878ff0b3835a709e847da5f5f9fd"
   },
   "security.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "1593ecc99a62da2fcd698a39a5685380",
-    "semantic_hash": "1593ecc99a62da2fcd698a39a5685380"
+    "mtime": 1784757518.4066327,
+    "ast_hash": "0529c6ad68647a85021a4828519ce729",
+    "semantic_hash": "0529c6ad68647a85021a4828519ce729"
   },
   "tests/_support.py": {
     "mtime": 1783391307.0,
@@ -25,19 +25,19 @@
     "semantic_hash": "50200b728669a4058a281b33ee81d050"
   },
   "tests/test_contract.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "1c78dac3a41cb344969dd58289710f61",
-    "semantic_hash": "1c78dac3a41cb344969dd58289710f61"
+    "mtime": 1784753082.3503108,
+    "ast_hash": "1898966e90d0d9ce7d636284ef332d39",
+    "semantic_hash": "1898966e90d0d9ce7d636284ef332d39"
   },
   "tests/test_migrations.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "6acd200791a398682560dab13a665c6b",
-    "semantic_hash": "6acd200791a398682560dab13a665c6b"
+    "mtime": 1784753014.7713542,
+    "ast_hash": "2f33b836b26f2fbbd2d8dbf117ce6938",
+    "semantic_hash": "2f33b836b26f2fbbd2d8dbf117ce6938"
   },
   "tests/test_routes_auth.py": {
-    "mtime": 1783391307.0,
-    "ast_hash": "132aa73c2b89b679a9cf51fd4420f6b1",
-    "semantic_hash": "132aa73c2b89b679a9cf51fd4420f6b1"
+    "mtime": 1784753135.0824964,
+    "ast_hash": "c31cefde8d4bc880048089721ad58ae3",
+    "semantic_hash": "c31cefde8d4bc880048089721ad58ae3"
   },
   "tests/test_security_behavior.py": {
     "mtime": 1783391307.0,
@@ -83,5 +83,50 @@
     "mtime": 1783391307.0,
     "ast_hash": "8cce011b23bd48fa1ca5fb63acf2c0f7",
     "semantic_hash": "8cce011b23bd48fa1ca5fb63acf2c0f7"
+  },
+  "contract.py": {
+    "mtime": 1784755179.1001222,
+    "ast_hash": "7eb0ffb2a18a07cc5297f2b73113d4ca",
+    "semantic_hash": "7eb0ffb2a18a07cc5297f2b73113d4ca"
+  },
+  "contracts/examples/1.0.0/contract.json": {
+    "mtime": 1784755201.9320402,
+    "ast_hash": "d36de934d1961bdd4465bab748d69725",
+    "semantic_hash": "d36de934d1961bdd4465bab748d69725"
+  },
+  "contracts/openapi/1.0.0/authentication.openapi.json": {
+    "mtime": 1784755316.6698585,
+    "ast_hash": "571edee30e2a1042179726387b067c48",
+    "semantic_hash": "571edee30e2a1042179726387b067c48"
+  },
+  "contracts/schemas/1.0.0/auth-contract.schema.json": {
+    "mtime": 1784755250.1989071,
+    "ast_hash": "51c72390843e4b8cb48e2f9248301abe",
+    "semantic_hash": "51c72390843e4b8cb48e2f9248301abe"
+  },
+  "contracts/schemas/1.0.0/auth-session.schema.json": {
+    "mtime": 1784755250.1975043,
+    "ast_hash": "a516e50dd4e020212d0fd37c4a1487e3",
+    "semantic_hash": "a516e50dd4e020212d0fd37c4a1487e3"
+  },
+  "contracts/schemas/1.0.0/security-policy.schema.json": {
+    "mtime": 1784755250.1975043,
+    "ast_hash": "56285837dd8e7eff7de1fd166d383d68",
+    "semantic_hash": "56285837dd8e7eff7de1fd166d383d68"
+  },
+  "tests/test_auth03_security.py": {
+    "mtime": 1784757274.4091825,
+    "ast_hash": "91143aacaad857b8c9180861f2f25839",
+    "semantic_hash": "91143aacaad857b8c9180861f2f25839"
+  },
+  "tests/test_auth_discovery.py": {
+    "mtime": 1784755007.4623704,
+    "ast_hash": "8f3527917fff8d47905df3c20b1606ab",
+    "semantic_hash": "8f3527917fff8d47905df3c20b1606ab"
+  },
+  "tests/test_auth_uuid_contract.py": {
+    "mtime": 1784752699.0643103,
+    "ast_hash": "60776caa1c453fe58b98778b7afa5236",
+    "semantic_hash": "60776caa1c453fe58b98778b7afa5236"
   }
 }

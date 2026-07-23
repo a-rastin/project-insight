@@ -31,5 +31,8 @@
   "29": "build-graph2.py",
   "30": "ua-inline-validate.cjs",
   "31": "assemble-final.py",
-  "32": "build-fp-input.py"
+  "32": "build-fp-input.py",
+  "33": "auth.py",
+  "34": "_load",
+  "35": "page"
 }
