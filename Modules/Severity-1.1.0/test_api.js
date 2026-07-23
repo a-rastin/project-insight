@@ -4,6 +4,12 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
+const testItems = Object.fromEntries([
+  ...Array.from({ length: 7 }, (_, index) => [`P${index + 1}`, 1]),
+  ...Array.from({ length: 7 }, (_, index) => [`N${index + 1}`, 1]),
+  ...Array.from({ length: 16 }, (_, index) => [`G${index + 1}`, 1])
+]);
+
 async function runTests() {
   console.log("Starting Severity API integration test...");
 
@@ -34,13 +40,12 @@ async function runTests() {
     assert.strictEqual(putRes1.status, 200);
     const putJson1 = await putRes1.json();
     assert.strictEqual(putJson1.success, true);
-    assert.strictEqual(putJson1.data.status, "passed");
+    assert.strictEqual(putJson1.data.status, "in_progress");
 
     const getJson2 = await (await fetch(`${baseUrl}/api/severity/${testPatientCode}`)).json();
-    assert.strictEqual(getJson2.status, "passed");
+    assert.strictEqual(getJson2.status, "in_progress");
 
-    const testItems = { P1: 4, N1: 2, G1: 1 };
-    const testScores = { total: 37, positive: 4, negative: 2, general: 1 };
+    const testScores = { total: 30, positive: 7, negative: 7, general: 16 };
     const putRes2 = await fetch(`${baseUrl}/api/severity/${testPatientCode}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -68,5 +73,4 @@ async function runTests() {
 }
 
 runTests();
-
 

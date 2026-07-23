@@ -2,6 +2,11 @@ import { createHash, randomUUID } from "node:crypto";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UTC_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const PANSS_ITEM_CODES = [
+  ...Array.from({ length: 7 }, (_, index) => `P${index + 1}`),
+  ...Array.from({ length: 7 }, (_, index) => `N${index + 1}`),
+  ...Array.from({ length: 16 }, (_, index) => `G${index + 1}`)
+];
 
 export class AssessmentError extends Error {
   constructor(message, status = 400) {
@@ -64,6 +69,58 @@ function validateAssessmentFields(input, { requireStatus = true } = {}) {
   validateProvenance(input.provenance);
 }
 
+function validatePanssItems(items, requireComplete) {
+  if (!items || typeof items !== "object" || Array.isArray(items)) {
+    throw new AssessmentError("items must be an object");
+  }
+  const allowed = new Set(PANSS_ITEM_CODES);
+  for (const [code, value] of Object.entries(items)) {
+    if (!allowed.has(code)) throw new AssessmentError(`Unknown PANSS item: ${code}`);
+    if (!Number.isInteger(value) || value < 1 || value > 7) {
+      throw new AssessmentError(`${code} must be an integer from 1 to 7`);
+    }
+  }
+  const missing = PANSS_ITEM_CODES.filter(code => !Object.hasOwn(items, code));
+  if (requireComplete && missing.length) {
+    throw new AssessmentError(`Missing PANSS items: ${missing.join(", ")}`);
+  }
+}
+
+function scoresForItems(items) {
+  const positive = PANSS_ITEM_CODES.filter(code => code.startsWith("P")).reduce((sum, code) => sum + (items[code] || 0), 0);
+  const negative = PANSS_ITEM_CODES.filter(code => code.startsWith("N")).reduce((sum, code) => sum + (items[code] || 0), 0);
+  const general = PANSS_ITEM_CODES.filter(code => code.startsWith("G")).reduce((sum, code) => sum + (items[code] || 0), 0);
+  return { positive, negative, general, total: positive + negative + general };
+}
+
+function scoresMatch(actual, expected) {
+  return actual && typeof actual === "object" &&
+    ["positive", "negative", "general", "total"].every(field => actual[field] === expected[field]);
+}
+
+export function computePanssScores(items) {
+  validatePanssItems(items, true);
+  return scoresForItems(items);
+}
+
+function applyPanssScores(input) {
+  const hasItems = input.items !== undefined;
+  const hasScores = input.scores !== undefined;
+  if (!hasItems) {
+    if (hasScores || input.status === "completed") {
+      throw new AssessmentError("completed assessments require all 30 PANSS items");
+    }
+    return input;
+  }
+
+  validatePanssItems(input.items, input.status === "completed");
+  const scores = scoresForItems(input.items);
+  if (hasScores && !scoresMatch(input.scores, scores)) {
+    throw new AssessmentError("supplied scores do not match PANSS item responses");
+  }
+  return { ...input, items: clone(input.items), scores };
+}
+
 function calculateEtag(resource) {
   const content = JSON.stringify({ ...resource, etag: undefined });
   const digest = createHash("sha256").update(content).digest("hex");
@@ -78,24 +135,27 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
   return {
     create(input) {
       validateAssessmentFields(input);
-      const assessmentId = input.assessmentId || idFactory();
+      const assessed = applyPanssScores(input);
+      const assessmentId = assessed.assessmentId || idFactory();
       requireUuid(assessmentId, "assessmentId");
       const assessments = assessmentStore.read();
       if (assessments[assessmentId]) throw new AssessmentError("assessmentId already exists", 409);
 
       const resource = {
         assessmentId,
-        patientId: input.patientId,
-        encounterId: input.encounterId,
-        scale: input.scale,
-        scaleVersion: input.scaleVersion,
-        rater: input.rater,
-        assessedAt: input.assessedAt,
-        status: input.status,
+        patientId: assessed.patientId,
+        encounterId: assessed.encounterId,
+        scale: assessed.scale,
+        scaleVersion: assessed.scaleVersion,
+        rater: assessed.rater,
+        assessedAt: assessed.assessedAt,
+        status: assessed.status,
         version: 1,
         updatedAt: clock().toISOString(),
-        provenance: clone(input.provenance)
+        provenance: clone(assessed.provenance)
       };
+      if (assessed.items) resource.items = assessed.items;
+      if (assessed.scores) resource.scores = assessed.scores;
       resource.etag = calculateEtag(resource);
       assessments[assessmentId] = resource;
       if (!assessmentStore.write(assessments)) throw new AssessmentError("Failed to write to database", 500);
@@ -115,14 +175,16 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
       if (expectedEtag !== current.etag) throw new AssessmentError("ETag does not match current resource", 412);
 
       const next = { ...current, ...clone(patch) };
+      if (patch.items !== undefined && patch.scores === undefined) delete next.scores;
       delete next.etag;
       delete next.version;
       delete next.updatedAt;
       delete next.assessmentId;
       validateAssessmentFields(next);
+      const assessed = applyPanssScores(next);
 
       const resource = {
-        ...next,
+        ...assessed,
         assessmentId,
         version: current.version + 1,
         updatedAt: clock().toISOString()

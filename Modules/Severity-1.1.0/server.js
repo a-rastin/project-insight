@@ -2,7 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { AssessmentError, createSeverityAssessmentModule } from "./severity-assessment.js";
+import { AssessmentError, computePanssScores, createSeverityAssessmentModule } from "./severity-assessment.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,28 +153,25 @@ export function createApp({ assessmentStore = createJsonAssessmentStore() } = {}
     if (status === "passed") {
       assessments[patient_code] = {
         patient_code,
-        status: "passed",
+        status: "in_progress",
         updated_at: new Date().toISOString()
       };
     } else {
-      if (
-        !scores ||
-        typeof scores.total !== "number" ||
-        typeof scores.positive !== "number" ||
-        typeof scores.negative !== "number" ||
-        typeof scores.general !== "number"
-      ) {
-        return res.status(400).json({ error: "Invalid scores provided for completed assessment" });
+      let computedScores;
+      try {
+        computedScores = computePanssScores(items);
+      } catch (error) {
+        return res.status(error instanceof AssessmentError ? error.status : 400).json({ error: error.message });
       }
-      if (!items || typeof items !== "object") {
-        return res.status(400).json({ error: "Invalid items provided for completed assessment" });
+      if (!scores || !["positive", "negative", "general", "total"].every(field => scores[field] === computedScores[field])) {
+        return res.status(400).json({ error: "Supplied scores do not match PANSS item responses" });
       }
 
       assessments[patient_code] = {
         patient_code,
         status: "completed",
-        scores,
-        items,
+        scores: computedScores,
+        items: { ...items },
         updated_at: new Date().toISOString()
       };
     }
@@ -213,4 +210,3 @@ function start() {
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   start();
 }
-

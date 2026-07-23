@@ -21,6 +21,20 @@ const assessmentMetadata = {
   }
 };
 
+const panssItems = Object.fromEntries([
+  ...Array.from({ length: 7 }, (_, index) => [`P${index + 1}`, 1]),
+  ...Array.from({ length: 7 }, (_, index) => [`N${index + 1}`, 1]),
+  ...Array.from({ length: 16 }, (_, index) => [`G${index + 1}`, 1])
+]);
+
+function createCanonicalAssessment(baseUrl) {
+  return fetch(`${baseUrl}/api/v1/severity-assessments`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(assessmentMetadata)
+  }).then(response => response.json());
+}
+
 async function withServer(store, callback) {
   const server = createApp({ assessmentStore: store }).listen(0);
   try {
@@ -42,8 +56,8 @@ async function exerciseHttpContract(baseUrl, patientCode) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       status: "completed",
-      scores: { total: 37, positive: 4, negative: 2, general: 1 },
-      items: { P1: 4, N1: 2, G1: 1 }
+      scores: { total: 30, positive: 7, negative: 7, general: 16 },
+      items: panssItems
     })
   });
   assert.equal(saved.status, 200);
@@ -88,13 +102,13 @@ test("canonical assessment interface creates, reads, and conditionally updates a
         "content-type": "application/json",
         "if-match": created.etag
       },
-      body: JSON.stringify({ rater: "rater-2", status: "completed" })
+      body: JSON.stringify({ rater: "rater-2" })
     });
 
     assert.equal(updatedResponse.status, 200);
     const updated = await updatedResponse.json();
     assert.equal(updated.rater, "rater-2");
-    assert.equal(updated.status, "completed");
+    assert.equal(updated.status, "in_progress");
     assert.equal(updated.version, 2);
     assert.notEqual(updated.etag, created.etag);
     assert.equal(updatedResponse.headers.get("etag"), updated.etag);
@@ -108,6 +122,84 @@ test("canonical assessment interface creates, reads, and conditionally updates a
       body: JSON.stringify({ rater: "stale" })
     });
     assert.equal(staleResponse.status, 412);
+  });
+});
+
+test("canonical PANSS scoring computes boundary totals and recomputes deterministically", async () => {
+  await withServer(createMemoryAssessmentStore(), async baseUrl => {
+    const created = await createCanonicalAssessment(baseUrl);
+    const minimumResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${created.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": created.etag },
+      body: JSON.stringify({ status: "completed", items: panssItems, scores: { positive: 7, negative: 7, general: 16, total: 30 } })
+    });
+    assert.equal(minimumResponse.status, 200);
+    const minimum = await minimumResponse.json();
+    assert.deepEqual(minimum.scores, { positive: 7, negative: 7, general: 16, total: 30 });
+
+    const maximumItems = Object.fromEntries(Object.keys(panssItems).map(code => [code, 7]));
+    const maximumResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${created.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": minimum.etag },
+      body: JSON.stringify({ items: maximumItems, scores: { positive: 49, negative: 49, general: 112, total: 210 } })
+    });
+    assert.equal(maximumResponse.status, 200);
+    const maximum = await maximumResponse.json();
+    assert.deepEqual(maximum.scores, { positive: 49, negative: 49, general: 112, total: 210 });
+
+    const repeatResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${created.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": maximum.etag },
+      body: JSON.stringify({ items: maximumItems })
+    });
+    assert.equal(repeatResponse.status, 200);
+    assert.deepEqual((await repeatResponse.json()).scores, maximum.scores);
+  });
+});
+
+test("canonical PANSS scoring rejects missing items, invalid values, and mismatched totals", async () => {
+  await withServer(createMemoryAssessmentStore(), async baseUrl => {
+    const missing = await createCanonicalAssessment(baseUrl);
+    const missingItems = { ...panssItems };
+    delete missingItems.G16;
+    const missingResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${missing.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": missing.etag },
+      body: JSON.stringify({ status: "completed", items: missingItems })
+    });
+    assert.equal(missingResponse.status, 400);
+
+    const invalid = await createCanonicalAssessment(baseUrl);
+    const invalidItems = { ...panssItems, P1: 8 };
+    const invalidResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${invalid.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": invalid.etag },
+      body: JSON.stringify({ status: "completed", items: invalidItems })
+    });
+    assert.equal(invalidResponse.status, 400);
+
+    const mismatched = await createCanonicalAssessment(baseUrl);
+    const mismatchResponse = await fetch(`${baseUrl}/api/v1/severity-assessments/${mismatched.assessmentId}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "if-match": mismatched.etag },
+      body: JSON.stringify({
+        status: "completed",
+        items: panssItems,
+        scores: { positive: 7, negative: 7, general: 16, total: 31 }
+      })
+    });
+    assert.equal(mismatchResponse.status, 400);
+  });
+});
+
+test("canonical assessments reject the legacy passed status", async () => {
+  await withServer(createMemoryAssessmentStore(), async baseUrl => {
+    const response = await fetch(`${baseUrl}/api/v1/severity-assessments`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...assessmentMetadata, status: "passed" })
+    });
+    assert.equal(response.status, 400);
   });
 });
 
@@ -127,4 +219,3 @@ test("HTTP interface works with an isolated production JSON adapter", async () =
     fs.rmSync(dataDir, { recursive: true, force: true });
   }
 });
-
