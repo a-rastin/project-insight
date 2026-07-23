@@ -5,6 +5,7 @@
   "description": "Standalone drug-drug interaction checker module with versioned knowledge-base ingestion and audit support.",
   "type": "commonjs",
   "scripts": {
+    "start": "node src/server.mjs",
     "ingest": "node scripts/ingest.mjs",
     "validate": "node scripts/validate-kb.mjs",
     "validate:clinical": "node scripts/validate-kb.mjs --clinical-active",
