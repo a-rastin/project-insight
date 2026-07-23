@@ -2,114 +2,160 @@
   "$schema": "manifest.schema.json",
   "manifestId": "deployment-manifest-1.0.0",
   "schema": "deployment/manifest.schema.json",
+  "image": {
+    "name": "insight-unified",
+    "dockerfile": "deployment/Dockerfile",
+    "context": "."
+  },
+  "gateway": {"port": 8080, "exposed": true},
+  "supervisor": {
+    "pid1": "tini",
+    "entrypoint": ["tini", "--", "python", "/opt/deployment/supervisor.py"]
+  },
   "modules": [
     {
       "moduleId": "authentication",
       "internalPort": 8101,
       "basePath": "/api/auth",
       "proxyPrefix": "/modules/authentication",
-      "volume": {"name": "authentication-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "authentication-data", "mountPath": "/var/lib/insight/authentication", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "authentication"},
       "backup": {"configured": true, "owner": "authentication"},
       "restore": {"configured": true, "owner": "authentication"},
       "retention": {"configured": true, "policyReference": "operator-provided:authentication", "owner": "authentication"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/authentication",
+      "command": ["python", "main.py"],
+      "environment": {"AUTH_PORT": "8101", "AUTH_DB_PATH": "/var/lib/insight/authentication/authentication.sqlite3"},
+      "databasePath": "/var/lib/insight/authentication/authentication.sqlite3"
     },
     {
       "moduleId": "add-new-patient",
-      "internalPort": 8102,
+      "internalPort": 8103,
       "basePath": "/api/add-new-patient/v1",
       "proxyPrefix": "/modules/add-new-patient",
-      "volume": {"name": "add-new-patient-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "add-new-patient-data", "mountPath": "/var/lib/insight/add-new-patient", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "add-new-patient"},
       "backup": {"configured": true, "owner": "add-new-patient"},
       "restore": {"configured": true, "owner": "add-new-patient"},
       "retention": {"configured": true, "policyReference": "operator-provided:add-new-patient", "owner": "add-new-patient"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/add-new-patient",
+      "command": ["python", "-m", "uvicorn", "add_new_patient_backend.main:app", "--host", "127.0.0.1", "--port", "8103"],
+      "environment": {"PORT": "8103", "ADD_NEW_PATIENT_DB_PATH": "/var/lib/insight/add-new-patient/add-new-patient.sqlite3"},
+      "databasePath": "/var/lib/insight/add-new-patient/add-new-patient.sqlite3"
     },
     {
       "moduleId": "diagnosis",
-      "internalPort": 8103,
+      "internalPort": 8104,
       "basePath": "/api/diagnosis/v1",
       "proxyPrefix": "/modules/diagnosis",
-      "volume": {"name": "diagnosis-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "diagnosis-data", "mountPath": "/var/lib/insight/diagnosis", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "diagnosis"},
       "backup": {"configured": true, "owner": "diagnosis"},
       "restore": {"configured": true, "owner": "diagnosis"},
       "retention": {"configured": true, "policyReference": "operator-provided:diagnosis", "owner": "diagnosis"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/diagnosis",
+      "command": ["python", "-m", "diagnosis", "--host", "127.0.0.1", "--port", "8104"],
+      "environment": {"PORT": "8104", "DIAGNOSIS_HOST": "127.0.0.1", "DIAGNOSIS_PORT": "8104", "DIAGNOSIS_DB_PATH": "/var/lib/insight/diagnosis/diagnosis.sqlite3"},
+      "databasePath": "/var/lib/insight/diagnosis/diagnosis.sqlite3"
     },
     {
       "moduleId": "dashboard",
-      "internalPort": 8104,
+      "internalPort": 8102,
       "basePath": "/internal/dashboard",
       "proxyPrefix": "/modules/dashboard",
-      "volume": {"name": "dashboard-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "dashboard-data", "mountPath": "/var/lib/insight/dashboard", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "dashboard"},
       "backup": {"configured": true, "owner": "dashboard"},
       "restore": {"configured": true, "owner": "dashboard"},
       "retention": {"configured": true, "policyReference": "operator-provided:dashboard", "owner": "dashboard"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/dashboard",
+      "command": ["python", "-m", "uvicorn", "dashboard_backend.main:app", "--host", "127.0.0.1", "--port", "8102"],
+      "environment": {"PORT": "8102", "DASHBOARD_DB_PATH": "/var/lib/insight/dashboard/dashboard.sqlite3"},
+      "databasePath": "/var/lib/insight/dashboard/dashboard.sqlite3"
     },
     {
       "moduleId": "medical-history",
-      "internalPort": 8105,
+      "internalPort": 8106,
       "basePath": "/api/internal/medical-history",
       "proxyPrefix": "/modules/medical-history",
-      "volume": {"name": "medical-history-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "medical-history-data", "mountPath": "/var/lib/insight/medical-history", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "medical-history"},
       "backup": {"configured": true, "owner": "medical-history"},
       "restore": {"configured": true, "owner": "medical-history"},
       "retention": {"configured": true, "policyReference": "operator-provided:medical-history", "owner": "medical-history"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/medical-history",
+      "command": ["node", "server.js"],
+      "environment": {"PORT": "8106", "MEDICAL_HISTORY_DATA_DIR": "/var/lib/insight/medical-history"},
+      "databasePath": "/var/lib/insight/medical-history/medical-history.sqlite3"
     },
     {
       "moduleId": "severity",
-      "internalPort": 8106,
+      "internalPort": 8105,
       "basePath": "/api/v1",
       "proxyPrefix": "/modules/severity",
-      "volume": {"name": "severity-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "severity-data", "mountPath": "/var/lib/insight/severity", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "severity"},
       "backup": {"configured": true, "owner": "severity"},
       "restore": {"configured": true, "owner": "severity"},
       "retention": {"configured": true, "policyReference": "operator-provided:severity", "owner": "severity"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/severity",
+      "command": ["node", "server.js"],
+      "environment": {"PORT": "8105", "SEVERITY_DATA_DIR": "/var/lib/insight/severity"},
+      "databasePath": "/var/lib/insight/severity/severity.sqlite3"
     },
     {
       "moduleId": "ddi-checker",
       "internalPort": 8107,
       "basePath": "/api/ddi-checker/v1",
       "proxyPrefix": "/modules/ddi-checker",
-      "volume": {"name": "ddi-checker-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "ddi-checker-data", "mountPath": "/var/lib/insight/ddi-checker", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "ddi-checker"},
       "backup": {"configured": true, "owner": "ddi-checker"},
       "restore": {"configured": true, "owner": "ddi-checker"},
       "retention": {"configured": true, "policyReference": "operator-provided:ddi-checker", "owner": "ddi-checker"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/ddi-checker",
+      "command": ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "src/server.mjs"],
+      "environment": {"PORT": "8107", "DDI_DATA_DIR": "/var/lib/insight/ddi-checker", "DDI_BUNDLED_KB_PATH": "/opt/modules/ddi-checker/data/active-kb.json"},
+      "databasePath": "/var/lib/insight/ddi-checker/ddi-checker.sqlite3"
     },
     {
       "moduleId": "bn-manager",
       "internalPort": 8108,
       "basePath": "/api/bn-manager/v1",
       "proxyPrefix": "/modules/bn-manager",
-      "volume": {"name": "bn-manager-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "bn-manager-data", "mountPath": "/var/lib/insight/bn-manager", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "bn-manager"},
       "backup": {"configured": true, "owner": "bn-manager"},
       "restore": {"configured": true, "owner": "bn-manager"},
       "retention": {"configured": true, "policyReference": "operator-provided:bn-manager", "owner": "bn-manager"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/bn-manager",
+      "command": ["python", "-m", "bn_manager_backend.server"],
+      "environment": {"PORT": "8108", "BN_MANAGER_HOST": "127.0.0.1", "BN_MANAGER_PORT": "8108", "BN_MANAGER_DATABASE_PATH": "/var/lib/insight/bn-manager/bn-manager.sqlite3"},
+      "databasePath": "/var/lib/insight/bn-manager/bn-manager.sqlite3"
     },
     {
       "moduleId": "treatment-plan",
       "internalPort": 8109,
       "basePath": "/api/treatment-plan/v1",
       "proxyPrefix": "/modules/treatment-plan",
-      "volume": {"name": "treatment-plan-data", "mountPath": "/data", "writable": true},
+      "volume": {"name": "treatment-plan-data", "mountPath": "/var/lib/insight/treatment-plan", "writable": true},
       "migration": {"mode": "startup", "readinessGate": true, "owner": "treatment-plan"},
       "backup": {"configured": true, "owner": "treatment-plan"},
       "restore": {"configured": true, "owner": "treatment-plan"},
       "retention": {"configured": true, "policyReference": "operator-provided:treatment-plan", "owner": "treatment-plan"},
-      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30}
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/treatment-plan",
+      "command": ["python", "-m", "treatment_plan.deployment", "serve"],
+      "environment": {"PORT": "8109", "TP_HOST": "127.0.0.1", "TP_PORT": "8109", "TP_DATABASE_PATH": "/var/lib/insight/treatment-plan/treatment-plan.sqlite3"},
+      "databasePath": "/var/lib/insight/treatment-plan/treatment-plan.sqlite3"
     }
   ]
 }

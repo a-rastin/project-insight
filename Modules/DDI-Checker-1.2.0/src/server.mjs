@@ -25,12 +25,12 @@ const { createKbSqliteStore, createMemoryKbStore, migrateKbIntoStore } = require
 
 const moduleRoot = join(__dirname, "..");
 const moduleConfig = JSON.parse(readFileSync(join(moduleRoot, "module-config.json"), "utf8"));
-const kbPath = join(moduleRoot, "data", "active-kb.json");
+const dataDir = process.env.DDI_DATA_DIR || join(moduleRoot, "data");
+const kbPath = process.env.DDI_BUNDLED_KB_PATH || join(dataDir, "active-kb.json");
 const bundledKb = JSON.parse(readFileSync(kbPath, "utf8"));
 
 function createKnowledgeStore() {
-  const databaseRel = moduleConfig.databasePath || "data/ddi-checker.sqlite3";
-  const databaseFile = join(moduleRoot, databaseRel);
+  const databaseFile = join(dataDir, "ddi-checker.sqlite3");
   const databaseDir = dirname(databaseFile);
   if (existsSync(databaseDir) === false) mkdirSync(databaseDir, { recursive: true });
   try {

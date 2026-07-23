@@ -98,13 +98,22 @@ def check_deployment(root: Path, manifest: dict[str, Any]) -> None:
         raise DeploymentContractError("unsupported deployment manifest")
     if manifest.get("schema") != "deployment/manifest.schema.json":
         raise DeploymentContractError("deployment manifest must reference deployment schema")
+    image = manifest.get("image")
+    if not isinstance(image, dict) or image.get("dockerfile") != "deployment/Dockerfile" or image.get("context") != ".":
+        raise DeploymentContractError("unified image must be rooted at deployment/Dockerfile")
+    gateway = manifest.get("gateway")
+    if gateway != {"port": 8080, "exposed": True}:
+        raise DeploymentContractError("unified gateway must expose port 8080")
+    supervisor = manifest.get("supervisor")
+    if not isinstance(supervisor, dict) or supervisor.get("pid1") != "tini":
+        raise DeploymentContractError("unified image must use tini as PID 1")
     modules = manifest.get("modules")
     if not isinstance(modules, list) or not modules:
         raise DeploymentContractError("deployment manifest modules must be a non-empty list")
     for module in modules:
         if not isinstance(module, dict):
             raise DeploymentContractError("each deployment module must be an object")
-        _required(module, ("moduleId", "internalPort", "basePath", "proxyPrefix", "volume", "migration", "backup", "restore", "retention", "shutdown"), "module")
+        _required(module, ("moduleId", "internalPort", "basePath", "proxyPrefix", "volume", "migration", "backup", "restore", "retention", "shutdown", "workingDirectory", "command", "environment", "databasePath"), "module")
         if not isinstance(module["moduleId"], str) or not re.fullmatch(r"[a-z][a-z0-9-]*", module["moduleId"]):
             raise DeploymentContractError("module IDs must be stable kebab-case identifiers")
         if not isinstance(module["internalPort"], int) or not 1024 <= module["internalPort"] <= 65535:
@@ -115,6 +124,14 @@ def check_deployment(root: Path, manifest: dict[str, Any]) -> None:
         volume = module["volume"]
         if not isinstance(volume, dict) or volume.get("writable") is not True or not str(volume.get("mountPath", "")).startswith("/"):
             raise DeploymentContractError(f"invalid writable volume for {module['moduleId']}")
+        mount_path = volume["mountPath"]
+        database_path = module["databasePath"]
+        if not database_path.startswith(mount_path + "/"):
+            raise DeploymentContractError(f"database must stay inside module volume for {module['moduleId']}")
+        if not isinstance(module["command"], list) or not module["command"]:
+            raise DeploymentContractError(f"module command missing for {module['moduleId']}")
+        if not isinstance(module["environment"], dict):
+            raise DeploymentContractError(f"module environment missing for {module['moduleId']}")
         migration = module["migration"]
         if not isinstance(migration, dict) or migration.get("mode") != "startup" or migration.get("readinessGate") is not True or migration.get("owner") != module["moduleId"]:
             raise DeploymentContractError(f"startup migration gate missing for {module['moduleId']}")
