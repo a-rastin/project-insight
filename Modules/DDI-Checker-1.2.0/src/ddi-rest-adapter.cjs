@@ -541,8 +541,20 @@ function createDdiServer(options = {}) {
       return pivotalProblem(request, 501, "ADMIN_NOT_IMPLEMENTED", "Admin mutator for the requested action is not wired for this deployment.");
     }
     const parsed = await readJson(request);
-    const result = await knowledgeStore.admin(action, version, parsed.ok ? parsed.body || {} : {});
-    return ok(request, result, 200);
+    const body = parsed.ok ? parsed.body || {} : {};
+    try {
+      const result = await knowledgeStore.admin(action, version, body, principal);
+      return ok(request, result, 200);
+    } catch (error) {
+      const code = error && error.code ? String(error.code) : "";
+      if (code === "INVALID_ACTION") return pivotalProblem(request, 400, "INVALID_ACTION", error?.message || "Invalid admin action.");
+      if (code === "KNOWLEDGE_BASE_NOT_FOUND") return pivotalProblem(request, 404, "KNOWLEDGE_BASE_NOT_FOUND", error?.message || "Knowledge base not found.");
+      if (code === "INTERACTION_NOT_FOUND") return pivotalProblem(request, 404, "INTERACTION_NOT_FOUND", error?.message || "Interaction not found.");
+      if (code === "ACTIVATION_GATE") return pivotalProblem(request, 409, "ACTIVATION_GATE_BLOCKED", error?.message || "Clinical activation gate blocked activation.");
+      if (code === "INVALID_RESULT") return pivotalProblem(request, 409, "REVIEW_REJECTED", error?.message || "Review edits failed validation; transaction rolled back.");
+      if (code === "FORBIDDEN") return pivotalProblem(request, 403, "FORBIDDEN", error?.message || "Forbidden.");
+      return pivotalProblem(request, 500, "INTERNAL_ERROR", error?.message || "Admin operation failed.");
+    }
   }
 
   function serveStatic(request, pathname) {

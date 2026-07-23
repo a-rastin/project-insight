@@ -1,10 +1,11 @@
-// DDI-01 standalone entrypoint. Wires the .cjs REST seam to a real
-// read-only knowledgeStore backed by the bundled data/active-kb.json, plus
-// src/auth-adapter.js (HTTP session check when AUTH_SESSION_URL is set, or a
-// memory adapter seeded from DDI_AUTH_SESSIONS for local dev). Serves the
-// existing static UI (which still calls window.DDIEngine for this packet).
+// DDI-01/04 standalone entrypoint. Wires the .cjs REST seam to a
+// SQLite-backed knowledgeStore (DDI-04) seeded idempotently from the bundled
+// data/active-kb.json, plus src/auth-adapter.js (HTTP session check when
+// AUTH_SESSION_URL is set, or a memory adapter seeded from
+// DDI_AUTH_SESSIONS for local dev). Serves the existing static UI (which
+// still calls window.DDIEngine for this packet).
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -16,25 +17,28 @@ const require = createRequire(import.meta.url);
 // except contracts.* (none needed by this entrypoint).
 const { createDdiServer } = require("./ddi-rest-adapter.cjs");
 const { createHttpAuthAdapter, createMemoryAuthAdapter } = require("./auth-adapter.js");
+// DDI-04: SQLite-backed KB store + idempotent migration. Falls back to the
+// in-memory store when better-sqlite3 is unavailable so the server stays
+// operational even without native bindings (read paths still work; admin
+// mutators still require ddi_admin principal via the same API surface).
+const { createKbSqliteStore, createMemoryKbStore, migrateKbIntoStore } = require("./kb-sqlite.cjs");
 
 const moduleRoot = join(__dirname, "..");
+const moduleConfig = JSON.parse(readFileSync(join(moduleRoot, "module-config.json"), "utf8"));
 const kbPath = join(moduleRoot, "data", "active-kb.json");
-const kb = JSON.parse(readFileSync(kbPath, "utf8"));
+const bundledKb = JSON.parse(readFileSync(kbPath, "utf8"));
 
-// Read-only knowledgeStore backed by the bundled active-kb.json. Admin
-// mutators stay unimplemented for DDI-01; the adapter already returns
-// ADMIN_NOT_IMPLEMENTED (501) when knowledgeStore.admin is absent.
-function createBundledKnowledgeStore(activeKb) {
-  const byVersion = new Map([[activeKb.version, activeKb]]);
-  return {
-    async load(version) {
-      if (!version) return activeKb;
-      return byVersion.has(version) ? byVersion.get(version) : null;
-    },
-    async list() {
-      return [{ version: activeKb.version, status: activeKb.status }];
-    },
-  };
+function createKnowledgeStore() {
+  const databaseRel = moduleConfig.databasePath || "data/ddi-checker.sqlite3";
+  const databaseFile = join(moduleRoot, databaseRel);
+  const databaseDir = dirname(databaseFile);
+  if (existsSync(databaseDir) === false) mkdirSync(databaseDir, { recursive: true });
+  try {
+    return createKbSqliteStore({ databaseFile });
+  } catch (error) {
+    console.warn(`[ddi-checker] SQLite store unavailable (${error?.message || error}); falling back to in-memory store. Admin mutators will not persist across restarts.`);
+    return createMemoryKbStore();
+  }
 }
 
 function createAuth() {
@@ -64,9 +68,19 @@ function createAuth() {
   return createMemoryAuthAdapter(sessions);
 }
 
+// DDI-04: seed the knowledge store with the bundled active-kb.json. The
+// migration is idempotent — reviewer / activation work is never clobbered by
+// a careless restart; an already-imported version is left untouched. The
+// server's default activeVersion is the bundled draft. Production activates a
+// reviewed KB via the admin REST routes; the clinical gate blocks activation
+// of any KB carrying rxnorm-pending identities referenced by approved
+// records, low-confidence parsers, or clinicalUse.allowedForProduction !== true.
+const knowledgeStore = createKnowledgeStore();
+await migrateKbIntoStore(knowledgeStore, bundledKb);
+
 const server = createDdiServer({
-  knowledgeStore: createBundledKnowledgeStore(kb),
-  activeVersion: kb.version,
+  knowledgeStore,
+  activeVersion: bundledKb.version,
   auth: createAuth(),
   serveStatic: true,
   moduleRoot,

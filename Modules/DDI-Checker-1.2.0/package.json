@@ -20,7 +20,10 @@
     "rxnorm",
     "audit"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.6.0"
+  }
 }
 
 
