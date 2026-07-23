@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+from .model_governance import ClinicalStatus
 
 
 MODEL_REGISTRY_DIR = Path(__file__).resolve().parent / "model_registry"
@@ -17,9 +19,20 @@ class ModelRegistryEntry:
     active_version: str
     status: str
     schema_path: str = XML_SCHEMA_PATH
+    clinical_status: ClinicalStatus = ClinicalStatus.UNVALIDATED
+    limitations: tuple[str, ...] = ()
 
-    def payload(self) -> dict[str, str]:
-        return asdict(self)
+    def payload(self) -> dict[str, str | list[str]]:
+        payload = asdict(self)
+        payload["clinical_status"] = self.clinical_status.value
+        payload["limitations"] = list(self.limitations)
+        return payload
+
+
+# BN-04: shipped networks ship as UNVALIDATED. Clinical approval is an
+# explicit governance action through the admin REST seam; the registry
+# never pre-fabricates approvals, identifiers, or clinical thresholds.
+_COMPACT_BROADCAST_LIMITATIONS = ("compact-neutral-cpt-broadcast",)
 
 
 MODEL_REGISTRY: tuple[ModelRegistryEntry, ...] = (
@@ -38,6 +51,7 @@ MODEL_REGISTRY: tuple[ModelRegistryEntry, ...] = (
         target_node="management_recommendation",
         active_version="1.0.0",
         status="active",
+        limitations=_COMPACT_BROADCAST_LIMITATIONS,
     ),
     ModelRegistryEntry(
         stable_id="bnm.involuntary-treatment-considerations",
@@ -46,6 +60,7 @@ MODEL_REGISTRY: tuple[ModelRegistryEntry, ...] = (
         target_node="management_recommendation",
         active_version="1.0.0",
         status="active",
+        limitations=_COMPACT_BROADCAST_LIMITATIONS,
     ),
     ModelRegistryEntry(
         stable_id="bnm.clozapine-suicide-risk",

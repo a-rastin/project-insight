@@ -10,9 +10,14 @@ ROUTE_PREFIX = "/api/bn-manager/v1"
 
 CLINICAL_SAFETY_WORDING = (
     "BN Manager output is clinical decision support, not a diagnosis, prescription, "
-    "or treatment order. A licensed clinician must review patient context, source "
+    "or a treatment order. A licensed clinician must review patient context, source "
     "evidence, contraindications, and local policy before clinical action."
 )
+
+# Compact one-row TABLE broadcasting across parent combinations is an authoring
+# pattern for two of the shipped networks; the contract surfaces this limitation so
+# callers never treat broadcast rows as calibrated clinical probabilities.
+LIMITATIONS: tuple[str, ...] = ("compact-neutral-cpt-broadcast",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +92,7 @@ PERMISSIONS = {
     "evaluate_follow_up": "bnm:follow-up:evaluate",
     "evaluate_treatment_plan": "bnm:treatment-plan:evaluate",
     "validate_model": "bnm:model:validate",
+    "govern_model": "bnm:model:govern",
 }
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -115,6 +121,7 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
     "ModelManager": (
         PERMISSIONS["read_contract"],
         PERMISSIONS["validate_model"],
+        PERMISSIONS["govern_model"],
     ),
     "Admin": tuple(PERMISSIONS.values()),
 }
@@ -162,6 +169,34 @@ ROUTES: tuple[RouteContract, ...] = (
         PERMISSIONS["validate_model"],
         "Validate supplied .xml model text against XSD.xml and BN semantics.",
     ),
+    RouteContract(
+        "Model Governance",
+        "GET",
+        f"{ROUTE_PREFIX}/models/{{stable_id}}/governance",
+        PERMISSIONS["validate_model"],
+        "Return the model's clinical approval status and signed approval, or unvalidated when no approval exists.",
+    ),
+    RouteContract(
+        "Model Governance",
+        "POST",
+        f"{ROUTE_PREFIX}/models/{{stable_id}}/approve",
+        PERMISSIONS["govern_model"],
+        "Record a signed clinical approval for an unvalidated model. Fails closed when no governance key is configured.",
+    ),
+    RouteContract(
+        "Model Governance",
+        "POST",
+        f"{ROUTE_PREFIX}/models/{{stable_id}}/retire",
+        PERMISSIONS["govern_model"],
+        "Retire a previously approved model with rationale. Refuses retire when no prior approval exists.",
+    ),
+    RouteContract(
+        "Model Governance",
+        "POST",
+        f"{ROUTE_PREFIX}/models/{{stable_id}}/revoke",
+        PERMISSIONS["govern_model"],
+        "Revoke any approval, returning the model to unvalidated. Idempotent when no approval exists.",
+    ),
 )
 
 ERROR_CODES: dict[str, str] = {
@@ -171,6 +206,9 @@ ERROR_CODES: dict[str, str] = {
     "model_not_found": "BNM_MODEL_NOT_FOUND",
     "model_parse_failed": "BNM_MODEL_PARSE_FAILED",
     "model_validation_failed": "BNM_MODEL_VALIDATION_FAILED",
+    "model_not_approved": "BNM_MODEL_NOT_APPROVED",
+    "model_retired": "BNM_MODEL_RETIRED",
+    "governance_key_unavailable": "BNM_GOVERNANCE_KEY_UNAVAILABLE",
     "unsupported_format": "BNM_UNSUPPORTED_FORMAT",
     "unknown_target_node": "BNM_UNKNOWN_TARGET_NODE",
     "evaluation_failed": "BNM_EVALUATION_FAILED",
@@ -199,11 +237,26 @@ def contract_payload() -> dict[str, Any]:
         },
         "error_codes": ERROR_CODES,
         "clinical_safety_wording": CLINICAL_SAFETY_WORDING,
+        "permissions": _governance_permission_paths(),
+        "limitations": list(LIMITATIONS),
         "module_boundary": (
             "Callers pass patient context and evidence through BN Manager routes. "
             "No direct imports or database reads are part of the inter-module contract."
         ),
     }
+
+
+def _governance_permission_paths() -> list[str]:
+    # The ``/models/govern`` path is the canonical governance surface index — the
+    # permission gate that bound routes share. Per-model governance, approve,
+    # retire, and revoke are the bound routes; ``permissions`` declares the
+    # umbrella surface so callers can enforce governance access without naming
+    # each per-model route branch.
+    paths = [f"{ROUTE_PREFIX}/models/govern"]
+    for route in ROUTES:
+        if route.permission == PERMISSIONS["govern_model"] and route.path not in paths:
+            paths.append(route.path)
+    return paths
 
 
 def ok_response(data: Any, request_id: str | None = None, warnings: list[str] | None = None) -> dict[str, Any]:

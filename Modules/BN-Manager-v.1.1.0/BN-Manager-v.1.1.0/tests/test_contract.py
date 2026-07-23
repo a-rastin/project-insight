@@ -65,6 +65,8 @@ class BnManagerContractTests(unittest.TestCase):
         self.assertIn(PERMISSIONS["evaluate_treatment_plan"], ROLE_PERMISSIONS["Psychiatrist"])
         self.assertNotIn(PERMISSIONS["evaluate_treatment_plan"], ROLE_PERMISSIONS["CareTeam"])
         self.assertIn(PERMISSIONS["validate_model"], ROLE_PERMISSIONS["ModelManager"])
+        self.assertIn(PERMISSIONS["govern_model"], ROLE_PERMISSIONS["ModelManager"])
+        self.assertIn(PERMISSIONS["govern_model"], ROLE_PERMISSIONS["Admin"])
         self.assertEqual(set(ROLE_PERMISSIONS["Admin"]), set(PERMISSIONS.values()))
 
     def test_response_envelope_and_errors_are_stable(self) -> None:
@@ -86,6 +88,22 @@ class BnManagerContractTests(unittest.TestCase):
         self.assertEqual(payload["xml_target"]["extension"], ".xml")
         self.assertNotIn("xmlbif_target", payload)
         self.assertIn("No direct imports or database reads", payload["module_boundary"])
+
+    def test_contract_payload_surfaces_governance_and_safety_wording(self) -> None:
+        payload = contract_payload()
+        self.assertIn("BNM_GOVERNANCE_KEY_UNAVAILABLE", payload["error_codes"].values())
+        self.assertIn("BNM_MODEL_NOT_APPROVED", payload["error_codes"].values())
+        self.assertIn("BNM_MODEL_RETIRED", payload["error_codes"].values())
+        self.assertIn("compact-neutral-cpt-broadcast", payload["limitations"])
+
+    def test_contract_payload_lists_governance_routes(self) -> None:
+        payload = contract_payload()
+        paths = {route["path"] for route in payload["routes"]}
+        self.assertIn(f"{ROUTE_PREFIX}/models/govern", payload["permissions"])
+        self.assertIn(f"{ROUTE_PREFIX}/models/{{stable_id}}/approve", paths)
+        self.assertIn(f"{ROUTE_PREFIX}/models/{{stable_id}}/retire", paths)
+        self.assertIn(f"{ROUTE_PREFIX}/models/{{stable_id}}/revoke", paths)
+        self.assertIn(f"{ROUTE_PREFIX}/models/{{stable_id}}/governance", paths)
 
     def test_package_has_no_cross_surface_or_database_imports(self) -> None:
         forbidden_roots = {

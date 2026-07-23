@@ -3,8 +3,14 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from clinical_graph_models.contract import CLINICAL_SAFETY_WORDING
 from clinical_graph_models.model import ClinicalGraphModel, Node
 
+from .model_governance import (
+    ClinicalStatus,
+    SignedApproval,
+    clinical_status_for,
+)
 from .model_registry import ModelRegistryEntry
 
 
@@ -17,14 +23,23 @@ def build_evidence_schema(
     entry: ModelRegistryEntry,
     model: ClinicalGraphModel,
     text: str,
+    *,
+    governance_store: Any = None,
 ) -> dict[str, Any]:
     """Expose allowed evidence nodes/states, required/optional membership, target, version/hash.
 
-    Semantic meaning is taken only from author-supplied VARIABLE PROPERTY text in the
-    owned XML. Required evidence is empty unless a node explicitly declares
-    ``required=true``; clinical owners have not approved required flags on the
-    four canonical networks, so callers must treat all evidence as optional unless
-    a later owned property marks otherwise.
+    The carried ``clinical_status`` reflects the registry default
+    (``unvalidated``) or the most recently signed approval blob in the supplied
+    governance store. Schema and dimensional validity never imply clinical
+    safety: ``clinical_safety_asserted`` is therefore always ``False`` so
+    downstream consumers cannot mistake structural validity for a released
+    clinical recommendation.
+
+    Semantic meaning is taken only from author-supplied VARIABLE PROPERTY text
+    in the owned XML. Required evidence is empty unless a node explicitly
+    declares ``required=true``; clinical owners have not approved required flags
+    on the four canonical networks, so callers must treat all evidence as
+    optional unless a later owned property marks otherwise.
     """
     node_map = model.node_map()
     target_node = node_map.get(entry.target_node)
@@ -40,10 +55,17 @@ def build_evidence_schema(
     required_evidence = [item["node_id"] for item in allowed if item["required"]]
     optional_evidence = [item["node_id"] for item in allowed if not item["required"]]
 
-    return {
+    clinical_status, signed_approval = clinical_status_for(entry.stable_id, governance_store)
+    limitations = list(entry.limitations)
+
+    payload: dict[str, Any] = {
         "stable_id": entry.stable_id,
         "title": entry.title,
         "status": entry.status,
+        "clinical_status": clinical_status.value,
+        "clinical_safety_asserted": False,
+        "clinical_safety_wording": CLINICAL_SAFETY_WORDING,
+        "limitations": limitations,
         "model_version": entry.active_version,
         "active_version": entry.active_version,
         "model_hash": model_content_hash(text),
@@ -63,6 +85,9 @@ def build_evidence_schema(
             "path": entry.schema_path,
         },
     }
+    if signed_approval is not None:
+        payload["signed_approval"] = signed_approval.to_dict()
+    return payload
 
 
 def _evidence_node_payload(node: Node) -> dict[str, Any]:

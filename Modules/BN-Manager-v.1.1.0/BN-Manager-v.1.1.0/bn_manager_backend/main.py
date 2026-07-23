@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -33,6 +34,16 @@ from .evaluation_store import (
     build_canonical_evaluation,
 )
 from .evidence_schema import build_evidence_schema, model_content_hash
+from .model_governance import (
+    ClinicalStatus,
+    MissingGovernanceKey,
+    ModelGovernanceStore,
+    ModelNotApproved,
+    SignedApproval,
+    clinical_status_for,
+    sign_approval,
+    verify_approval,
+)
 from .model_registry import (
     ModelRegistryEntry,
     get_registry_entry,
@@ -63,6 +74,8 @@ def create_app(
     settings: BnManagerSettings | None = None,
     session_adapter: SessionAdapter | None = None,
     evaluation_store: EvaluationStore | None = None,
+    governance_store: ModelGovernanceStore | None = None,
+    governance_key: bytes | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     app = FastAPI(
@@ -76,6 +89,8 @@ def create_app(
         settings.auth_timeout_seconds,
     )
     app.state.evaluation_store = evaluation_store or SqliteEvaluationStore(settings.database_path)
+    app.state.governance_store = governance_store
+    app.state.governance_key = governance_key
 
     @app.exception_handler(BnManagerHttpError)
     def bn_manager_error(request: Request, exc: BnManagerHttpError) -> JSONResponse:
@@ -177,11 +192,18 @@ def create_app(
         )
 
     @app.get("/api/bn-manager/v1/models/{stable_id}/schema")
-    def model_evidence_schema(stable_id: str) -> dict[str, Any]:
-        return ok_response(_registry_evidence_schema(stable_id))
+    def model_evidence_schema(
+        stable_id: str,
+        request: Request,
+    ) -> dict[str, Any]:
+        store: ModelGovernanceStore | None = request.app.state.governance_store
+        return ok_response(_registry_evidence_schema(stable_id, governance_store=store))
 
     @app.get("/api/bn-manager/v1/models/{stable_id}")
-    def model_registry_detail(stable_id: str) -> dict[str, Any]:
+    def model_registry_detail(
+        stable_id: str,
+        request: Request,
+    ) -> dict[str, Any]:
         try:
             entry, text = read_registry_model(stable_id)
         except KeyError as exc:
@@ -193,7 +215,8 @@ def create_app(
             ) from exc
         except ValueError as exc:
             raise BnManagerHttpError(404, ERROR_CODES["invalid_request"], "BN Manager registry file not found.") from exc
-        evidence_schema = _evidence_schema_for_registry(entry, text)
+        store: ModelGovernanceStore | None = request.app.state.governance_store
+        evidence_schema = _evidence_schema_for_registry(entry, text, governance_store=store)
         return ok_response(
             {
                 "model": entry.payload(),
@@ -276,6 +299,190 @@ def create_app(
             }
         )
 
+    def _load_registry_entry_for_governance(stable_id: str) -> ModelRegistryEntry:
+        try:
+            entry, _text = read_registry_model(stable_id)
+        except KeyError as exc:
+            raise BnManagerHttpError(
+                404,
+                ERROR_CODES["model_not_found"],
+                "BN Manager registry model not found.",
+                {"stable_id": stable_id},
+            ) from exc
+        except ValueError as exc:
+            raise BnManagerHttpError(404, ERROR_CODES["invalid_request"], "BN Manager registry file not found.") from exc
+        return entry
+
+    def _resolve_governance(request: Request) -> tuple[ModelGovernanceStore | None, bytes | None]:
+        store: ModelGovernanceStore | None = request.app.state.governance_store
+        key: bytes | None = request.app.state.governance_key
+        return store, key
+
+    @app.get("/api/bn-manager/v1/models/{stable_id}/governance")
+    def model_governance_status(
+        stable_id: str,
+        request: Request,
+        session: SessionState = Depends(require_permission(PERMISSIONS["validate_model"])),
+    ) -> dict[str, Any]:
+        _load_registry_entry_for_governance(stable_id)
+        store, _key = _resolve_governance(request)
+        clinical_status, signed_approval = clinical_status_for(stable_id, store)
+        return ok_response(
+            {
+                "stable_id": stable_id,
+                "clinical_status": clinical_status.value,
+                "signed_approval": signed_approval.to_dict() if signed_approval is not None else None,
+                "reviewed_by": session.subject,
+            }
+        )
+
+    @app.post("/api/bn-manager/v1/models/{stable_id}/approve")
+    def model_approve(
+        stable_id: str,
+        request: Request,
+        payload: dict[str, Any] = Body(...),
+        session: SessionState = Depends(require_permission(PERMISSIONS["govern_model"])),
+    ) -> dict[str, Any]:
+        entry = _load_registry_entry_for_governance(stable_id)
+        store, key = _resolve_governance(request)
+        if store is None or not key:
+            raise BnManagerHttpError(
+                503,
+                ERROR_CODES["governance_key_unavailable"],
+                "BN Manager governance signing key is not configured.",
+                {"stable_id": stable_id},
+            )
+        _, text = read_registry_model(stable_id)
+        approved_by = str(payload.get("approved_by") or session.subject or "")
+        approved_at = str(payload.get("approved_at") or datetime.now(UTC).isoformat())
+        rationale = str(payload.get("rationale") or "")
+        try:
+            signature = sign_approval(
+                stable_id=stable_id,
+                status=ClinicalStatus.APPROVED,
+                model_hash=model_content_hash(text),
+                approved_at=approved_at,
+                approved_by=approved_by,
+                secret_key=key,
+            )
+        except MissingGovernanceKey as exc:
+            raise BnManagerHttpError(
+                503,
+                ERROR_CODES["governance_key_unavailable"],
+                "BN Manager governance signing key is not configured.",
+                {"stable_id": stable_id},
+            ) from exc
+        approval = SignedApproval(
+            stable_id=stable_id,
+            status=ClinicalStatus.APPROVED,
+            model_hash=model_content_hash(text),
+            approved_at=approved_at,
+            approved_by=approved_by,
+            signature=signature,
+        )
+        if not verify_approval(approval, key):
+            raise BnManagerHttpError(
+                503,
+                ERROR_CODES["governance_key_unavailable"],
+                "Signed approval failed verification against the configured governance key.",
+                {"stable_id": stable_id},
+            )
+        store.put(approval)
+        return JSONResponse(
+            status_code=201,
+            content=ok_response(
+                {
+                    "stable_id": stable_id,
+                    "clinical_status": ClinicalStatus.APPROVED.value,
+                    "signed_approval": approval.to_dict(),
+                    "rationale": rationale,
+                },
+                request_id=request.headers.get("x-request-id"),
+            ),
+        )
+
+    @app.post("/api/bn-manager/v1/models/{stable_id}/retire")
+    def model_retire(
+        stable_id: str,
+        request: Request,
+        payload: dict[str, Any] = Body(...),
+        session: SessionState = Depends(require_permission(PERMISSIONS["govern_model"])),
+    ) -> dict[str, Any]:
+        _load_registry_entry_for_governance(stable_id)
+        store, key = _resolve_governance(request)
+        if store is None or not key:
+            raise BnManagerHttpError(
+                503,
+                ERROR_CODES["governance_key_unavailable"],
+                "BN Manager governance signing key is not configured.",
+                {"stable_id": stable_id},
+            )
+        existing = store.get(stable_id)
+        if existing is None or existing.status != ClinicalStatus.APPROVED:
+            raise BnManagerHttpError(
+                409,
+                ERROR_CODES["model_not_approved"],
+                "BN Manager model cannot be retired without a prior approved status.",
+                {"stable_id": stable_id},
+            )
+        _, text = read_registry_model(stable_id)
+        retired_by = str(payload.get("retired_by") or session.subject or "")
+        retired_at = str(payload.get("retired_at") or datetime.now(UTC).isoformat())
+        rationale = str(payload.get("rationale") or "")
+        signature = sign_approval(
+            stable_id=stable_id,
+            status=ClinicalStatus.RETIRED,
+            model_hash=model_content_hash(text),
+            approved_at=retired_at,
+            approved_by=retired_by,
+            secret_key=key,
+        )
+        approval = SignedApproval(
+            stable_id=stable_id,
+            status=ClinicalStatus.RETIRED,
+            model_hash=model_content_hash(text),
+            approved_at=retired_at,
+            approved_by=retired_by,
+            signature=signature,
+        )
+        if not verify_approval(approval, key):
+            raise BnManagerHttpError(
+                503,
+                ERROR_CODES["governance_key_unavailable"],
+                "Signed approval failed verification against the configured governance key.",
+                {"stable_id": stable_id},
+            )
+        store.put(approval)
+        return ok_response(
+            {
+                "stable_id": stable_id,
+                "clinical_status": ClinicalStatus.RETIRED.value,
+                "signed_approval": approval.to_dict(),
+                "rationale": rationale,
+            },
+            request_id=request.headers.get("x-request-id"),
+        )
+
+    @app.post("/api/bn-manager/v1/models/{stable_id}/revoke")
+    def model_revoke(
+        stable_id: str,
+        request: Request,
+        session: SessionState = Depends(require_permission(PERMISSIONS["govern_model"])),
+    ) -> dict[str, Any]:
+        _load_registry_entry_for_governance(stable_id)
+        store, _key = _resolve_governance(request)
+        if store is not None:
+            store.delete(stable_id)
+        return ok_response(
+            {
+                "stable_id": stable_id,
+                "clinical_status": ClinicalStatus.UNVALIDATED.value,
+                "signed_approval": None,
+                "revoked_by": session.subject,
+            },
+            request_id=request.headers.get("x-request-id"),
+        )
+
     index_path = settings.static_dir / "index.html"
 
     @app.get(settings.ui_mount_path, include_in_schema=False)
@@ -298,7 +505,11 @@ def create_app(
 app = create_app()
 
 
-def _registry_evidence_schema(stable_id: str) -> dict[str, Any]:
+def _registry_evidence_schema(
+    stable_id: str,
+    *,
+    governance_store: ModelGovernanceStore | None = None,
+) -> dict[str, Any]:
     try:
         entry, text = read_registry_model(stable_id)
     except KeyError as exc:
@@ -310,13 +521,18 @@ def _registry_evidence_schema(stable_id: str) -> dict[str, Any]:
         ) from exc
     except ValueError as exc:
         raise BnManagerHttpError(404, ERROR_CODES["invalid_request"], "BN Manager registry file not found.") from exc
-    return _evidence_schema_for_registry(entry, text)
+    return _evidence_schema_for_registry(entry, text, governance_store=governance_store)
 
 
-def _evidence_schema_for_registry(entry: ModelRegistryEntry, text: str) -> dict[str, Any]:
+def _evidence_schema_for_registry(
+    entry: ModelRegistryEntry,
+    text: str,
+    *,
+    governance_store: ModelGovernanceStore | None = None,
+) -> dict[str, Any]:
     try:
         model = compile_xmlbif(text, schema_text=read_registry_schema())
-        return build_evidence_schema(entry, model, text)
+        return build_evidence_schema(entry, model, text, governance_store=governance_store)
     except XmlBifCompileError as exc:
         raise BnManagerHttpError(
             400,

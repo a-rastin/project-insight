@@ -8,6 +8,12 @@ from fastapi.testclient import TestClient
 from bn_manager_backend.auth_adapter import SessionState
 from bn_manager_backend.evaluation_store import InMemoryEvaluationStore
 from bn_manager_backend.main import create_app
+from bn_manager_backend.model_governance import (
+    ClinicalStatus,
+    InMemoryGovernanceStore,
+    SignedApproval,
+    sign_approval,
+)
 from bn_manager_backend.model_registry import (
     MODEL_REGISTRY,
     MODEL_REGISTRY_DIR,
@@ -15,6 +21,9 @@ from bn_manager_backend.model_registry import (
     resolve_owned_registry_file,
 )
 from clinical_graph_models import compile_xmlbif
+
+
+GOVERNANCE_KEY = b"test-governance-key-0123456789abcdef"
 
 
 class AdminSessionAdapter:
@@ -30,6 +39,19 @@ class AdminSessionAdapter:
         return self.session
 
 
+class ModelManagerSessionAdapter:
+    def __init__(self) -> None:
+        self.session = SessionState(
+            active=True,
+            subject="model-mgr-1",
+            roles=frozenset({"modelmanager"}),
+            csrf_token="csrf-validate",
+        )
+
+    def fetch_session(self, request: Request) -> SessionState:
+        return self.session
+
+
 class BnManagerBackendTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(create_app(evaluation_store=InMemoryEvaluationStore()))
@@ -37,6 +59,16 @@ class BnManagerBackendTests(unittest.TestCase):
             create_app(
                 session_adapter=AdminSessionAdapter(),
                 evaluation_store=InMemoryEvaluationStore(),
+                governance_store=InMemoryGovernanceStore(),
+                governance_key=GOVERNANCE_KEY,
+            )
+        )
+        self.model_manager_client = TestClient(
+            create_app(
+                session_adapter=ModelManagerSessionAdapter(),
+                evaluation_store=InMemoryEvaluationStore(),
+                governance_store=InMemoryGovernanceStore(),
+                governance_key=GOVERNANCE_KEY,
             )
         )
 
@@ -233,6 +265,217 @@ class BnManagerBackendTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["error"]["code"], "BNM_MODEL_NOT_FOUND")
+
+    def test_evidence_schema_defaults_to_unvalidated_status_without_signature(self) -> None:
+        for entry in MODEL_REGISTRY:
+            with self.subTest(stable_id=entry.stable_id):
+                response = self.client.get(f"/api/bn-manager/v1/models/{entry.stable_id}/schema")
+                self.assertEqual(response.status_code, 200)
+                evidence = response.json()["data"]
+                self.assertEqual(evidence["clinical_status"], "unvalidated")
+                self.assertNotIn("signed_approval", evidence)
+                # Dimensional/schema validity must not imply clinical safety.
+                self.assertFalse(evidence["clinical_safety_asserted"])
+                self.assertIn(evidence["clinical_safety_wording"], [
+                    "BN Manager output is clinical decision support, not a diagnosis, prescription, "
+                    "or a treatment order. A licensed clinician must review patient context, source "
+                    "evidence, contraindications, and local policy before clinical action.",
+                ])
+
+    def test_evidence_schema_surfaces_compact_neutral_cpt_bias_limitation(self) -> None:
+        # Treatment Setting and Involuntary Treatment Considerations ship the compact one-row
+        # TABLE the compiler broadcasts across parent combinations (table_broadcast=True).
+        for stable_id in ("bnm.treatment-setting", "bnm.involuntary-treatment-considerations"):
+            with self.subTest(stable_id=stable_id):
+                evidence = self.client.get(
+                    f"/api/bn-manager/v1/models/{stable_id}/schema"
+                ).json()["data"]
+                self.assertIn("compact-neutral-cpt-broadcast", evidence["limitations"])
+
+    def test_governance_endpoint_reports_unvalidated_model(self) -> None:
+        response = self.admin_client.get(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/governance",
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()["data"]
+        self.assertEqual(payload["stable_id"], "bnm.pharmacotherapy")
+        self.assertEqual(payload["clinical_status"], "unvalidated")
+        self.assertEqual(payload["signed_approval"], None)
+
+    def test_approve_requires_authenticated_model_manager_role_and_csrf(self) -> None:
+        # Unauthenticated caller blocked.
+        unauth = self.client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "psych-1"},
+        )
+        self.assertEqual(unauth.status_code, 401)
+
+        # Authenticated but missing the governance write permission.
+        clinician_session = SessionState(
+            active=True,
+            subject="clinician-1",
+            roles=frozenset({"psychiatrist"}),
+            csrf_token="csrf-validate",
+        )
+        class ClinicianAdapter:
+            def fetch_session(self, request: Request) -> SessionState:
+                return clinician_session
+        clinician_client = TestClient(
+            create_app(
+                session_adapter=ClinicianAdapter(),
+                evaluation_store=InMemoryEvaluationStore(),
+                governance_store=InMemoryGovernanceStore(),
+                governance_key=GOVERNANCE_KEY,
+            )
+        )
+        forbidden = clinician_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "psych-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(forbidden.status_code, 403)
+
+        # Authenticated with permission but missing CSRF token.
+        no_csrf = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "psych-1"},
+        )
+        self.assertEqual(no_csrf.status_code, 403)
+
+    def test_approve_records_signed_signature_and_marks_model_approved(self) -> None:
+        response = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "model-mgr-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(response.status_code, 201, response.text)
+        payload = response.json()["data"]
+        self.assertEqual(payload["stable_id"], "bnm.pharmacotherapy")
+        self.assertEqual(payload["clinical_status"], "approved")
+        approval = payload["signed_approval"]
+        self.assertEqual(approval["status"], "approved")
+        self.assertEqual(approval["approved_by"], "model-mgr-1")
+        self.assertRegex(approval["signature"], r"^[A-Za-z0-9_-]+$")
+        self.assertRegex(approval["model_hash"], r"^sha256:[a-f0-9]{64}$")
+
+        # Evidence schema now reports the approval.
+        evidence = self.model_manager_client.get(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/schema",
+            headers={"x-csrf-token": "csrf-validate"},
+        ).json()["data"]
+        self.assertEqual(evidence["clinical_status"], "approved")
+        self.assertIsNotNone(evidence["signed_approval"])
+        self.assertEqual(evidence["signed_approval"]["approved_by"], "model-mgr-1")
+        # Clinical safety assertion stays false: schema validity never implies clinical safety.
+        self.assertFalse(evidence["clinical_safety_asserted"])
+
+    def test_retire_requires_prior_approval(self) -> None:
+        retire_without_approval = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/retire",
+            json={"retired_by": "model-mgr-1", "rationale": "superseded"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(retire_without_approval.status_code, 409)
+        self.assertEqual(
+            retire_without_approval.json()["error"]["code"], "BNM_MODEL_NOT_APPROVED"
+        )
+
+        self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "model-mgr-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        retire = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/retire",
+            json={"retired_by": "model-mgr-1", "rationale": "superseded"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(retire.status_code, 200, retire.text)
+        payload = retire.json()["data"]
+        self.assertEqual(payload["clinical_status"], "retired")
+        self.assertEqual(payload["signed_approval"]["status"], "retired")
+
+    def test_revoke_returns_model_to_unvalidated(self) -> None:
+        self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "model-mgr-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        revoke = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/revoke",
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(revoke.status_code, 200)
+        payload = revoke.json()["data"]
+        self.assertEqual(payload["clinical_status"], "unvalidated")
+        self.assertIsNone(payload["signed_approval"])
+
+    def test_approve_rejects_unknown_stable_id_with_404(self) -> None:
+        response = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.never-heard-of/approve",
+            json={"approved_by": "model-mgr-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["error"]["code"], "BNM_MODEL_NOT_FOUND")
+
+    def test_governance_routes_fail_closed_when_key_is_missing(self) -> None:
+        # Without a governance signing key the approve endpoint refuses rather than
+        # silently fabricating an unsigned approval.
+        response = self.model_manager_client.post(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/approve",
+            json={"approved_by": "model-mgr-1"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(response.status_code, 201)
+
+        # Build a second client without a governance key.
+        keyless_client = TestClient(
+            create_app(
+                session_adapter=ModelManagerSessionAdapter(),
+                evaluation_store=InMemoryEvaluationStore(),
+                governance_store=InMemoryGovernanceStore(),
+                governance_key=None,
+            )
+        )
+        approved = self.model_manager_client.get(
+            "/api/bn-manager/v1/models/bnm.pharmacotherapy/governance",
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(approved.status_code, 200)
+
+        keyless_response = keyless_client.post(
+            "/api/bn-manager/v1/models/bnm.treatment-setting/approve",
+            json={"approved_by": "model-mgr-2"},
+            headers={"x-csrf-token": "csrf-validate"},
+        )
+        self.assertEqual(keyless_response.status_code, 503)
+        self.assertEqual(
+            keyless_response.json()["error"]["code"], "BNM_GOVERNANCE_KEY_UNAVAILABLE"
+        )
+
+    def test_signed_approval_signature_round_trips_through_store(self) -> None:
+        approval = SignedApproval(
+            stable_id="bnm.pharmacotherapy",
+            status=ClinicalStatus.APPROVED,
+            model_hash="sha256:" + "f" * 64,
+            approved_at="2026-07-23T13:00:00Z",
+            approved_by="model-mgr-3",
+            signature=sign_approval(
+                stable_id="bnm.pharmacotherapy",
+                status=ClinicalStatus.APPROVED,
+                model_hash="sha256:" + "f" * 64,
+                approved_at="2026-07-23T13:00:00Z",
+                approved_by="model-mgr-3",
+                secret_key=GOVERNANCE_KEY,
+            ),
+        )
+        store = InMemoryGovernanceStore()
+        store.put(approval)
+        loaded = store.get(approval.stable_id)
+        assert loaded is not None
+        self.assertEqual(loaded.to_dict()["signature"], approval.signature)
 
 
 if __name__ == "__main__":
