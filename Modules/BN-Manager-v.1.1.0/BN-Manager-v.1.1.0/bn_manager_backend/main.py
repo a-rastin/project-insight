@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -23,7 +24,13 @@ from clinical_graph_models.model import ClinicalGraphModel
 
 from .auth_adapter import AuthenticationRestAdapter, CsrfError, SessionAdapter, SessionState, assert_csrf_token
 from .config import BnManagerSettings, get_settings
-from .evidence_schema import build_evidence_schema
+from .evaluation_store import (
+    EvaluationStore,
+    IdempotencyConflict,
+    SqliteEvaluationStore,
+    build_canonical_evaluation,
+)
+from .evidence_schema import build_evidence_schema, model_content_hash
 from .model_registry import (
     ModelRegistryEntry,
     get_registry_entry,
@@ -54,6 +61,7 @@ class BnManagerHttpError(Exception):
 def create_app(
     settings: BnManagerSettings | None = None,
     session_adapter: SessionAdapter | None = None,
+    evaluation_store: EvaluationStore | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     app = FastAPI(
@@ -66,6 +74,7 @@ def create_app(
         settings.auth_session_url,
         settings.auth_timeout_seconds,
     )
+    app.state.evaluation_store = evaluation_store or SqliteEvaluationStore(settings.database_path)
 
     @app.exception_handler(BnManagerHttpError)
     def bn_manager_error(request: Request, exc: BnManagerHttpError) -> JSONResponse:
@@ -209,24 +218,27 @@ def create_app(
 
     @app.post("/api/bn-manager/v1/dashboard/evaluate")
     def dashboard_evaluate(
+        request: Request,
         payload: dict[str, Any] = Body(...),
         session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Dashboard", session)
+        return _evaluate_payload(payload, "Dashboard", session, request)
 
     @app.post("/api/bn-manager/v1/add-new-patient/evaluate")
     def add_new_patient_evaluate(
+        request: Request,
         payload: dict[str, Any] = Body(...),
         session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Add New Patient", session)
+        return _evaluate_payload(payload, "Add New Patient", session, request)
 
     @app.post("/api/bn-manager/v1/follow-up/evaluate")
     def follow_up_evaluate(
+        request: Request,
         payload: dict[str, Any] = Body(...),
         session: SessionState = Depends(require_roles(EVALUATION_ROLES)),
     ) -> dict[str, Any]:
-        return _evaluate_payload(payload, "Follow-up", session)
+        return _evaluate_payload(payload, "Follow-up", session, request)
 
     @app.post("/api/bn-manager/v1/models/validate")
     def model_validate(
@@ -304,8 +316,15 @@ def _evidence_schema_for_registry(entry: ModelRegistryEntry, text: str) -> dict[
         ) from exc
 
 
-def _evaluate_payload(payload: dict[str, Any], surface: str, session: SessionState) -> dict[str, Any]:
-    model = _load_model(payload)
+def _evaluate_payload(
+    payload: dict[str, Any],
+    surface: str,
+    session: SessionState,
+    request: Request,
+) -> dict[str, Any]:
+    model_payload = payload.get("model") if isinstance(payload.get("model"), dict) else payload
+    stable_id = str(model_payload.get("stable_id") or model_payload.get("model_id") or "").strip()
+    model, model_text, registry_entry = _load_model_with_provenance(payload)
     messages = [asdict(message) for message in validate_model(model)]
     if any(message["severity"] == "error" for message in messages):
         raise BnManagerHttpError(
@@ -316,8 +335,12 @@ def _evaluate_payload(payload: dict[str, Any], surface: str, session: SessionSta
         )
 
     target = _target_node(payload)
+    supplied_evidence = payload.get("evidence") or {}
+    if not isinstance(supplied_evidence, dict):
+        raise BnManagerHttpError(400, ERROR_CODES["invalid_request"], "evidence must be an object.")
+
     try:
-        result = evaluate_posterior(model, target, payload.get("evidence") or {})
+        result = evaluate_posterior(model, target, supplied_evidence)
     except KeyError as exc:
         raise BnManagerHttpError(
             404,
@@ -333,28 +356,89 @@ def _evaluate_payload(payload: dict[str, Any], surface: str, session: SessionSta
             {"target": target},
         ) from exc
 
+    model_id = stable_id or (registry_entry.stable_id if registry_entry is not None else "inline")
+    model_version = registry_entry.active_version if registry_entry is not None else "inline"
+    model_hash = model_content_hash(model_text)
+    allowed_evidence = {
+        node.name: frozenset(node.states)
+        for node in model.nodes
+        if node.kind == "chance" and node.name != target
+    }
+    request_id = request.headers.get("x-request-id")
+    idempotency_key = _idempotency_key(request, payload, request_id)
+    caller = {
+        "subject": session.subject,
+        "surface": surface,
+        "roles": sorted(session.roles),
+    }
+    request_metadata = {
+        "request_id": request_id,
+        "decision_id": payload.get("decision_id") or payload.get("target_decision_id"),
+        "model_id": model_id,
+    }
+    record = build_canonical_evaluation(
+        model_id=model_id,
+        model_version=model_version,
+        model_hash=model_hash,
+        target=result.target,
+        posterior=result.values,
+        supplied_evidence=supplied_evidence,
+        allowed_evidence=allowed_evidence,
+        warnings=messages,
+        caller=caller,
+        request_metadata=request_metadata,
+        idempotency_key=idempotency_key,
+    )
+    store: EvaluationStore = request.app.state.evaluation_store
+    try:
+        stored = store.put(record)
+    except IdempotencyConflict as exc:
+        raise BnManagerHttpError(
+            409,
+            ERROR_CODES["idempotency_conflict"],
+            str(exc),
+            {"idempotency_key": idempotency_key},
+        ) from exc
+
     return ok_response(
         {
             "surface": surface,
-            "target": result.target,
-            "values": result.values,
+            "target": stored.target,
+            "values": stored.posterior,
             "rankings": [
                 {"state": state, "probability": value}
-                for state, value in sorted(result.values.items(), key=lambda item: item[1], reverse=True)
+                for state, value in sorted(stored.posterior.items(), key=lambda item: item[1], reverse=True)
             ],
-            "warnings": messages,
+            "warnings": list(stored.warnings) if stored.warnings else messages,
             "evaluated_by": session.subject,
-        }
+            "evaluation": stored.to_dict(),
+        },
+        request_id=request_id,
     )
 
 
-def _load_model(payload: dict[str, Any]) -> ClinicalGraphModel:
+def _idempotency_key(request: Request, payload: dict[str, Any], request_id: str | None) -> str:
+    header = request.headers.get("idempotency-key") or request.headers.get("x-idempotency-key")
+    if header and str(header).strip():
+        return str(header).strip()
+    body_key = payload.get("idempotency_key") or payload.get("idempotencyKey")
+    if body_key and str(body_key).strip():
+        return str(body_key).strip()
+    if request_id and str(request_id).strip():
+        return f"request:{request_id.strip()}"
+    return f"auto:{uuid4()}"
+
+
+def _load_model_with_provenance(
+    payload: dict[str, Any],
+) -> tuple[ClinicalGraphModel, str, ModelRegistryEntry | None]:
     model_payload = payload.get("model") if isinstance(payload.get("model"), dict) else payload
     text = str(model_payload.get("text") or model_payload.get("model_text") or "").strip()
     stable_id = str(model_payload.get("stable_id") or model_payload.get("model_id") or "").strip()
+    registry_entry: ModelRegistryEntry | None = None
     if not text and stable_id:
         try:
-            _, text = read_registry_model(stable_id)
+            registry_entry, text = read_registry_model(stable_id)
         except KeyError as exc:
             raise BnManagerHttpError(
                 404,
@@ -362,6 +446,8 @@ def _load_model(payload: dict[str, Any]) -> ClinicalGraphModel:
                 "BN Manager registry model not found.",
                 {"stable_id": stable_id},
             ) from exc
+    elif stable_id:
+        registry_entry = get_registry_entry(stable_id)
     if not text:
         raise BnManagerHttpError(400, ERROR_CODES["invalid_request"], "XML model text or model_id is required.")
 
@@ -374,7 +460,7 @@ def _load_model(payload: dict[str, Any]) -> ClinicalGraphModel:
             {"format": format_name},
         )
     try:
-        return compile_xmlbif(text, schema_text=read_registry_schema())
+        model = compile_xmlbif(text, schema_text=read_registry_schema())
     except XmlBifCompileError as exc:
         raise BnManagerHttpError(
             400,
@@ -382,6 +468,12 @@ def _load_model(payload: dict[str, Any]) -> ClinicalGraphModel:
             str(exc),
             exc.details(),
         ) from exc
+    return model, text, registry_entry
+
+
+def _load_model(payload: dict[str, Any]) -> ClinicalGraphModel:
+    model, _text, _entry = _load_model_with_provenance(payload)
+    return model
 
 
 def _target_node(payload: dict[str, Any]) -> str:

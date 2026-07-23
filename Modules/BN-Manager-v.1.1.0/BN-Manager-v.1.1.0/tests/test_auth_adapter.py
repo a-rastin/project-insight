@@ -6,6 +6,7 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 
 from bn_manager_backend.auth_adapter import SessionState, session_from_payload
+from bn_manager_backend.evaluation_store import InMemoryEvaluationStore
 from bn_manager_backend.main import create_app
 
 
@@ -45,6 +46,96 @@ class AuthenticationGuardTests(unittest.TestCase):
         self.assertEqual(payload["data"]["target"], "Clinical_Action_Pattern")
         self.assertAlmostEqual(sum(payload["data"]["values"].values()), 1.0)
         self.assertTrue(all("probability" in row for row in payload["data"]["rankings"]))
+        evaluation = payload["data"]["evaluation"]
+        self.assertRegex(evaluation["evaluationId"], r"^[0-9a-f-]{36}$")
+        self.assertEqual(evaluation["modelId"], "bnm.clozapine-suicide-risk")
+        self.assertRegex(evaluation["modelHash"], r"^sha256:[a-f0-9]{64}$")
+        self.assertEqual(evaluation["target"], "Clinical_Action_Pattern")
+        self.assertIn("Schizophrenia_Suicide_Indication", evaluation["acceptedEvidence"])
+        self.assertEqual(evaluation["caller"]["subject"], "psy-1")
+        self.assertEqual(evaluation["caller"]["surface"], "Dashboard")
+        self.assertTrue(evaluation["idempotencyKey"])
+        self.assertRegex(evaluation["bindingHash"], r"^sha256:[a-f0-9]{64}$")
+        self.assertEqual(evaluation["engineVersion"].split("/")[0], "clinical_graph_models")
+
+    def test_evaluate_idempotent_retry_returns_same_record(self) -> None:
+        store = InMemoryEvaluationStore()
+        client = TestClient(
+            create_app(
+                session_adapter=FakeSessionAdapter(
+                    session_from_payload(
+                        {
+                            "schemaVersion": "1.0.0",
+                            "authenticated": True,
+                            "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                            "session": {"id": "session-idem", "expiresAt": "2099-01-01T00:00:00Z"},
+                            "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+                        }
+                    )
+                ),
+                evaluation_store=store,
+            )
+        )
+        body = {
+            "model": {"model_id": "bnm.clozapine-suicide-risk"},
+            "evidence": {"Schizophrenia_Suicide_Indication": "Met"},
+        }
+        headers = {
+            "x-csrf-token": "csrf-1",
+            "Cookie": "csrf_token=csrf-1",
+            "Idempotency-Key": "idemp-evaluate-retry-0001",
+        }
+        first = client.post("/api/bn-manager/v1/dashboard/evaluate", json=body, headers=headers)
+        second = client.post("/api/bn-manager/v1/dashboard/evaluate", json=body, headers=headers)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(
+            first.json()["data"]["evaluation"]["evaluationId"],
+            second.json()["data"]["evaluation"]["evaluationId"],
+        )
+
+    def test_evaluate_idempotency_conflict_on_changed_payload(self) -> None:
+        store = InMemoryEvaluationStore()
+        client = TestClient(
+            create_app(
+                session_adapter=FakeSessionAdapter(
+                    session_from_payload(
+                        {
+                            "schemaVersion": "1.0.0",
+                            "authenticated": True,
+                            "user": {"id": "psy-1", "roles": ["psychiatrist"]},
+                            "session": {"id": "session-conflict", "expiresAt": "2099-01-01T00:00:00Z"},
+                            "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+                        }
+                    )
+                ),
+                evaluation_store=store,
+            )
+        )
+        headers = {
+            "x-csrf-token": "csrf-1",
+            "Cookie": "csrf_token=csrf-1",
+            "Idempotency-Key": "idemp-evaluate-conflict-01",
+        }
+        first = client.post(
+            "/api/bn-manager/v1/dashboard/evaluate",
+            json={
+                "model": {"model_id": "bnm.clozapine-suicide-risk"},
+                "evidence": {"Schizophrenia_Suicide_Indication": "Met"},
+            },
+            headers=headers,
+        )
+        second = client.post(
+            "/api/bn-manager/v1/dashboard/evaluate",
+            json={
+                "model": {"model_id": "bnm.clozapine-suicide-risk"},
+                "evidence": {"Schizophrenia_Suicide_Indication": "NotMet"},
+            },
+            headers=headers,
+        )
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 409)
+        self.assertEqual(second.json()["error"]["code"], "BNM_IDEMPOTENCY_CONFLICT")
 
     def test_valid_admin_can_validate_registered_xml_model(self) -> None:
         client = self._client(
@@ -126,7 +217,12 @@ class AuthenticationGuardTests(unittest.TestCase):
         self.assertFalse(session_from_payload({"authenticated": True, "userId": "psy-1", "roles": ["psychiatrist"]}).active)
 
     def _client(self, payload: dict) -> TestClient:
-        return TestClient(create_app(session_adapter=FakeSessionAdapter(session_from_payload(payload))))
+        return TestClient(
+            create_app(
+                session_adapter=FakeSessionAdapter(session_from_payload(payload)),
+                evaluation_store=InMemoryEvaluationStore(),
+            )
+        )
 
 
 if __name__ == "__main__":

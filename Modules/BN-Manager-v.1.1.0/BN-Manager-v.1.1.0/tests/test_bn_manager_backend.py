@@ -6,6 +6,7 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 
 from bn_manager_backend.auth_adapter import SessionState
+from bn_manager_backend.evaluation_store import InMemoryEvaluationStore
 from bn_manager_backend.main import create_app
 from bn_manager_backend.model_registry import (
     MODEL_REGISTRY,
@@ -31,8 +32,13 @@ class AdminSessionAdapter:
 
 class BnManagerBackendTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(create_app())
-        self.admin_client = TestClient(create_app(session_adapter=AdminSessionAdapter()))
+        self.client = TestClient(create_app(evaluation_store=InMemoryEvaluationStore()))
+        self.admin_client = TestClient(
+            create_app(
+                session_adapter=AdminSessionAdapter(),
+                evaluation_store=InMemoryEvaluationStore(),
+            )
+        )
 
     def test_health_ready_and_contract_endpoints(self) -> None:
         health = self.client.get("/api/health").json()

@@ -165,6 +165,7 @@ ERROR_CODES: dict[str, str] = {
     "unsupported_format": "BNM_UNSUPPORTED_FORMAT",
     "unknown_target_node": "BNM_UNKNOWN_TARGET_NODE",
     "evaluation_failed": "BNM_EVALUATION_FAILED",
+    "idempotency_conflict": "BNM_IDEMPOTENCY_CONFLICT",
     "safety_review_required": "BNM_SAFETY_REVIEW_REQUIRED",
     "internal_error": "BNM_INTERNAL_ERROR",
 }
