@@ -11,7 +11,7 @@ from .observability import Observability,current_observability
 class AuthenticationUnavailable(RuntimeError):pass
 class AccessDenied(RuntimeError):pass
 class Capability(str,Enum):
-    SESSION="session";PLAN_READ="plan:read";PLAN_MUTATE="plan:mutate";SUPPORT_READ="support:read";AUDIT_READ="audit:read"
+    SESSION="session";PLAN_READ="plan:read";PLAN_MUTATE="plan:mutate";SUPPORT_READ="support:read";AUDIT_READ="audit:read";BN_EVALUATE="bn:evaluate"
 @dataclass(frozen=True)
 class Session:
     user_id:str;roles:frozenset[str];expires_at:datetime;csrf_token:str
@@ -50,11 +50,11 @@ class Security:
             session=self._authentication.verify(cookie);expires=session.expires_at if session.expires_at.tzinfo else session.expires_at.replace(tzinfo=timezone.utc)
             if not session.enabled or expires<=self._now():raise AccessDenied("session is expired or disabled")
             allowed=capability==Capability.SESSION
-            if capability in {Capability.PLAN_READ,Capability.PLAN_MUTATE}:allowed="psychiatrist" in session.roles
+            if capability in {Capability.PLAN_READ,Capability.PLAN_MUTATE,Capability.BN_EVALUATE}:allowed="psychiatrist" in session.roles
             elif capability==Capability.SUPPORT_READ:allowed="admin" in session.roles and "treatment-plan:support" in session.permissions
             elif capability==Capability.AUDIT_READ:allowed="admin" in session.roles and "treatment-plan:audit" in session.permissions
             if not allowed:raise AccessDenied("principal is not authorized")
-            if capability==Capability.PLAN_MUTATE and (not session.csrf_token or not csrf_token or not hmac.compare_digest(session.csrf_token,csrf_token)):raise AccessDenied("CSRF token is missing or invalid")
+            if capability in {Capability.PLAN_MUTATE,Capability.BN_EVALUATE} and (not session.csrf_token or not csrf_token or not hmac.compare_digest(session.csrf_token,csrf_token)):raise AccessDenied("CSRF token is missing or invalid")
         except (AccessDenied,AuthenticationUnavailable):
             observer.audit(action,"denied",actor_id=session.user_id if session else None);raise
         observer.audit(action,"success",actor_id=session.user_id);return session

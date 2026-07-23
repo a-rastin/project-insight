@@ -25,6 +25,7 @@ class Settings:
     log_level: str = "INFO"
     authentication_session_url: str | None = None
     trusted_internal_origins: tuple[str, ...] = ()
+    bn_manager_url: str = "http://bn-manager.internal"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -51,6 +52,9 @@ class Settings:
                 raise ConfigurationError("TP_AUTHENTICATION_SESSION_URL must use a trusted internal origin")
         if environment == "production" and not session_url:
             raise ConfigurationError("production requires the Authentication REST interface")
-        return cls(environment, Path(os.getenv("TP_DATABASE_PATH", "var/treatment-plan.db")), stub, level, session_url, origins)
+        bn_manager_url = os.getenv("TP_BN_MANAGER_URL", "http://bn-manager.internal").strip()
+        if not bn_manager_url:
+            raise ConfigurationError("TP_BN_MANAGER_URL must be a non-empty BN Manager base URL")
+        return cls(environment, Path(os.getenv("TP_DATABASE_PATH", "var/treatment-plan.db")), stub, level, session_url, origins, bn_manager_url)
 
 

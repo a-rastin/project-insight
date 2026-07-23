@@ -1,0 +1,293 @@
+{
+  "bnm.clozapine-suicide-risk": {
+    "allowed_evidence": {
+      "Clozapine_Contraindications": [
+        "Present",
+        "Absent"
+      ],
+      "Clozapine_Eligibility": [
+        "Eligible",
+        "Contraindicated"
+      ],
+      "Monitoring_Adherence_Capacity": [
+        "Sufficient",
+        "Insufficient"
+      ],
+      "Schizophrenia_Suicide_Indication": [
+        "Met",
+        "Not_Met"
+      ]
+    },
+    "limitations": [],
+    "model_hash": "sha256:90f633bee7da1625ca4d44d35ace5acace5ca51ee7d597541ee7a5d0089acf3a",
+    "model_version": "1.0.0",
+    "optional_evidence": [
+      "Schizophrenia_Suicide_Indication",
+      "Clozapine_Contraindications",
+      "Monitoring_Adherence_Capacity",
+      "Clozapine_Eligibility"
+    ],
+    "required_evidence": [],
+    "stable_id": "bnm.clozapine-suicide-risk",
+    "target": "Clinical_Action_Pattern",
+    "target_states": [
+      "Initiate_Clozapine",
+      "Optimize_Current_Therapy"
+    ],
+    "title": "Clozapine in Suicide Risk"
+  },
+  "bnm.involuntary-treatment-considerations": {
+    "allowed_evidence": {
+      "decision_making_capacity": [
+        "has_capacity",
+        "lacks_capacity",
+        "unknown"
+      ],
+      "engagement_efforts_status": [
+        "accepted_after_psychotherapeutic_or_support_engagement",
+        "not_accepted_despite_engagement",
+        "not_yet_attempted",
+        "unknown"
+      ],
+      "immediate_treatment_path": [
+        "continue_voluntary_collaborative_treatment",
+        "follow_advance_directive_and_reassess",
+        "pursue_lawful_involuntary_process",
+        "defer_involuntary_treatment_continue_engagement",
+        "insufficient_information"
+      ],
+      "implementation_resources_and_individualized_plan": [
+        "adequate",
+        "inadequate",
+        "unknown"
+      ],
+      "lawful_involuntary_treatment_pathway": [
+        "administrative_process_available",
+        "judicial_hearing_required",
+        "no_pathway_or_criteria_not_met",
+        "unknown"
+      ],
+      "outpatient_commitment_priority": [
+        "consider_with_ethical_balancing",
+        "do_not_prioritize",
+        "insufficient_information"
+      ],
+      "psychiatric_advance_directive": [
+        "available_and_applicable",
+        "absent_or_not_applicable",
+        "unknown"
+      ],
+      "recurrent_nonadherence_related_deterioration": [
+        "repeated_relapse_rehospitalization_or_reincarceration",
+        "pattern_absent",
+        "unknown"
+      ],
+      "severe_symptoms_requiring_treatment": [
+        "present",
+        "absent",
+        "unknown"
+      ],
+      "treatment_participation": [
+        "accepts_treatment",
+        "declines_or_resists_treatment",
+        "unknown"
+      ]
+    },
+    "limitations": [
+      "compact-neutral-cpt-broadcast"
+    ],
+    "model_hash": "sha256:6c42ea3f0f2491e7f15a7624d60dcb6b84055a5545bd258cf67b0ad8b211cd0d",
+    "model_version": "1.0.0",
+    "optional_evidence": [
+      "treatment_participation",
+      "decision_making_capacity",
+      "psychiatric_advance_directive",
+      "severe_symptoms_requiring_treatment",
+      "engagement_efforts_status",
+      "lawful_involuntary_treatment_pathway",
+      "recurrent_nonadherence_related_deterioration",
+      "implementation_resources_and_individualized_plan",
+      "immediate_treatment_path",
+      "outpatient_commitment_priority"
+    ],
+    "required_evidence": [],
+    "stable_id": "bnm.involuntary-treatment-considerations",
+    "target": "management_recommendation",
+    "target_states": [
+      "voluntary_treatment_with_psychotherapeutic_and_support_engagement",
+      "follow_applicable_advance_directive_with_capacity_and_clinical_reassessment",
+      "initiate_state_authorized_involuntary_treatment_process",
+      "seek_judicial_permission_before_involuntary_treatment",
+      "consider_involuntary_outpatient_commitment_with_resources_individualized_plan_and_ethical_review",
+      "insufficient_information_verify_capacity_need_preferences_and_local_law"
+    ],
+    "title": "Involuntary Treatment Considerations"
+  },
+  "bnm.pharmacotherapy": {
+    "allowed_evidence": {
+      "antipsychotic_candidate_eligibility": [
+        "eligible",
+        "candidate_contraindicated",
+        "diagnostic_review_required",
+        "insufficient_information"
+      ],
+      "candidate_specific_hard_contraindication": [
+        "present",
+        "absent",
+        "unknown"
+      ],
+      "formulation_fit": [
+        "acceptable_formulation_available",
+        "formulation_mismatch",
+        "unknown"
+      ],
+      "individualized_candidate_priority": [
+        "candidate_high_priority",
+        "alternative_candidate_preferred",
+        "candidate_requires_caution_or_adjustment",
+        "insufficient_information"
+      ],
+      "interaction_and_pharmacokinetic_fit": [
+        "favorable",
+        "concerning",
+        "unknown"
+      ],
+      "patient_preference_and_acceptability": [
+        "accepts_candidate",
+        "prefers_alternative",
+        "declines_antipsychotic",
+        "unknown"
+      ],
+      "prior_antipsychotic_experience": [
+        "effective_and_tolerable",
+        "ineffective_or_intolerable",
+        "no_prior_trial",
+        "unknown"
+      ],
+      "schizophrenia_diagnostic_context": [
+        "schizophrenia_confirmed",
+        "diagnosis_not_confirmed",
+        "unknown"
+      ],
+      "shared_decision_and_formulation_priority": [
+        "proceed_with_candidate",
+        "choose_acceptable_alternative_or_formulation",
+        "address_declination_and_reassess",
+        "insufficient_information"
+      ],
+      "side_effect_and_physical_health_fit": [
+        "favorable",
+        "concerning",
+        "unknown"
+      ]
+    },
+    "limitations": [],
+    "model_hash": "sha256:2458da5e122027ca96521e9746c803d53b86e6b897b74a2bef01033f923bb915",
+    "model_version": "1.0.0",
+    "optional_evidence": [
+      "schizophrenia_diagnostic_context",
+      "candidate_specific_hard_contraindication",
+      "prior_antipsychotic_experience",
+      "patient_preference_and_acceptability",
+      "side_effect_and_physical_health_fit",
+      "interaction_and_pharmacokinetic_fit",
+      "formulation_fit",
+      "antipsychotic_candidate_eligibility",
+      "individualized_candidate_priority",
+      "shared_decision_and_formulation_priority"
+    ],
+    "required_evidence": [],
+    "stable_id": "bnm.pharmacotherapy",
+    "target": "management_recommendation",
+    "target_states": [
+      "initiate_individualized_antipsychotic_and_monitor_effectiveness_and_side_effects",
+      "select_alternative_antipsychotic_or_formulation_then_initiate_and_monitor",
+      "exclude_contraindicated_candidate_and_select_an_eligible_alternative",
+      "continue_shared_decision_discussion_and_reassess_if_antipsychotic_declined",
+      "defer_selection_and_obtain_missing_or_diagnostic_information"
+    ],
+    "title": "Pharmacotherapy"
+  },
+  "bnm.treatment-setting": {
+    "allowed_evidence": {
+      "acute_safety_or_supervision_need": [
+        "serious_threat_of_harm_to_self_or_others",
+        "unable_to_self_care_and_needs_constant_support",
+        "neither_present",
+        "unknown"
+      ],
+      "hospitalization_acceptance": [
+        "accepts_voluntary_hospitalization",
+        "does_not_accept_voluntary_hospitalization",
+        "unknown_or_not_yet_discussed"
+      ],
+      "inpatient_care_priority": [
+        "inpatient_care_essential",
+        "inpatient_care_not_indicated",
+        "insufficient_information"
+      ],
+      "inpatient_service_priority": [
+        "general_hospital_or_intensive_care_with_consultation_liaison_psychiatry",
+        "psychiatric_inpatient_service_with_medical_consultants",
+        "standard_psychiatric_inpatient_service",
+        "insufficient_information"
+      ],
+      "less_restrictive_care_priority": [
+        "enhanced_outpatient_program",
+        "routine_outpatient_care",
+        "insufficient_information"
+      ],
+      "medical_surgical_service_need": [
+        "significant_intervention_or_monitoring_unavailable_on_psychiatric_service",
+        "manageable_on_psychiatric_service_with_medical_consultants",
+        "no_significant_additional_health_service_need",
+        "unknown"
+      ],
+      "monitoring_assistance_need_if_not_inpatient": [
+        "more_than_routine_outpatient_care",
+        "routine_outpatient_care_sufficient",
+        "unknown"
+      ],
+      "new_onset_psychosis_stabilization_need": [
+        "initial_inpatient_stabilization_warranted",
+        "initial_inpatient_stabilization_not_warranted",
+        "unknown"
+      ],
+      "outpatient_treatment_feasibility": [
+        "unsafe_or_ineffective_due_to_psychiatric_problem",
+        "unsafe_or_ineffective_due_to_medical_problem",
+        "safe_and_effective",
+        "unknown"
+      ]
+    },
+    "limitations": [
+      "compact-neutral-cpt-broadcast"
+    ],
+    "model_hash": "sha256:0282bbb4c1b4378728c4f8429a9bc71396d8cd94e61dd508aaef19c08d92ee65",
+    "model_version": "1.0.0",
+    "optional_evidence": [
+      "acute_safety_or_supervision_need",
+      "outpatient_treatment_feasibility",
+      "new_onset_psychosis_stabilization_need",
+      "medical_surgical_service_need",
+      "monitoring_assistance_need_if_not_inpatient",
+      "hospitalization_acceptance",
+      "inpatient_care_priority",
+      "inpatient_service_priority",
+      "less_restrictive_care_priority"
+    ],
+    "required_evidence": [],
+    "stable_id": "bnm.treatment-setting",
+    "target": "management_recommendation",
+    "target_states": [
+      "voluntary_general_hospital_or_intensive_care_with_consultation_liaison_psychiatry",
+      "voluntary_psychiatric_inpatient_care_with_needed_medical_consultation",
+      "voluntary_standard_psychiatric_inpatient_care",
+      "follow_jurisdictional_requirements_for_involuntary_hospitalization_in_appropriate_inpatient_service",
+      "use_enhanced_outpatient_program_act_assisted_outpatient_intensive_outpatient_partial_or_day_hospitalization",
+      "use_routine_outpatient_care",
+      "insufficient_information_reassess_safety_feasibility_service_needs_and_acceptance"
+    ],
+    "title": "Treatment Setting"
+  }
+}

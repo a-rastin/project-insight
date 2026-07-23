@@ -31,6 +31,8 @@ from .repository import InMemoryRepository, Repository
 from .sqlite_edit_store import SQLitePlanEditStore
 from .sqlite_repository import SQLiteRepository
 from .security import AccessDenied, AuthenticationUnavailable, Capability, HttpAuthenticationAdapter, Security, Session
+from .bn_caller_policy import BnManagerTreatmentPlanEvaluator, Caller
+from .bn_evaluation import BnModel, RawBnEvaluation
 
 
 def create_app(
@@ -249,6 +251,69 @@ def create_app(
     def metrics(request: Request):
         authorized_session(request, Capability.SUPPORT_READ)
         return observability.prometheus()
+
+    @app.post("/api/treatment-plan/v1/bn-evaluate")
+    async def bn_evaluate(
+        body: dict[str, Any],
+        request: Request,
+        csrf_token: str | None = Header(default=None, alias="X-CSRF-Token"),
+    ):
+        current_session = authorized_session(request, Capability.BN_EVALUATE, csrf_token)
+        allowed_fields = {"model_id", "evidence"}
+        unknown = sorted(set(body) - allowed_fields)
+        if unknown:
+            raise HTTPException(422, "unsupported bn-evaluate fields: " + ", ".join(unknown))
+        model_id = body.get("model_id")
+        evidence = body.get("evidence")
+        if not isinstance(model_id, str) or not model_id.strip():
+            raise HTTPException(422, "model_id is required")
+        if not isinstance(evidence, dict) or any(not isinstance(value, str) for value in evidence.values()):
+            raise HTTPException(422, "evidence must be a string-valued object")
+        try:
+            model = next(model for model in BnModel if ("bnm." + model.value) == model_id.strip())
+        except StopIteration as exc:
+            raise HTTPException(422, "model_id is not a registered BN model") from exc
+        caller = Caller(
+            subject=current_session.user_id,
+            roles=current_session.roles,
+            csrf_token=csrf_token or "",
+            cookie=request.headers.get("cookie", ""),
+        )
+        import httpx
+        client = getattr(app.state, "bn_manager_client", None) or httpx.AsyncClient()
+        evaluator = BnManagerTreatmentPlanEvaluator(
+            base_url=settings.bn_manager_url,
+            client=client,
+            caller=caller,
+        )
+        try:
+            result = await evaluator.evaluate(model, evidence)
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(503, "BN Manager evaluation failed") from exc
+        except httpx.HTTPError as exc:
+            raise HTTPException(503, "BN Manager is unavailable") from exc
+        finally:
+            if not hasattr(app.state, "bn_manager_client"):
+                await client.aclose()
+        return JSONResponse(
+            {
+                "surface": caller.surface,
+                "model": {"model_id": model_id},
+                "evaluations": [
+                    {
+                        "evaluation_id": result.evaluation_id,
+                        "model_id": result.model_id,
+                        "model_version": result.model_version,
+                        "model_hash": result.model_hash,
+                        "posterior": dict(result.posterior),
+                        "evaluated_at": result.evaluated_at,
+                    }
+                ],
+                "evaluated_by": current_session.user_id,
+            },
+            status_code=200,
+            headers={"X-Schema-Version": "1.0.0"},
+        )
 
     frontend = Path(__file__).parents[1] / "frontend" / "dist"
     if frontend.exists():
