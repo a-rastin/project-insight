@@ -11,6 +11,9 @@ const {
 const {
   createDefaultMedicalHistoryRepository,
 } = require("./repository.js");
+const { createHttpAuthAdapter } = require("./auth-adapter.js");
+const { createSecurity } = require("./security.js");
+const { createReadinessProbe } = require("./readiness.js");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT_DIR = __dirname;
@@ -200,22 +203,18 @@ function createServer(options = {}) {
     dataDir: options.dataDir || process.env.MEDICAL_HISTORY_DATA_DIR || path.join(ROOT_DIR, "data"),
   });
   const submissionStore = options.submissionStore || new MedicalHistorySubmissionStore({ repository });
-  const security = options.security || null;
-  const readiness = options.readiness || (() => ({
-    ok: true,
-    checks: {
-      database: (() => {
-        try {
-          repository.ping();
-          return "ok";
-        } catch {
-          return "blocked";
-        }
-      })(),
-      authentication: security?.authConfigured ? "ok" : "disabled",
-      csrf: security?.csrfConfigured ? "ok" : "disabled",
-    },
-  }));
+  const configuredAuthAdapter = options.authAdapter === undefined
+    ? (process.env.AUTH_SESSION_URL ? createHttpAuthAdapter() : null)
+    : options.authAdapter;
+  const security = options.security || createSecurity({
+    authAdapter: configuredAuthAdapter,
+    csrfSecret: options.csrfSecret,
+  });
+  const readiness = options.readiness || createReadinessProbe({
+    repository,
+    authConfigured: security.authConfigured,
+    csrfConfigured: security.csrfConfigured,
+  });
 
   async function sendSubmission(req, res, submission, status = 200) {
     if (!submission) {

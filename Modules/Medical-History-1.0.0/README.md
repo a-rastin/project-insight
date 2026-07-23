@@ -24,7 +24,7 @@ Conditional questions are hidden until applicable. The server independently vali
 
 ## Correlation and persistence
 
-A deep submission requires `patientId`, `encounterId`, and `author`; each resource includes UUID identity, schema version, timestamps, status, and a quoted ETag. Submissions are appended to `data/medical_history_submissions.json`. Six-character activation routes normalize the code and adapt legacy callers to the same append-only store:
+A deep submission requires `patientId`, `encounterId`, and `author`; each resource includes UUID identity, schema version, timestamps, status, and a quoted ETag. Submissions are append-only in SQLite (`data/medical_history.sqlite` by default). Six-character activation routes normalize the code and adapt legacy callers to the same store:
 
 ```http
 GET /api/internal/medical-history/submissions?code=A1B2C3
@@ -37,12 +37,7 @@ GET /api/internal/medical-history/submissions/latest?patientId={uuid}&encounterI
 GET /api/internal/medical-history/submissions/history?patientId={uuid}&encounterId={uuid}
 ```
 
-Runtime files remain JSON arrays:
-
-- `data/activation_sessions.json`
-- `data/medical_history_submissions.json`
-
-Set `MEDICAL_HISTORY_DATA_DIR` to use another runtime data directory (used by the isolated test suite).
+Legacy JSON files (`activation_sessions.json`, `medical_history_submissions.json`) migrate into SQLite on startup. Set `MEDICAL_HISTORY_DATA_DIR` for an isolated data directory. Optional auth is enabled with `AUTH_SESSION_URL`; readiness is `GET /ready`. Production must set `MEDICAL_HISTORY_CORS_ORIGINS` (wildcard CORS is disabled when `NODE_ENV=production`).
 
 ## Internal REST API
 
@@ -78,4 +73,4 @@ The canonical dataset contract is `data/medical_history_schema.json`.
 
 ## Production note
 
-This is prototype storage, not production-ready PHI infrastructure. Production deployment needs authentication, authorization, restricted CORS, encrypted/database persistence, audit logging, concurrency-safe writes, and appropriate clinical governance.
+SQLite persistence, optional canonical auth/CSRF, audit events, readiness, concurrency-safe transactional writes, and approval-gated retention are in place. Production still needs encrypted volumes, operator-approved retention windows (`MEDICAL_HISTORY_PHI_RETENTION_DAYS` plus dual privacy/clinical-safety approval), and restricted CORS origins.

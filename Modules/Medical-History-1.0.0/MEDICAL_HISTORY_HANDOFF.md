@@ -32,29 +32,34 @@ All four primary Yes/No questions default to No. Prior therapy = Yes reveals the
 
 ## Persistence and testing
 
-Default runtime data is stored in `data/activation_sessions.json` and `data/medical_history_submissions.json`. Submission records are immutable history entries; `MEDICAL_HISTORY_DATA_DIR` overrides the runtime directory so tests can run without touching real module data.
+Default runtime uses SQLite (`medical_history.sqlite`) via `better-sqlite3`, with an in-memory adapter for tests. Legacy `activation_sessions.json` and `medical_history_submissions.json` are migrated transactionally on boot. Submission records stay append-only. `MEDICAL_HISTORY_DATA_DIR` overrides the runtime directory so tests can run without touching real module data. `MEDICAL_HISTORY_STORE=memory` forces the memory adapter.
+
+When `AUTH_SESSION_URL` is set, write routes require canonical session roles plus signed double-submit CSRF (`GET /api/internal/medical-history/csrf`). Readiness is at `/ready`. Production defaults drop wildcard CORS; set `MEDICAL_HISTORY_CORS_ORIGINS`. PHI retention is approval-gated (`privacy_officer` + `clinical_safety_officer`) via `applyRetentionPolicy` and `MEDICAL_HISTORY_PHI_RETENTION_DAYS`.
 
 Verification:
 
 ```powershell
+npm install
 node --check server.js
 node --check public/app.js
 npm test
 ```
 
-The integration tests cover option lists, a fully populated conditional submission, all-default No answers, code normalization/retrieval, the 20-drug maximum, and invalid conditional combinations.
+The integration tests cover option lists, repository adapters, migration, concurrency-safe legacy submits, auth/CSRF/readiness, retention redaction with audit preservation, production CORS, conditional submissions, code normalization, the 20-drug maximum, and invalid combinations.
 
 ## Change guidance
 
 When changing a collected field, keep these synchronized:
 
-1. `medical-history-submission.js` resource and persistence interface.
-2. `public/index.html` markup and defaults.
-3. `public/app.js` conditional behavior and payload mapping.
-4. `server.js` controlled options, validation, and adapter mapping.
-5. `data/medical_history_schema.json`.
-6. `test/server.test.js`.
-7. `README.md` and this handoff.
-8. `graphify-out` via `graphify --update`.
+1. `medical-history-submission.js` resource and coding helpers.
+2. `repository.js` persistence adapters and JSON migration.
+3. `security.js` / `readiness.js` / `retention.js` PHI controls.
+4. `public/index.html` markup and defaults.
+5. `public/app.js` conditional behavior and payload mapping.
+6. `server.js` controlled options, validation, and adapter mapping.
+7. `data/medical_history_schema.json`.
+8. `test/*.test.js`.
+9. `README.md` and this handoff.
+10. `graphify-out` via `graphify --update`.
 
-Do not rename the internal REST routes without coordinating every parent-module integration. Runtime JSON storage is suitable only for a prototype; production PHI requires hardened identity, access control, persistence, encryption, audit, and retention controls.
+Do not rename the internal REST routes without coordinating every parent-module integration.
