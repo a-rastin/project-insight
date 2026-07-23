@@ -87,9 +87,22 @@
 
   function looksLikeDrugHeading(value) {
     const block = cleanLine(value);
-    return Boolean(block && block.length <= 90 && !/[.:;]$/.test(block) && !/^\d/.test(block) &&
-      !/^(contraindicated|serious|minor|monitor closely|significant)/i.test(block) &&
-      !/\b(increases|decreases|avoid|monitor|contraindicated|toxicity|levels|effect|recommended|patients|dosing|assay|study|initially|postoperatively|discontinuation|years?|weeks?|daily|tablet|capsule|dose)\b/i.test(block) && /[a-z]/i.test(block));
+    if (!block || block.length > 90) return false;
+    if (/[.:;]$/.test(block)) return false;
+    if (/^\d/.test(block)) return false;
+    // DDI-05: dose/strength fragments, age bands, and clinical phrases leaked
+    // into the corpus as bogus drug identities. Reject them at the parser seam so
+    // the normalizer never has to silently patch thousands of generated records.
+    if (/\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|mEq|units?|iu|%)\b/i.test(block)) return false;
+    if (/(?:^|\s)\d+(?:\s*[-\u2013]\s*\d+)?\s*(mg|mcg|years?|weeks?|months?|days?|hours?)\b/i.test(block)) return false;
+    if (/\b(initial|maintenance|maximum|titrate|dose|dosage|po|iv|im|subq|qday|qdaily|bid|tid|qid|qhs|q\d+hr|daily|weekly|monthly|bedtime)\b/i.test(block)) return false;
+    if (/^(contraindicated|serious|minor|monitor closely|significant)/i.test(block)) return false;
+    if (/\b(increases|decreases|avoid|monitor|contraindicated|toxicity|levels|effect|recommended|patients|dosing|assay|study|initially|postoperatively|discontinuation|years?|weeks?|daily|tablet|capsule|dose|coadministration|arrhythmias|impairment|renal|hepatic|and|or|with|for|when|if|may|should|is|are|not|recommended|required)\b/i.test(block)) return false;
+    if (!/[a-z]/i.test(block)) return false;
+    // multi-word blocks that read as a sentence rather than a drug heading
+    const tokens = block.split(/\s+/).filter(Boolean);
+    if (tokens.length > 4) return false;
+    return true;
   }
 
   function splitBlocks(lines) {

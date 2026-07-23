@@ -13,10 +13,12 @@
   const kbPersistence = window.DDIKbPersistence;
   const storage = window.DDIStorage.browserStorageAdapter(window.localStorage);
   let storageFailure = null;
-  const bundledKb = window.DDI_ACTIVE_KB || createEmptyKb();
-  const startupRebase = kbPersistence.rebase(bundledKb, loadLocalKb());
-  let kb = startupRebase.kb;
-  if (startupRebase.migrated) writeJson(STORAGE_KEYS.localKb, startupRebase.revision);
+  // DDI-05: remove the duplicate browser JS KB artifact — UI reads the
+  // canonical server /knowledge-bases/active interface. Bundle starts empty
+  // and is hydrated asynchronously before the rest of the UI initializes.
+  const DDI_KB_ENDPOINT = "/api/ddi-checker/v1/knowledge-bases/active";
+  let bundledKb = createEmptyKb();
+  let kb = bundledKb;
   let index = engine.buildIndex(kb);
   let medications = readJson(STORAGE_KEYS.meds, []);
   let sessionCode = getSessionCode();
@@ -86,6 +88,41 @@
       reports: [],
       clinicalUse: { allowedForProduction: false, reason: "No active KB loaded." }
     };
+  }
+
+  // DDI-05 — canonical server KB read. Resolves the active KB from the
+  // /knowledge-bases/active interface and calls into the existing rebase logic
+  // so local review/activation history survives. A transport failure keeps the
+  // empty bundle visible (the storage banner stays clear, since fetch errors
+  // are not browser-storage failures) and surfaces in the KB header panel.
+  async function loadBundledKbFromServer() {
+    try {
+      const response = await fetch(DDI_KB_ENDPOINT, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`server returned ${response.status}`);
+      const remoteKb = await response.json();
+      if (!remoteKb || !Array.isArray(remoteKb.drugs) || !Array.isArray(remoteKb.interactions)) {
+        throw new Error("server KB shape is invalid");
+      }
+      bundledKb = remoteKb;
+      const startupRebase = kbPersistence.rebase(bundledKb, loadLocalKb());
+      kb = startupRebase.kb;
+      if (startupRebase.migrated) writeJson(STORAGE_KEYS.localKb, startupRebase.revision);
+      index = engine.buildIndex(kb);
+      selectedReviewId = selectedReviewId || kb.interactions[0]?.id || null;
+      refreshHeader();
+      renderSuggestions("");
+      renderDoseSuggestions();
+      renderMedications();
+      renderReviewList();
+      renderAudit();
+      checkNow();
+      return true;
+    } catch (error) {
+      if (els.kbSummary) {
+        els.kbSummary.textContent = `Knowledge base unavailable from the server (${error?.message || "fetch failed"}). Start the server with bun/deno and reload.`;
+      }
+      return false;
+    }
   }
 
   function readJson(key, fallback) {
@@ -751,6 +788,10 @@
   renderReviewList();
   renderAudit();
   checkNow();
+  // DDI-05: hydrate the bundle from the canonical server interface (replaces
+  // the static data/active-kb.js artifact, which is removed). Re-renders and
+  // re-checks once the server KB is loaded.
+  loadBundledKbFromServer();
 })();
 
 

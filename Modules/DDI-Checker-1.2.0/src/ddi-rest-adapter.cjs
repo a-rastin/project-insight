@@ -162,14 +162,30 @@ function medicationInputToEngine(medication) {
 }
 
 function knowledgeBaseShape(kb) {
+  // DDI-05: the canonical server interface is the single KB reader for the UI
+  // (the duplicate active-kb.js browser artifact is removed). The shape returned
+  // here carries every field the deep engine needs to buildIndex / checkInteractions
+  // and every field the UI needs to render evidence, recommendations, and audit.
   return {
-    version: kb.version,
     schemaVersion: kb.schemaVersion,
+    version: kb.version,
     status: kb.status,
     generatedAt: kb.generatedAt || null,
     activatedAt: kb.activatedAt || null,
+    source: kb.source || null,
+    normalization: kb.normalization || null,
+    clinicalUse: kb.clinicalUse || null,
+    quarantine: kb.quarantine || null,
     drugs: Array.isArray(kb.drugs)
-      ? kb.drugs.map((drug) => ({ id: drug.id, name: drug.name, aliases: drug.aliases || [] }))
+      ? kb.drugs.map((drug) => ({
+          id: drug.id,
+          name: drug.name,
+          aliases: drug.aliases || [],
+          rxcui: drug.rxcui ?? null,
+          doseSuggestions: drug.doseSuggestions || [],
+          identityStatus: drug.identityStatus || "unknown",
+          isSourceReportDrug: Boolean(drug.isSourceReportDrug),
+        }))
       : [],
     interactions: Array.isArray(kb.interactions)
       ? kb.interactions.map((row) => ({
@@ -177,10 +193,25 @@ function knowledgeBaseShape(kb) {
           severity: row.severity,
           drugAId: row.drugAId,
           drugBId: row.drugBId,
+          drugAName: row.drugAName,
+          drugBName: row.drugBName,
+          mechanism: row.mechanism,
+          clinicalEffect: row.clinicalEffect,
+          recommendation: row.recommendation,
+          monitoring: row.monitoring,
+          evidenceSource: row.evidenceSource,
+          evidenceExcerpt: row.evidenceExcerpt,
+          sourceReportPath: row.sourceReportPath,
+          sourceReportVersion: row.sourceReportVersion || null,
           reviewStatus: row.reviewStatus,
+          reviewedBy: row.reviewedBy ?? null,
+          reviewedAt: row.reviewedAt ?? null,
+          parserConfidence: row.parserConfidence,
           knowledgeBaseVersion: row.knowledgeBaseVersion,
         }))
       : [],
+    reports: Array.isArray(kb.reports) ? kb.reports : [],
+    auditSchema: kb.auditSchema || null,
   };
 }
 
@@ -530,6 +561,16 @@ function createDdiServer(options = {}) {
       return ok(request, list || [], 200);
     }
     if (!action) {
+      // DDI-05: GET /knowledge-bases/active resolves the deployment's active
+      // version, so the static UI can read the canonical server interface
+      // without naming a version out of band. Public read; the KB contents are
+      // review-only — alerts surface only approved records via the engine.
+      if (version === "active") {
+        if (!activeVersion) return pivotalProblem(request, 503, "KNOWLEDGE_BASE_UNAVAILABLE", "No active knowledge base is loaded.");
+        const kb = await knowledgeStore.load(activeVersion);
+        if (!kb) return pivotalProblem(request, 404, "KNOWLEDGE_BASE_NOT_FOUND", `Active version ${activeVersion} is not loaded.`);
+        return ok(request, knowledgeBaseShape(kb), 200);
+      }
       const kb = await knowledgeStore.load(version);
       if (!kb) return pivotalProblem(request, 404, "KNOWLEDGE_BASE_NOT_FOUND", `Unknown knowledge-base version: ${version}`);
       return ok(request, knowledgeBaseShape(kb), 200);

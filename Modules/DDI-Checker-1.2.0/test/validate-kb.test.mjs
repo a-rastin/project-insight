@@ -56,3 +56,44 @@ test("exact duplicate unordered pairs are distinguished from conflicts", () => {
   kb.interactions.push({ ...clone(kb.interactions[0]), id: "ddi-2", drugAId: "rxnorm:2", drugBId: "rxnorm:1" });
   assert.match(validateKnowledgeBase(kb).join("\n"), /exact duplicate for pair/);
 });
+
+test("returnPartition quarantines conflicting unordered pairs instead of reporting them as errors", () => {
+  const kb = fixture("valid-pending");
+  kb.interactions.push({
+    ...clone(kb.interactions[0]), id: "ddi-conflict", drugAId: "rxnorm:2", drugBId: "rxnorm:1",
+    severity: "contraindicated", mechanism: "M2", clinicalEffect: "E2",
+    recommendation: "R2", monitoring: "Mo2", evidenceExcerpt: "X2", sourceReportPath: "p2",
+  });
+  const partition = validateKnowledgeBase(kb, { returnPartition: true });
+  assert.ok(Array.isArray(partition.quarantinedInteractions), "returnPartition yields a quarantine partition");
+  assert.ok(
+    partition.quarantinedInteractions.some((q) => q.reason === "conflicting_pair"),
+    "conflicting unordered pairs are quarantined with a reason",
+  );
+  assert.equal(
+    partition.interactions.filter((row) => [row.drugAId, row.drugBId].sort().join("::") === "rxnorm:1::rxnorm:2").length,
+    1,
+    "one representative record survives for the quarantined pair",
+  );
+  assert.deepEqual(
+    partition.errors.filter((message) => /conflicting record for pair/.test(message)),
+    [],
+    "returnPartition does not re-report quarantined pair conflicts as errors",
+  );
+});
+
+test("exact duplicate pairs without explicit versioning are flagged; a distinct sourceReportVersion survives", () => {
+  const kb = fixture("valid-pending");
+  kb.interactions.push({
+    ...clone(kb.interactions[0]), id: "ddi-2", drugAId: "rxnorm:2", drugBId: "rxnorm:1",
+    sourceReportVersion: "report.txt@sha:abc",
+  });
+  const errors = validateKnowledgeBase(kb).join("\n");
+  assert.match(errors, /exact duplicate for pair/, "an unversioned exact duplicate is rejected by structural validation");
+  const partition = validateKnowledgeBase(kb, { returnPartition: true });
+  const pairRows = partition.interactions.filter((row) => [row.drugAId, row.drugBId].sort().join("::") === "rxnorm:1::rxnorm:2");
+  assert.ok(
+    pairRows.length === 1 && pairRows[0].sourceReportVersion === "report.txt@sha:abc",
+    "returnPartition keeps the explicitly versioned duplicate and quarantines the unversioned one",
+  );
+});

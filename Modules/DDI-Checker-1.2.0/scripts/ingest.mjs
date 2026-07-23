@@ -13,6 +13,8 @@ const require = createRequire(import.meta.url);
 // NOT re-declare parser, severity, or inference helpers.
 const reportParser = require("../src/report-parser.js");
 const engine = require("../src/ddi-engine.js");
+// DDI-05: run the shared validator's quarantine partition over the candidate KB.
+const { validateKnowledgeBase } = require("../src/kb-validator.cjs");
 const normalizeDrugName = engine.normalizeName;
 const cleanLine = reportParser.cleanLine;
 const extractDoseSuggestions = reportParser.extractDoseSuggestions;
@@ -280,15 +282,25 @@ export function buildKnowledgeBase(sourceDir = SOURCE_DIR, revisionConfig = {}) 
   const parserVersion = revisionConfig.parserVersion || PARSER_VERSION;
   const normalization = revisionConfig.normalization || NORMALIZATION_CONFIG;
   const version = createRevisionId(sourceDir, source.files, { schemaVersion, parserVersion, normalization });
+  const freshness = new Date().toISOString();
   const drugs = new Map();
   const interactionMap = new Map();
   const reports = [];
 
   for (const filePath of source.files) {
     const raw = fs.readFileSync(filePath, "utf8");
+    const bytes = fs.readFileSync(filePath);
+    const contentDigest = crypto.createHash("sha256").update(bytes).digest("hex");
+    const relativePath = path.relative(sourceDir, filePath).split(path.sep).join("/");
+    const sourceReportVersion = `${relativePath}@sha:${contentDigest.slice(0, 16)}`;
     const parsed = parseReport(raw, filePath, { drugs, version });
+    for (const interaction of parsed.interactions) {
+      interaction.sourceReportVersion = sourceReportVersion;
+    }
     reports.push({
       path: filePath,
+      relativePath,
+      sourceReportVersion,
       drugId: parsed.drug?.id || null,
       drugName: parsed.drug?.name || path.basename(filePath, path.extname(filePath)),
       parsedInteractionCount: parsed.interactions.length
@@ -306,23 +318,81 @@ export function buildKnowledgeBase(sourceDir = SOURCE_DIR, revisionConfig = {}) 
   });
 
   const drugRecords = [...drugs.values()].sort((a, b) => a.name.localeCompare(b.name));
-  const identityCollisions = validateDrugIdentities(drugRecords);
-  if (identityCollisions.length) {
-    const details = identityCollisions
-      .map((collision) => collision.label + ": " + collision.candidates.map((candidate) => candidate.id).join(", "))
-      .join("; ");
-    throw new Error("Ambiguous drug identity labels detected during ingestion: " + details);
+
+  // DDI-05 identity/evidence governance step 1 — the parser seam already
+  // rejects dose/age/clinical-phrase "drug" headings. An alias can still
+  // legitimately collide across drug identities (e.g. "Children's" tagged
+  // against cetirizine AND branded variants). Such cross-ID aliases are
+  // ambiguous identities; they cannot yield a definitive safe result.
+  // Prune the colliding alias from later drugs only (first-defined keeps it),
+  // and record the pruned identity so admin review can resolve it. Drug
+  // canonical names are never pruned — they identify the record.
+  const canonicalById = new Map();
+  for (const drug of drugRecords) {
+    const canonical = normalizeDrugName(drug.name);
+    if (canonical) canonicalById.set(drug.id, canonical);
   }
+  const canonicals = new Set(canonicalById.values());
+  const labelOwners = new Map();
+  const prunedAliases = [];
+  for (const drug of drugRecords) {
+    const dedupedAliases = [];
+    for (const alias of Array.isArray(drug.aliases) ? drug.aliases : []) {
+      const norm = normalizeDrugName(alias);
+      if (!norm) continue;
+      if (canonicals.has(norm) && canonicalById.get(drug.id) !== norm) {
+        prunedAliases.push({ label: norm, drugId: drug.id, reason: "collides_with_canonical" });
+        continue;
+      }
+      const owner = labelOwners.get(norm);
+      if (owner && owner !== drug.id) {
+        prunedAliases.push({ label: norm, drugId: drug.id, conflictWith: owner });
+        continue;
+      }
+      if (!owner) labelOwners.set(norm, drug.id);
+      dedupedAliases.push(alias);
+    }
+    drug.aliases = dedupedAliases;
+    const canonical = canonicalById.get(drug.id);
+    if (canonical && !labelOwners.has(canonical)) labelOwners.set(canonical, drug.id);
+  }
+
+  // DDI-05: identity/evidence governance. Hand the candidate KB to the shared
+  // validator's quarantine partition. Ambiguous identities and conflicting /
+  // unversioned-duplicate unordered medication pairs are quarantined (with a
+  // reason and conflict reference) rather than flattened into the active KB.
+  // The bundled KB ships only the survivors; the quarantine partition stays
+  // available for admin review without aborting ingestion. The original
+  // source corpus is preserved as non-runtime evidence — the relative paths
+  // and per-report content digests are carried on each record and report.
+  const candidateKb = {
+    schemaVersion,
+    version,
+    status: "draft_parsed_pending_admin_review",
+    clinicalUse: { allowedForProduction: false },
+    normalization,
+    drugs: drugRecords,
+    interactions,
+  };
+  const partition = validateKnowledgeBase(candidateKb, { returnPartition: true });
+  const activeInteractions = partition.interactions;
+  const quarantine = {
+    identities: partition.quarantinedIdentities,
+    prunedAliases,
+    interactions: partition.quarantinedInteractions,
+  };
 
   return {
     schemaVersion,
     parserVersion,
     version,
     status: "draft_parsed_pending_admin_review",
-    generatedAt: new Date().toISOString(),
+    generatedAt: freshness,
     activatedAt: null,
     source: {
       type: "medscape-export",
+      version,
+      freshness,
       path: sourceDir,
       textReportCount: source.files.length,
       skippedFileCount: source.skipped.length,
@@ -334,8 +404,9 @@ export function buildKnowledgeBase(sourceDir = SOURCE_DIR, revisionConfig = {}) 
       reason: "Parsed records require clinician/pharmacist review and activation before production clinical use."
     },
     drugs: drugRecords,
-    interactions,
+    interactions: activeInteractions,
     reports,
+    quarantine,
     auditSchema: {
       captures: [
         "knowledgeBaseVersion",
@@ -352,10 +423,10 @@ function writeOutputs(kb) {
   const dataDir = path.join(PROJECT_ROOT, "data");
   fs.mkdirSync(dataDir, { recursive: true });
   const jsonPath = path.join(dataDir, "active-kb.json");
-  const jsPath = path.join(dataDir, "active-kb.js");
   fs.writeFileSync(jsonPath, JSON.stringify(kb, null, 2));
-  fs.writeFileSync(jsPath, `window.DDI_ACTIVE_KB = ${JSON.stringify(kb, null, 2)};\n`);
-  return { jsonPath, jsPath };
+  // DDI-05: the duplicate browser JS KB artifact is intentionally NOT written.
+  // The UI reads the canonical server /knowledge-bases interface instead.
+  return { jsonPath };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {

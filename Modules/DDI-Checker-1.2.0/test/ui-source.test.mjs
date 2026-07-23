@@ -68,3 +68,11 @@ test("storage failures are persistent and KB mutations roll back", () => {
   assert.match(app, /quota_exceeded/);
 });
 
+test("DDI-05: the UI loads the KB from the canonical server interface, not the duplicate active-kb.js artifact", () => {
+  const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
+  assert.doesNotMatch(html, /src="data\/active-kb\.js"/, "index.html must not load the duplicate active-kb.js artifact");
+  assert.doesNotMatch(app, /window\.DDI_ACTIVE_KB/, "app.js must not read the bundled window.DDI_ACTIVE_KB artifact");
+  assert.match(app, /\/api\/ddi-checker\/v1\/knowledge-bases/, "app.js must read the canonical server /knowledge-bases interface");
+});
+
