@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import os
@@ -181,6 +181,18 @@ def flat_payload(**overrides: object) -> dict:
     return payload
 
 
+def canonical_patient_payload(**overrides: object) -> dict:
+    payload = {**valid_payload()["demographics"], "status": "active"}
+    payload.update(overrides)
+    return payload
+
+
+def canonical_encounter_payload(patient_id: str, **overrides: object) -> dict:
+    payload = {"patientId": patient_id, **valid_payload()["clinical"]}
+    payload.update(overrides)
+    return payload
+
+
 def dob_for_age(age: int) -> str:
     today = datetime.now(UTC).date()
     try:
@@ -296,7 +308,145 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertIn("id", patient)
             self.assertIn("createdAt", patient)
             self.assertIn("updatedAt", patient)
+            self.assertEqual(data["patientId"], patient["id"])
+            self.assertEqual(data["encounterId"], patient["intakeId"])
 
+    def test_canonical_patient_can_have_multiple_encounters(self) -> None:
+        with AddNewPatientServer() as base:
+            status, patient_response = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="CAN001"),
+            )
+            self.assertEqual(status, 201)
+            patient = patient_response["patient"]
+            self.assertEqual(patient["patientCode"], "CAN001")
+            self.assertEqual(patient["status"], "active")
+            self.assertNotIn("presentingComplaint", patient)
+
+            first_status, first_response = request_json(
+                base,
+                "/api/add-new-patient/v1/encounters",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_encounter_payload(patient["id"], encounterDate="2026-07-20T10:00:00Z"),
+            )
+            second_status, second_response = request_json(
+                base,
+                "/api/add-new-patient/v1/encounters",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_encounter_payload(
+                    patient["id"],
+                    encounterDate="2026-07-21T10:00:00Z",
+                    presentingComplaint="A later episode.",
+                ),
+            )
+            self.assertEqual(first_status, 201)
+            self.assertEqual(second_status, 201)
+            self.assertEqual(first_response["encounter"]["patientId"], patient["id"])
+            self.assertEqual(second_response["encounter"]["patientId"], patient["id"])
+            self.assertNotEqual(first_response["encounter"]["id"], second_response["encounter"]["id"])
+
+            get_patient_status, get_patient_response = request_json(
+                base,
+                f"/api/add-new-patient/v1/patients/{patient['id']}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(get_patient_status, 200)
+            self.assertEqual(get_patient_response["patient"]["id"], patient["id"])
+            for encounter_id in (first_response["encounter"]["id"], second_response["encounter"]["id"]):
+                encounter_status, encounter_response = request_json(
+                    base,
+                    f"/api/add-new-patient/v1/encounters/{encounter_id}",
+                    headers=PSY_HEADER,
+                )
+                self.assertEqual(encounter_status, 200)
+                self.assertEqual(encounter_response["encounter"]["patientId"], patient["id"])
+
+    def test_encounter_patient_binding_cannot_be_changed(self) -> None:
+        with AddNewPatientServer() as base:
+            _, first_patient_response = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="BIND01"),
+            )
+            _, second_patient_response = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="BIND02"),
+            )
+            first_patient_id = first_patient_response["patient"]["id"]
+            second_patient_id = second_patient_response["patient"]["id"]
+            _, encounter_response = request_json(
+                base,
+                "/api/add-new-patient/v1/encounters",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_encounter_payload(first_patient_id),
+            )
+            encounter_id = encounter_response["encounter"]["id"]
+
+            status, _ = request_json(
+                base,
+                f"/api/add-new-patient/v1/encounters/{encounter_id}",
+                method="PATCH",
+                headers=csrf_headers(base, PSY_HEADER),
+                body={"patientId": second_patient_id},
+            )
+            self.assertEqual(status, 405)
+            _, stored = request_json(
+                base,
+                f"/api/add-new-patient/v1/encounters/{encounter_id}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(stored["encounter"]["patientId"], first_patient_id)
+
+    def test_legacy_adapter_is_atomic_and_idempotent(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            key = "legacy-patient-key-01"
+            headers = csrf_headers(base, {**PSY_HEADER, "Idempotency-Key": key})
+            first_status, first_response = request_json(
+                base,
+                "/api/patients",
+                method="POST",
+                headers=headers,
+                body=valid_payload(patientCode="IDEM01"),
+            )
+            retry_status, retry_response = request_json(
+                base,
+                "/api/patients",
+                method="POST",
+                headers=headers,
+                body=valid_payload(patientCode="IDEM01"),
+            )
+            self.assertEqual(first_status, 201)
+            self.assertEqual(retry_status, 201)
+            self.assertEqual(retry_response, first_response)
+
+            conflict_status, conflict_response = request_json(
+                base,
+                "/api/patients",
+                method="POST",
+                headers=headers,
+                body=valid_payload(patientCode="IDEM02"),
+            )
+            self.assertEqual(conflict_status, 409)
+            self.assertEqual(conflict_response, {"error": "idempotency_key_reused"})
+
+            conn = sqlite3.connect(server.db_path)
+            try:
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patients").fetchone()[0], 1)
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patient_intake_records").fetchone()[0], 1)
+            finally:
+                conn.close()
     def test_optional_intake_fields_default_safely(self) -> None:
         with AddNewPatientServer() as base:
             payload = valid_payload()

@@ -1,19 +1,21 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 
-from .auth import AuthSessionError, fetch_auth_identity, PSYCHIATRIST_ROLE
+from .auth import AuthSessionError, fetch_auth_identity
 from .config import ROOT, settings
 from .csrf import CSRF_COOKIE_NAME, CSRF_WRITE_METHODS, csrf_error, generate_csrf_token, request_has_valid_csrf, sign_csrf_token
 from .db import SQLiteAdapter
-from .models import PatientIntake, generate_patient_code
-from .repository import PatientRepository
+from .models import CanonicalEncounterCreate, CanonicalPatientCreate, PatientIntake, generate_patient_code
+from .repository import IdempotencyConflict, PatientRepository
 
 repo = PatientRepository(SQLiteAdapter(settings.db_path))
 repo.initialize()
@@ -33,7 +35,7 @@ EMBEDDED_ASSET_PATHS = {
     f"{MODULE_ID}/app.js": "app.js",
 }
 
-# ponytail: in-memory mock — matches Dashboard. Persists only for the process.
+# ponytail: in-memory mock â€” matches Dashboard. Persists only for the process.
 MOCK_AUTH_USERS = {
     "psy-1": {"id": "psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Mina Rahimi"},
 }
@@ -111,7 +113,7 @@ async def require_psychiatrist_or_admin_session(request: Request) -> dict[str, A
     if not identity:
         raise json_error(401, "authentication_session_required")
     role = (identity.get("user") or {}).get("role")
-    if role not in (PSYCHIATRIST_ROLE, "ADMIN"):
+    if role not in ("PSYCHIATRIST", "ADMIN"):
         raise json_error(403, "psychiatrist_or_admin_required")
     return identity
 
@@ -173,6 +175,65 @@ async def csrf() -> JSONResponse:
     return response
 
 
+def ensure_patient_code(data: dict[str, Any]) -> dict[str, Any]:
+    if data.get("patientCode"):
+        return data
+    existing = repo.existing_codes()
+    code = generate_patient_code()
+    while code in existing:
+        code = generate_patient_code()
+    return {**data, "patientCode": code}
+
+
+@app.post("/api/add-new-patient/v1/patients")
+async def create_canonical_patient(
+    payload: CanonicalPatientCreate,
+    identity: dict[str, Any] = Depends(require_psychiatrist_session),
+) -> JSONResponse:
+    data = ensure_patient_code(payload.to_patient_record())
+    try:
+        record = repo.create_patient_identity({"id": str(uuid4()), **data}, identity["user"]["id"])
+    except Exception:
+        if repo.get_patient(data["patientCode"]):
+            errors = {"patientCode": "Patient code already exists."}
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "patient_alias_already_exists", "errors": errors})
+        raise
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"patient": record})
+
+
+@app.get("/api/add-new-patient/v1/patients/{patient_id}", response_model=None)
+async def get_canonical_patient(
+    patient_id: str,
+    _: dict[str, Any] = Depends(require_authenticated_session),
+) -> dict[str, Any] | JSONResponse:
+    patient = repo.get_patient_identity(patient_id)
+    if not patient:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
+    return {"patient": patient}
+
+
+@app.post("/api/add-new-patient/v1/encounters")
+async def create_canonical_encounter(
+    payload: CanonicalEncounterCreate,
+    identity: dict[str, Any] = Depends(require_psychiatrist_session),
+) -> JSONResponse:
+    record = repo.create_encounter(payload.to_encounter_record(), identity["user"]["id"])
+    if not record:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"encounter": record})
+
+
+@app.get("/api/add-new-patient/v1/encounters/{encounter_id}", response_model=None)
+async def get_canonical_encounter(
+    encounter_id: str,
+    _: dict[str, Any] = Depends(require_authenticated_session),
+) -> dict[str, Any] | JSONResponse:
+    encounter = repo.get_encounter(encounter_id)
+    if not encounter:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Encounter was not found."})
+    return {"encounter": encounter}
+
+
 @app.get("/api/patients")
 async def list_patients(_: dict[str, Any] = Depends(require_authenticated_session)) -> dict[str, Any]:
     return {"patients": repo.list_patients()}
@@ -182,29 +243,30 @@ async def list_patients(_: dict[str, Any] = Depends(require_authenticated_sessio
 async def create_patient(
     payload: PatientIntake,
     identity: dict[str, Any] = Depends(require_psychiatrist_session),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> JSONResponse:
     data = payload.to_patient_record()
-
-    if not data.get("patientCode"):
-        existing = repo.existing_codes()
-        code = generate_patient_code()
-        while code in existing:
-            code = generate_patient_code()
-        data["patientCode"] = code
-
+    request_hash = hashlib.sha256(
+        json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     try:
-        record = repo.create_patient({"id": str(uuid4()), **data}, identity["user"]["id"])
+        response_status, response = repo.create_patient_with_encounter(
+            {"id": str(uuid4()), **data},
+            identity["user"]["id"],
+            idempotency_key=idempotency_key.strip() if idempotency_key else None,
+            request_hash=request_hash,
+        )
+    except IdempotencyConflict:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "idempotency_key_reused"})
     except Exception:
-        if repo.get_patient(data["patientCode"]):
+        if data.get("patientCode") and repo.get_patient(data["patientCode"]):
             errors = {"demographics.patientCode": "Patient code already exists. Generate a new code and submit again."}
             return JSONResponse(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 content={"message": "Patient data failed validation.", "errors": errors},
             )
         raise
-
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"patient": record})
-
+    return JSONResponse(status_code=response_status, content=response)
 
 @app.get("/api/patients/{id_or_code}/intake", response_model=None)
 async def get_patient_intake(
@@ -250,7 +312,7 @@ async def serve_embedded_asset(path: str) -> FileResponse:
 
 @app.get("/{path:path}")
 async def serve_static(path: str) -> FileResponse:
-    # ponytail: allowlist not directory-walk — preserve privacy invariant from old server.
+    # ponytail: allowlist not directory-walk â€” preserve privacy invariant from old server.
     return public_file_response(path)
 
 

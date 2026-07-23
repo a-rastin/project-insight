@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS patients (
   sex TEXT NOT NULL CHECK (sex IN ('Male', 'Female')),
   dob TEXT NOT NULL,
   phone_number TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
   created_by_user_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -41,6 +42,16 @@ CREATE TABLE IF NOT EXISTS patient_intake_records (
 
 CREATE INDEX IF NOT EXISTS idx_patient_intake_records_patient_id
   ON patient_intake_records(patient_id);
+
+CREATE TABLE IF NOT EXISTS idempotency_records (
+  scope TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  status_code INTEGER NOT NULL,
+  response_body TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (scope, idempotency_key)
+);
 """
 
 PATIENT_IDENTITY_COLUMNS = {
@@ -51,6 +62,7 @@ PATIENT_IDENTITY_COLUMNS = {
     "sex",
     "dob",
     "phone_number",
+    "status",
     "created_by_user_id",
     "created_at",
     "updated_at",
@@ -75,6 +87,7 @@ CREATE TABLE patients (
   sex TEXT NOT NULL CHECK (sex IN ('Male', 'Female')),
   dob TEXT NOT NULL,
   phone_number TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
   created_by_user_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -151,7 +164,7 @@ def now_iso() -> str:
 
 def migrate_patients_to_identity_table(conn: sqlite3.Connection) -> None:
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(patients)").fetchall()}
-    if PATIENT_IDENTITY_COLUMNS.issubset(columns) and not (columns & LEGACY_INTAKE_COLUMNS) and "age" not in columns:
+    if PATIENT_IDENTITY_COLUMNS.issubset(columns) and not (columns & LEGACY_INTAKE_COLUMNS) and "age" not in columns and "status" in columns:
         return
 
     rows = conn.execute("SELECT * FROM patients ORDER BY created_at ASC").fetchall()
@@ -169,8 +182,8 @@ def migrate_patients_to_identity_table(conn: sqlite3.Connection) -> None:
         conn.execute(
             """
             INSERT INTO patients
-              (id, patient_code, first_name, last_name, sex, dob, phone_number, created_by_user_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              (id, patient_code, first_name, last_name, sex, dob, phone_number, status, created_by_user_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row["id"],
@@ -180,6 +193,7 @@ def migrate_patients_to_identity_table(conn: sqlite3.Connection) -> None:
                 row["sex"],
                 row["dob"],
                 row["phone_number"] if "phone_number" in row_keys else None,
+                row["status"] if "status" in row_keys else "active",
                 created_by_user_id,
                 created_at,
                 updated_at,

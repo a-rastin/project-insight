@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime
@@ -161,6 +161,52 @@ class PatientIntake(BaseModel):
 
     def to_patient_record(self) -> dict[str, Any]:
         return {**self.demographics.model_dump(mode="json"), **self.clinical.model_dump(mode="json")}
+
+
+class CanonicalPatientCreate(BaseModel):
+    demographics: PatientDemographics
+    status: str = "active"
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_flat_demographics(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        if "demographics" in value:
+            return value
+        return {"demographics": value, "status": value.get("status", "active")}
+
+    @field_validator("status")
+    @classmethod
+    def normalize_status(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Patient status is required.")
+        return value
+
+    def to_patient_record(self) -> dict[str, Any]:
+        return {
+            **self.demographics.model_dump(mode="json"),
+            "status": self.status,
+        }
+
+
+class CanonicalEncounterCreate(BaseModel):
+    patientId: str
+    clinical: ClinicalSection
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_flat_clinical_snapshot(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        if "clinical" in value:
+            return value
+        clinical = {field: value[field] for field in CLINICAL_FIELDS if field in value}
+        return {"patientId": value.get("patientId"), "clinical": clinical}
+
+    def to_encounter_record(self) -> dict[str, Any]:
+        return {"patientId": self.patientId, **self.clinical.model_dump(mode="json")}
 
 
 PatientCreate = PatientIntake

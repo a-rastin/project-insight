@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import UTC, date, datetime
@@ -6,6 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 from .db import DatabaseAdapter
+from .models import generate_patient_code
 
 
 def now_iso() -> str:
@@ -39,6 +40,7 @@ def patient_row(row: Any) -> dict[str, Any]:
         "dob": row["dob"],
         "age": compute_age(row["dob"]),
         "phoneNumber": row["phone_number"],
+        "status": row["status"],
         "createdByUserId": row["created_by_user_id"],
         "createdAt": row["created_at"],
         "updatedAt": row["updated_at"],
@@ -89,6 +91,9 @@ def _find_patient_id_row(conn: Any, id_or_code: str) -> Any:
 
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+class IdempotencyConflict(Exception):
+    pass
 
 
 class PatientRepository:
@@ -156,6 +161,24 @@ class PatientRepository:
             ).fetchone()
         return patient_row(row) if row else None
 
+    def get_patient_identity(self, patient_id: str) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute("SELECT * FROM patients WHERE id = ?", (patient_id,)).fetchone()
+        return patient_row(row) if row else None
+
+    def get_encounter(self, encounter_id: str) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT id, patient_id, encounter_date, presenting_complaint, provisional_diagnosis,
+                       treatment_history, allergies_snapshot, current_medications_snapshot,
+                       suicidality, substance_use, created_by_user_id, created_at, updated_at
+                FROM patient_intake_records
+                WHERE id = ?
+                """,
+                (encounter_id,),
+            ).fetchone()
+        return intake_row(row) if row else None
     def list_intake_records(self, id_or_code: str) -> tuple[dict[str, Any], list[dict[str, Any]]] | None:
         with self.adapter.connect() as conn:
             patient = conn.execute(
@@ -198,15 +221,15 @@ class PatientRepository:
             ).fetchall()
         return patient_dict, [intake_row(row) for row in intake_rows]
 
-    def create_patient(self, patient: dict[str, Any], created_by_user_id: str) -> dict[str, Any]:
+    def create_patient_identity(self, patient: dict[str, Any], created_by_user_id: str) -> dict[str, Any]:
         now = now_iso()
-        encounter_date = patient.get("encounterDate") or now
         with self.adapter.connect() as conn:
             conn.execute(
                 """
                 INSERT INTO patients
-                  (id, patient_code, first_name, last_name, sex, dob, phone_number, created_by_user_id, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  (id, patient_code, first_name, last_name, sex, dob, phone_number, status,
+                   created_by_user_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     patient["id"],
@@ -216,11 +239,22 @@ class PatientRepository:
                     patient["sex"],
                     patient["dob"],
                     patient.get("phoneNumber") or None,
+                    patient.get("status") or "active",
                     created_by_user_id,
                     now,
                     now,
                 ),
             )
+            row = conn.execute("SELECT * FROM patients WHERE id = ?", (patient["id"],)).fetchone()
+        return patient_row(row)
+
+    def create_encounter(self, encounter: dict[str, Any], created_by_user_id: str) -> dict[str, Any] | None:
+        now = now_iso()
+        encounter_id = str(uuid4())
+        with self.adapter.connect() as conn:
+            if not _find_patient_id_row(conn, encounter["patientId"]):
+                return None
+            encounter_date = encounter.get("encounterDate") or now
             conn.execute(
                 """
                 INSERT INTO patient_intake_records
@@ -232,8 +266,103 @@ class PatientRepository:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    str(uuid4()),
-                    patient["id"],
+                    encounter_id,
+                    encounter["patientId"],
+                    encounter_date,
+                    encounter["presentingComplaint"],
+                    encounter["provisionalDiagnosis"],
+                    json.dumps(encounter.get("treatmentHistory") or []),
+                    json.dumps(encounter.get("allergies") or []),
+                    json.dumps(encounter.get("currentMedications") or []),
+                    canonical_suicidality((encounter.get("riskFlags") or {}).get("suicidality")),
+                    1 if (encounter.get("riskFlags") or {}).get("substanceUse", False) else 0,
+                    created_by_user_id,
+                    now,
+                    now,
+                ),
+            )
+            row = conn.execute(
+                """
+                SELECT id, patient_id, encounter_date, presenting_complaint, provisional_diagnosis,
+                       treatment_history, allergies_snapshot, current_medications_snapshot,
+                       suicidality, substance_use, created_by_user_id, created_at, updated_at
+                FROM patient_intake_records
+                WHERE id = ?
+                """,
+                (encounter_id,),
+            ).fetchone()
+        return intake_row(row)
+
+    def create_patient_with_encounter(
+        self,
+        patient: dict[str, Any],
+        created_by_user_id: str,
+        idempotency_key: str | None = None,
+        request_hash: str | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        scope = f"{created_by_user_id}:POST:/api/patients"
+        now = now_iso()
+        with self.adapter.connect() as conn:
+            if idempotency_key:
+                prior = conn.execute(
+                    """
+                    SELECT request_hash, status_code, response_body
+                    FROM idempotency_records
+                    WHERE scope = ? AND idempotency_key = ?
+                    """,
+                    (scope, idempotency_key),
+                ).fetchone()
+                if prior:
+                    if prior["request_hash"] != request_hash:
+                        raise IdempotencyConflict
+                    return prior["status_code"], json.loads(prior["response_body"])
+
+            patient_id = patient.get("id") or str(uuid4())
+            patient_code = patient.get("patientCode")
+            if not patient_code:
+                existing_codes = {
+                    row["patient_code"] for row in conn.execute("SELECT patient_code FROM patients").fetchall()
+                }
+                patient_code = generate_patient_code()
+                while patient_code in existing_codes:
+                    patient_code = generate_patient_code()
+
+            conn.execute(
+                """
+                INSERT INTO patients
+                  (id, patient_code, first_name, last_name, sex, dob, phone_number, status,
+                   created_by_user_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    patient_id,
+                    patient_code,
+                    patient["firstName"],
+                    patient["lastName"],
+                    patient["sex"],
+                    patient["dob"],
+                    patient.get("phoneNumber") or None,
+                    patient.get("status") or "active",
+                    created_by_user_id,
+                    now,
+                    now,
+                ),
+            )
+            encounter_date = patient.get("encounterDate") or now
+            encounter_id = str(uuid4())
+            conn.execute(
+                """
+                INSERT INTO patient_intake_records
+                  (
+                    id, patient_id, encounter_date, presenting_complaint, provisional_diagnosis,
+                    treatment_history, allergies_snapshot, current_medications_snapshot,
+                    suicidality, substance_use, created_by_user_id, created_at, updated_at
+                  )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    encounter_id,
+                    patient_id,
                     encounter_date,
                     patient["presentingComplaint"],
                     patient["provisionalDiagnosis"],
@@ -247,8 +376,45 @@ class PatientRepository:
                     now,
                 ),
             )
-        return self.get_patient(patient["id"])  # type: ignore[return-value]
+            row = conn.execute(
+                """
+                SELECT
+                  p.*,
+                  i.id AS intake_id,
+                  i.encounter_date,
+                  i.presenting_complaint,
+                  i.provisional_diagnosis,
+                  i.treatment_history,
+                  i.allergies_snapshot,
+                  i.current_medications_snapshot,
+                  i.suicidality,
+                  i.substance_use
+                FROM patients p
+                LEFT JOIN patient_intake_records i ON i.id = (
+                  SELECT id FROM patient_intake_records
+                  WHERE patient_id = p.id
+                  ORDER BY encounter_date DESC, created_at DESC
+                  LIMIT 1
+                )
+                WHERE p.id = ?
+                """,
+                (patient_id,),
+            ).fetchone()
+            response = {"patient": patient_row(row), "patientId": patient_id, "encounterId": encounter_id}
+            if idempotency_key:
+                conn.execute(
+                    """
+                    INSERT INTO idempotency_records
+                      (scope, idempotency_key, request_hash, status_code, response_body, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (scope, idempotency_key, request_hash or "", 201, json.dumps(response), now),
+                )
+        return 201, response
 
+    def create_patient(self, patient: dict[str, Any], created_by_user_id: str) -> dict[str, Any]:
+        _, response = self.create_patient_with_encounter(patient, created_by_user_id)
+        return response["patient"]
     def existing_codes(self) -> set[str]:
         with self.adapter.connect() as conn:
             rows = conn.execute("SELECT patient_code FROM patients").fetchall()
