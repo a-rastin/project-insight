@@ -3,7 +3,8 @@ services:
     build:
       context: ..
       dockerfile: deployment/Dockerfile
-    image: ${INSIGHT_UNIFIED_IMAGE:-insight-unified:local}
+    # Prefer immutable digest: export INSIGHT_UNIFIED_IMAGE='registry/insight-unified@sha256:…'
+    image: ${INSIGHT_UNIFIED_IMAGE:?set INSIGHT_UNIFIED_IMAGE to an immutable digest}
     init: false
     read_only: true
     environment:
@@ -12,7 +13,7 @@ services:
       TP_TRUSTED_INTERNAL_ORIGINS: ${TP_TRUSTED_INTERNAL_ORIGINS:?set trusted Authentication origin}
       TP_BN_MANAGER_URL: http://127.0.0.1:8108
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     tmpfs:
       - /tmp:size=64m,mode=1777
       - /run
@@ -31,6 +32,7 @@ services:
       - ddi-checker-data:/var/lib/insight/ddi-checker
       - bn-manager-data:/var/lib/insight/bn-manager
       - treatment-plan-data:/var/lib/insight/treatment-plan
+      - ${INSIGHT_SECRETS_DIR:-./secrets-empty}:/run/secrets:ro
 
 volumes:
   authentication-data:

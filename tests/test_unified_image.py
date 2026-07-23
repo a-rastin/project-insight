@@ -80,9 +80,11 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertNotIn("EXPOSE 810", dockerfile)
         for ignored in ("graphify-out", "tests", "node_modules", "*.sqlite*", "fixtures"):
             self.assertIn(ignored, dockerignore)
-        self.assertIn('"8080:8080"', compose)
+        self.assertIn('"127.0.0.1:8080:8080"', compose)
         for port in range(8101, 8110):
             self.assertNotIn(f'"{port}:', compose)
+        self.assertIn("/run/secrets:ro", compose)
+        self.assertIn("INSIGHT_UNIFIED_IMAGE", compose)
 
     def test_nginx_routes_unique_base_paths_on_gateway_only(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
@@ -92,6 +94,45 @@ class UnifiedImageTests(unittest.TestCase):
         for module in self.manifest["modules"]:
             self.assertIn(f"location {module['basePath']}", nginx)
             self.assertIn(f"location {module['proxyPrefix']}", nginx)
+
+    def test_vps_topology_keeps_host_nginx_on_tls_and_systemd_on_digest_only(self):
+        unit = (DEPLOYMENT / "insight-unified-container.service").read_text(encoding="utf-8")
+        nginx = (DEPLOYMENT / "nginx-vps.conf").read_text(encoding="utf-8")
+        nginx_lower = nginx.lower()
+        self.assertIn("/usr/bin/docker run", unit)
+        self.assertIn("${INSIGHT_UNIFIED_IMAGE}", unit)
+        self.assertIn("127.0.0.1:8080:8080", unit)
+        self.assertIn("/run/secrets:ro", unit)
+        self.assertNotIn("uvicorn", unit)
+        self.assertNotIn("supervisor.py", unit)
+        for module_port in range(8101, 8110):
+            self.assertNotIn(f":{module_port}", unit)
+            self.assertNotIn(f"127.0.0.1:{module_port}", nginx)
+        self.assertIn("listen 443 ssl", nginx_lower)
+        self.assertIn("strict-transport-security", nginx_lower)
+        self.assertIn("content-security-policy", nginx_lower)
+        self.assertIn("x-content-type-options", nginx_lower)
+        self.assertIn("x-frame-options", nginx_lower)
+        self.assertIn("referrer-policy", nginx_lower)
+        self.assertIn("proxy_pass http://127.0.0.1:8080", nginx_lower)
+        self.assertIn("proxy_set_header x-forwarded-proto", nginx_lower)
+        self.assertIn("proxy_set_header x-forwarded-for", nginx_lower)
+        self.assertIn("proxy_set_header host", nginx_lower)
+        self.assertNotIn("proxy_pass http://127.0.0.1:810", nginx_lower)
+
+    def test_supervisor_remains_sole_manager_of_internal_module_processes(self):
+        dockerfile = (DEPLOYMENT / "Dockerfile").read_text(encoding="utf-8")
+        unit = (DEPLOYMENT / "insight-unified-container.service").read_text(encoding="utf-8")
+        self.assertIn("tini -- python /opt/deployment/supervisor.py", dockerfile)
+        specs = build_process_specs(self.manifest)
+        self.assertIn("nginx", specs)
+        self.assertNotIn("python -m", unit)
+        self.assertNotIn("node server", unit)
+        self.assertNotIn("deno run", unit)
+        for module in self.manifest["modules"]:
+            self.assertIn(module["moduleId"], specs)
+            command = " ".join(module["command"])
+            self.assertNotIn(command, unit)
 
     def test_ddi_adapter_reads_database_from_deployment_data_directory(self):
         source = (ROOT / "Modules/DDI-Checker-1.2.0/src/server.mjs").read_text(encoding="utf-8")
