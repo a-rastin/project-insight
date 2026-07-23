@@ -19,9 +19,16 @@ CREATE TABLE IF NOT EXISTS patients (
   dob TEXT NOT NULL,
   phone_number TEXT,
   status TEXT NOT NULL DEFAULT 'active',
+  resource_version INTEGER NOT NULL DEFAULT 1,
   created_by_user_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS patient_code_reservations (
+  patient_code TEXT PRIMARY KEY COLLATE NOCASE,
+  patient_id TEXT NOT NULL,
+  reserved_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS patient_intake_records (
@@ -63,6 +70,7 @@ PATIENT_IDENTITY_COLUMNS = {
     "dob",
     "phone_number",
     "status",
+    "resource_version",
     "created_by_user_id",
     "created_at",
     "updated_at",
@@ -88,6 +96,7 @@ CREATE TABLE patients (
   dob TEXT NOT NULL,
   phone_number TEXT,
   status TEXT NOT NULL DEFAULT 'active',
+  resource_version INTEGER NOT NULL DEFAULT 1,
   created_by_user_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -151,6 +160,13 @@ class SQLiteAdapter:
             if "patients" in existing_tables:
                 migrate_patients_to_identity_table(conn)
             conn.executescript(SCHEMA)
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO patient_code_reservations
+                  (patient_code, patient_id, reserved_at)
+                SELECT patient_code, id, created_at FROM patients
+                """
+            )
 
     def ping(self) -> bool:
         with self.connect() as conn:

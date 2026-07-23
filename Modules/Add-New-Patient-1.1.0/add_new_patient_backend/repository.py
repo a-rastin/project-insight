@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import UTC, date, datetime
 from typing import Any
 from uuid import uuid4
@@ -83,6 +84,18 @@ def intake_row(row: Any) -> dict[str, Any]:
     }
 
 
+def patient_resolution_row(row: Any) -> dict[str, Any]:
+    version = int(row["resource_version"])
+    patient_id = row["id"]
+    return {
+        "patientId": patient_id,
+        "patientCode": row["patient_code"],
+        "status": row["status"],
+        "resourceVersion": version,
+        "etag": f'"patient:{patient_id}:v{version}"',
+    }
+
+
 def _find_patient_id_row(conn: Any, id_or_code: str) -> Any:
     return conn.execute(
         "SELECT id FROM patients WHERE id = ? OR patient_code = ?",
@@ -96,6 +109,14 @@ class IdempotencyConflict(Exception):
     pass
 
 
+class PatientAliasCollision(Exception):
+    pass
+
+
+class PatientCodeAlreadyExists(Exception):
+    pass
+
+
 class PatientRepository:
     def __init__(self, adapter: DatabaseAdapter) -> None:
         self.adapter = adapter
@@ -105,6 +126,20 @@ class PatientRepository:
 
     def ping(self) -> bool:
         return self.adapter.ping()
+
+    @staticmethod
+    def _reserve_patient_code(conn: Any, patient_code: str, patient_id: str, reserved_at: str) -> None:
+        try:
+            conn.execute(
+                """
+                INSERT INTO patient_code_reservations
+                  (patient_code, patient_id, reserved_at)
+                VALUES (?, ?, ?)
+                """,
+                (patient_code, patient_id, reserved_at),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise PatientCodeAlreadyExists from exc
 
     def list_patients(self) -> list[dict[str, Any]]:
         with self.adapter.connect() as conn:
@@ -166,6 +201,20 @@ class PatientRepository:
             row = conn.execute("SELECT * FROM patients WHERE id = ?", (patient_id,)).fetchone()
         return patient_row(row) if row else None
 
+    def resolve_patient(self, alias: str) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, patient_code, status, resource_version
+                FROM patients
+                WHERE id = ? OR UPPER(patient_code) = ?
+                """,
+                (alias, alias.upper()),
+            ).fetchall()
+        if len(rows) > 1:
+            raise PatientAliasCollision
+        return patient_resolution_row(rows[0]) if rows else None
+
     def get_encounter(self, encounter_id: str) -> dict[str, Any] | None:
         with self.adapter.connect() as conn:
             row = conn.execute(
@@ -224,6 +273,7 @@ class PatientRepository:
     def create_patient_identity(self, patient: dict[str, Any], created_by_user_id: str) -> dict[str, Any]:
         now = now_iso()
         with self.adapter.connect() as conn:
+            self._reserve_patient_code(conn, patient["patientCode"], patient["id"], now)
             conn.execute(
                 """
                 INSERT INTO patients
@@ -252,7 +302,7 @@ class PatientRepository:
         now = now_iso()
         encounter_id = str(uuid4())
         with self.adapter.connect() as conn:
-            if not _find_patient_id_row(conn, encounter["patientId"]):
+            if not conn.execute("SELECT id FROM patients WHERE id = ?", (encounter["patientId"],)).fetchone():
                 return None
             encounter_date = encounter.get("encounterDate") or now
             conn.execute(
@@ -321,12 +371,14 @@ class PatientRepository:
             patient_code = patient.get("patientCode")
             if not patient_code:
                 existing_codes = {
-                    row["patient_code"] for row in conn.execute("SELECT patient_code FROM patients").fetchall()
+                    row["patient_code"]
+                    for row in conn.execute("SELECT patient_code FROM patient_code_reservations").fetchall()
                 }
                 patient_code = generate_patient_code()
                 while patient_code in existing_codes:
                     patient_code = generate_patient_code()
 
+            self._reserve_patient_code(conn, patient_code, patient_id, now)
             conn.execute(
                 """
                 INSERT INTO patients
@@ -417,5 +469,5 @@ class PatientRepository:
         return response["patient"]
     def existing_codes(self) -> set[str]:
         with self.adapter.connect() as conn:
-            rows = conn.execute("SELECT patient_code FROM patients").fetchall()
-        return {row["patient_code"] for row in rows}
+            rows = conn.execute("SELECT patient_code FROM patient_code_reservations").fetchall()
+        return {row["patient_code"].upper() for row in rows}

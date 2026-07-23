@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -15,7 +16,12 @@ from .config import ROOT, settings
 from .csrf import CSRF_COOKIE_NAME, CSRF_WRITE_METHODS, csrf_error, generate_csrf_token, request_has_valid_csrf, sign_csrf_token
 from .db import SQLiteAdapter
 from .models import CanonicalEncounterCreate, CanonicalPatientCreate, PatientIntake, generate_patient_code
-from .repository import IdempotencyConflict, PatientRepository
+from .repository import (
+    IdempotencyConflict,
+    PatientAliasCollision,
+    PatientCodeAlreadyExists,
+    PatientRepository,
+)
 
 repo = PatientRepository(SQLiteAdapter(settings.db_path))
 repo.initialize()
@@ -40,6 +46,8 @@ MOCK_AUTH_USERS = {
     "psy-1": {"id": "psy-1", "username": "psychiatrist", "roles": ["psychiatrist"], "displayName": "Mina Rahimi"},
 }
 MOCK_AUTH_SESSIONS: dict[str, str] = {}
+PATIENT_UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+PATIENT_CODE_PATTERN = re.compile(r"^[A-Z0-9]{6}$")
 
 
 def public_file_response(filename: str) -> FileResponse:
@@ -193,12 +201,40 @@ async def create_canonical_patient(
     data = ensure_patient_code(payload.to_patient_record())
     try:
         record = repo.create_patient_identity({"id": str(uuid4()), **data}, identity["user"]["id"])
+    except PatientCodeAlreadyExists:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"error": "patient_alias_already_exists", "errors": {"patientCode": "Patient code already exists."}},
+        )
     except Exception:
         if repo.get_patient(data["patientCode"]):
             errors = {"patientCode": "Patient code already exists."}
             return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "patient_alias_already_exists", "errors": errors})
         raise
     return JSONResponse(status_code=status.HTTP_201_CREATED, content={"patient": record})
+
+
+@app.get("/api/add-new-patient/v1/patient-resolutions/{alias}", response_model=None)
+async def resolve_patient_alias(
+    alias: str,
+    request: Request,
+    if_match: str | None = Header(default=None, alias="If-Match"),
+    _: dict[str, Any] = Depends(require_authenticated_session),
+) -> JSONResponse:
+    normalized = alias.strip()
+    if PATIENT_CODE_PATTERN.fullmatch(normalized.upper()):
+        normalized = normalized.upper()
+    elif not PATIENT_UUID_PATTERN.fullmatch(normalized):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"error": "invalid_patient_code"})
+    try:
+        resolution = repo.resolve_patient(normalized)
+    except PatientAliasCollision:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "patient_alias_collision"})
+    if not resolution:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "patient_alias_not_found"})
+    if if_match is not None and if_match != resolution["etag"]:
+        return JSONResponse(status_code=status.HTTP_412_PRECONDITION_FAILED, content={"error": "etag_mismatch"})
+    return JSONResponse(content=resolution, headers={"ETag": resolution["etag"]})
 
 
 @app.get("/api/add-new-patient/v1/patients/{patient_id}", response_model=None)
@@ -258,6 +294,12 @@ async def create_patient(
         )
     except IdempotencyConflict:
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "idempotency_key_reused"})
+    except PatientCodeAlreadyExists:
+        errors = {"demographics.patientCode": "Patient code already exists. Generate a new code and submit again."}
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"message": "Patient data failed validation.", "errors": errors},
+        )
     except Exception:
         if data.get("patientCode") and repo.get_patient(data["patientCode"]):
             errors = {"demographics.patientCode": "Patient code already exists. Generate a new code and submit again."}

@@ -138,6 +138,34 @@ def request_json(
         return error.code, payload
 
 
+def request_json_with_headers(
+    base: str,
+    path: str,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+    body: dict | None = None,
+) -> tuple[int, dict | None, dict[str, str]]:
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = Request(
+        f"{base}{path}",
+        data=data,
+        method=method,
+        headers={"content-type": "application/json", **(headers or {})},
+    )
+    try:
+        with urlopen(req, timeout=5) as response:
+            raw = response.read()
+            return response.status, json.loads(raw) if raw else None, dict(response.headers.items())
+    except HTTPError as error:
+        try:
+            payload = json.loads(error.read().decode("utf-8"))
+        finally:
+            if error.fp:
+                error.fp.close()
+            error.close()
+        return error.code, payload, dict(error.headers.items())
+
+
 def csrf_headers(base: str, headers: dict[str, str] | None = None) -> dict[str, str]:
     req = Request(f"{base}/api/add-new-patient/csrf", method="GET")
     with urlopen(req, timeout=5) as response:
@@ -365,6 +393,181 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 )
                 self.assertEqual(encounter_status, 200)
                 self.assertEqual(encounter_response["encounter"]["patientId"], patient["id"])
+
+    def test_patient_resolution_by_uuid_and_code_returns_canonical_version_and_etag(self) -> None:
+        with AddNewPatientServer() as base:
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="RES001"),
+            )
+            patient_id = created["patient"]["id"]
+            uuid_status, by_uuid, uuid_headers = request_json_with_headers(
+                base,
+                f"/api/add-new-patient/v1/patient-resolutions/{patient_id}",
+                headers=PSY_HEADER,
+            )
+            code_status, by_code, code_headers = request_json_with_headers(
+                base,
+                "/api/add-new-patient/v1/patient-resolutions/res001",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(uuid_status, 200)
+            self.assertEqual(code_status, 200)
+            self.assertEqual(by_uuid, by_code)
+            self.assertEqual(
+                by_uuid,
+                {
+                    "patientId": patient_id,
+                    "patientCode": "RES001",
+                    "status": "active",
+                    "resourceVersion": 1,
+                    "etag": f'"patient:{patient_id}:v1"',
+                },
+            )
+            self.assertEqual(uuid_headers["etag"], by_uuid["etag"])
+            self.assertEqual(code_headers["etag"], by_uuid["etag"])
+
+    def test_patient_resolution_returns_merged_and_inactive_statuses(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            _, merged = request_json(base, "/api/add-new-patient/v1/patients", "POST", headers, canonical_patient_payload(patientCode="MERGE1"))
+            _, inactive = request_json(base, "/api/add-new-patient/v1/patients", "POST", headers, canonical_patient_payload(patientCode="INACT1"))
+            with sqlite3.connect(server.db_path) as conn:
+                conn.executemany(
+                    "UPDATE patients SET status = ?, resource_version = ? WHERE id = ?",
+                    [("merged", 2, merged["patient"]["id"]), ("inactive", 3, inactive["patient"]["id"])],
+                )
+            conn.close()
+            for code, patient, expected_status, version in [
+                ("MERGE1", merged, "merged", 2),
+                ("INACT1", inactive, "inactive", 3),
+            ]:
+                status, resolution = request_json(base, f"/api/add-new-patient/v1/patient-resolutions/{code}", headers=PSY_HEADER)
+                self.assertEqual(status, 200)
+                self.assertEqual(resolution["patientId"], patient["patient"]["id"])
+                self.assertEqual(resolution["status"], expected_status)
+                self.assertEqual(resolution["resourceVersion"], version)
+
+    def test_patient_resolution_quarantines_ambiguous_legacy_alias(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            with sqlite3.connect(server.db_path) as conn:
+                for patient_id, patient_code in [
+                    ("COLL01", "FIRST1"),
+                    ("22222222-2222-4222-8222-222222222222", "COLL01"),
+                ]:
+                    conn.execute(
+                        """
+                        INSERT INTO patients
+                          (id, patient_code, first_name, last_name, sex, dob, status,
+                           created_by_user_id, created_at, updated_at, resource_version)
+                        VALUES (?, ?, 'Jane', 'Doe', 'Female', '1986-01-01', 'active',
+                                'psy-1', '2026-07-22T00:00:00Z', '2026-07-22T00:00:00Z', 1)
+                        """,
+                        (patient_id, patient_code),
+                    )
+            conn.close()
+            status, data = request_json(
+                base,
+                "/api/add-new-patient/v1/patient-resolutions/COLL01",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 409)
+            self.assertEqual(data, {"error": "patient_alias_collision"})
+
+    def test_patient_resolution_rejects_stale_if_match(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="STALE1"),
+            )
+            patient_id = created["patient"]["id"]
+            _, current, headers = request_json_with_headers(
+                base,
+                f"/api/add-new-patient/v1/patient-resolutions/{patient_id}",
+                headers=PSY_HEADER,
+            )
+            with sqlite3.connect(server.db_path) as conn:
+                conn.execute("UPDATE patients SET resource_version = 2 WHERE id = ?", (patient_id,))
+            conn.close()
+            status, data = request_json(
+                base,
+                f"/api/add-new-patient/v1/patient-resolutions/{patient_id}",
+                headers={**PSY_HEADER, "If-Match": headers["etag"]},
+            )
+            self.assertEqual(current["resourceVersion"], 1)
+            self.assertEqual(status, 412)
+            self.assertEqual(data, {"error": "etag_mismatch"})
+
+    def test_patient_code_is_not_reused_after_patient_becomes_inactive(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="NOREU1"),
+            )
+            with sqlite3.connect(server.db_path) as conn:
+                conn.execute(
+                    "UPDATE patients SET status = 'inactive', resource_version = 2 WHERE id = ?",
+                    (created["patient"]["id"],),
+                )
+            conn.close()
+            status, data = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="NOREU1"),
+            )
+            self.assertEqual(status, 409)
+            self.assertEqual(data["error"], "patient_alias_already_exists")
+
+    def test_canonical_patient_lookup_does_not_accept_patient_code(self) -> None:
+        with AddNewPatientServer() as base:
+            request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="CAN001"),
+            )
+            status, data = request_json(
+                base,
+                "/api/add-new-patient/v1/patients/CAN001",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 404)
+            self.assertEqual(data, {"message": "Patient was not found."})
+
+    def test_encounter_canonical_route_requires_patient_uuid(self) -> None:
+        with AddNewPatientServer() as base:
+            request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="ENC001"),
+            )
+            status, data = request_json(
+                base,
+                "/api/add-new-patient/v1/encounters",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_encounter_payload("ENC001"),
+            )
+            self.assertEqual(status, 404)
+            self.assertEqual(data, {"message": "Patient was not found."})
 
     def test_encounter_patient_binding_cannot_be_changed(self) -> None:
         with AddNewPatientServer() as base:
