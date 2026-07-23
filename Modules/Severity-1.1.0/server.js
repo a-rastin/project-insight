@@ -9,6 +9,9 @@ import {
   createSqliteAssessmentStore,
   migrateAssessmentsJson,
 } from "./assessment-repository.js";
+import { createHttpAuthAdapter } from "./auth-adapter.js";
+import { createSecurity } from "./security.js";
+import { createReadinessProbe } from "./readiness.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,9 +34,22 @@ function createDefaultAssessmentStore() {
   return store;
 }
 
-export function createApp({ assessmentStore = createDefaultAssessmentStore() } = {}) {
+export function createApp({
+  assessmentStore = createDefaultAssessmentStore(),
+  authAdapter = undefined,
+  csrfSecret = undefined,
+} = {}) {
   const app = express();
   const severityAssessments = createSeverityAssessmentModule({ assessmentStore });
+  const configuredAuthAdapter = authAdapter === undefined ? (
+    process.env.AUTH_SESSION_URL ? createHttpAuthAdapter() : null
+  ) : authAdapter;
+  const security = createSecurity({ authAdapter: configuredAuthAdapter, csrfSecret });
+  const readiness = createReadinessProbe({
+    assessmentStore,
+    authConfigured: security.authConfigured,
+    csrfConfigured: security.csrfConfigured,
+  });
 
   app.use(express.json());
   app.use(express.static(path.join(__dirname, "public")));
@@ -49,7 +65,15 @@ export function createApp({ assessmentStore = createDefaultAssessmentStore() } =
     next();
   });
 
-  app.post("/api/v1/severity-assessments", (req, res) => {
+  app.get("/health", (_req, res) => res.json({ status: "ok" }));
+  app.get("/ready", (_req, res) => {
+    const result = readiness();
+    return res.status(result.ok ? 200 : 503).json(result);
+  });
+
+  app.get("/api/v1/csrf", security.requireRole("psychiatrist", "admin"), security.issueToken);
+
+  app.post("/api/v1/severity-assessments", security.requireRole("psychiatrist"), security.requireCsrf, (req, res) => {
     try {
       const assessment = severityAssessments.create(req.body);
       res.setHeader("ETag", assessment.etag);
@@ -60,14 +84,14 @@ export function createApp({ assessmentStore = createDefaultAssessmentStore() } =
     }
   });
 
-  app.get("/api/v1/severity-assessments/:assessment_id", (req, res) => {
+  app.get("/api/v1/severity-assessments/:assessment_id", security.requireRole("psychiatrist", "admin"), (req, res) => {
     const assessment = severityAssessments.read(req.params.assessment_id);
     if (!assessment) return res.status(404).json({ error: "Assessment not found" });
     res.setHeader("ETag", assessment.etag);
     return res.json(assessment);
   });
 
-  app.put("/api/v1/severity-assessments/:assessment_id", (req, res) => {
+  app.put("/api/v1/severity-assessments/:assessment_id", security.requireRole("psychiatrist"), security.requireCsrf, (req, res) => {
     try {
       const assessment = severityAssessments.update(req.params.assessment_id, req.body, {
         ifMatch: req.get("if-match")
@@ -82,7 +106,7 @@ export function createApp({ assessmentStore = createDefaultAssessmentStore() } =
   });
 
   // Legacy GET api/severity/:patient_code adapter.
-  app.get("/api/severity/:patient_code", (req, res) => {
+  app.get("/api/severity/:patient_code", security.requireRole("psychiatrist", "admin"), (req, res) => {
     const { patient_code } = req.params;
     if (!patient_code || patient_code.trim() === "") {
       return res.status(400).json({ error: "Patient code is required" });
@@ -109,7 +133,7 @@ export function createApp({ assessmentStore = createDefaultAssessmentStore() } =
   });
 
   // Legacy PUT api/severity/:patient_code adapter.
-  app.put("/api/severity/:patient_code", (req, res) => {
+  app.put("/api/severity/:patient_code", security.requireRole("psychiatrist"), security.requireCsrf, (req, res) => {
     const { patient_code } = req.params;
     const { status, scores, items } = req.body;
 

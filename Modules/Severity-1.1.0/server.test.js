@@ -10,6 +10,7 @@ import {
   createSqliteAssessmentStore,
   migrateAssessmentsJson,
 } from "./server.js";
+import { createMemoryAuthAdapter, parseCanonicalSession } from "./auth-adapter.js";
 
 const assessmentMetadata = {
   patientId: "11111111-1111-4111-8111-111111111111",
@@ -283,5 +284,68 @@ test("SQLite adapter migrates the legacy assessments.json map into the configure
     assert.equal(migrateAssessmentsJson({ sourceFile, store }), 0);
   } finally {
     fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("configured canonical auth enforces roles and signed double-submit CSRF", async () => {
+  const sessions = new Map([
+    ["psy", parseCanonicalSession({
+      schemaVersion: "1.0.0", authenticated: true,
+      user: { id: "u-psy", roles: ["psychiatrist"] },
+      session: { id: "s-psy", expiresAt: "2099-01-01T00:00:00Z" },
+      gates: { disclaimerAccepted: true, passwordChangeRequired: false },
+    })],
+    ["nurse", parseCanonicalSession({
+      schemaVersion: "1.0.0", authenticated: true,
+      user: { id: "u-nurse", roles: ["nurse"] },
+      session: { id: "s-nurse", expiresAt: "2099-01-01T00:00:00Z" },
+      gates: { disclaimerAccepted: true, passwordChangeRequired: false },
+    })],
+  ]);
+  const server = createApp({
+    assessmentStore: createMemoryAssessmentStore(),
+    authAdapter: createMemoryAuthAdapter(sessions),
+    csrfSecret: "test-csrf-secret",
+  }).listen(0);
+  try {
+    const baseUrl = `http://127.0.0.1:${server.address().port}`;
+    const unauthenticated = await fetch(`${baseUrl}/api/v1/severity-assessments/missing`);
+    assert.equal(unauthenticated.status, 401);
+    const wrongRole = await fetch(`${baseUrl}/api/v1/severity-assessments/missing`, {
+      headers: { cookie: "insight_session=nurse" },
+    });
+    assert.equal(wrongRole.status, 403);
+
+    const ready = await fetch(`${baseUrl}/ready`);
+    assert.equal(ready.status, 200);
+    assert.deepEqual((await ready.json()).checks, {
+      database: "ok", authentication: "ok", csrf: "ok",
+    });
+
+    const tokenResponse = await fetch(`${baseUrl}/api/v1/csrf`, {
+      headers: { cookie: "insight_session=psy" },
+    });
+    assert.equal(tokenResponse.status, 200);
+    const token = (await tokenResponse.json()).token;
+    const cookie = tokenResponse.headers.get("set-cookie").split(";", 1)[0];
+    const created = await fetch(`${baseUrl}/api/v1/severity-assessments`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `insight_session=psy; ${cookie}`,
+        "x-csrf-token": token,
+      },
+      body: JSON.stringify(assessmentMetadata),
+    });
+    assert.equal(created.status, 201);
+
+    const missingCsrf = await fetch(`${baseUrl}/api/v1/severity-assessments`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: "insight_session=psy" },
+      body: JSON.stringify(assessmentMetadata),
+    });
+    assert.equal(missingCsrf.status, 403);
+  } finally {
+    await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   }
 });

@@ -138,9 +138,6 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
       const assessed = applyPanssScores(input);
       const assessmentId = assessed.assessmentId || idFactory();
       requireUuid(assessmentId, "assessmentId");
-      const assessments = assessmentStore.read();
-      if (assessments[assessmentId]) throw new AssessmentError("assessmentId already exists", 409);
-
       const resource = {
         assessmentId,
         patientId: assessed.patientId,
@@ -157,8 +154,14 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
       if (assessed.items) resource.items = assessed.items;
       if (assessed.scores) resource.scores = assessed.scores;
       resource.etag = calculateEtag(resource);
-      assessments[assessmentId] = resource;
-      if (!assessmentStore.write(assessments)) throw new AssessmentError("Failed to write to database", 500);
+      if (typeof assessmentStore.insert === "function") {
+        if (!assessmentStore.insert(resource)) throw new AssessmentError("assessmentId already exists", 409);
+      } else {
+        const assessments = assessmentStore.read();
+        if (assessments[assessmentId]) throw new AssessmentError("assessmentId already exists", 409);
+        assessments[assessmentId] = resource;
+        if (!assessmentStore.write(assessments)) throw new AssessmentError("Failed to write to database", 500);
+      }
       return clone(resource);
     },
 
@@ -168,8 +171,9 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
     },
 
     update(assessmentId, patch, { ifMatch } = {}) {
-      const assessments = assessmentStore.read();
-      const current = assessments[assessmentId];
+      const current = typeof assessmentStore.get === "function"
+        ? assessmentStore.get(assessmentId)
+        : assessmentStore.read()[assessmentId];
       if (!current) return null;
       const expectedEtag = ifMatch || patch?.etag;
       if (expectedEtag !== current.etag) throw new AssessmentError("ETag does not match current resource", 412);
@@ -190,6 +194,17 @@ export function createSeverityAssessmentModule({ assessmentStore, idFactory = ra
         updatedAt: clock().toISOString()
       };
       resource.etag = calculateEtag(resource);
+      if (typeof assessmentStore.compareAndSwap === "function") {
+        const updated = assessmentStore.compareAndSwap(assessmentId, expectedEtag, resource);
+        if (!updated) throw new AssessmentError("ETag does not match current resource", 412);
+        return clone(updated);
+      }
+      if (typeof assessmentStore.update === "function") {
+        const updated = assessmentStore.update(assessmentId, expectedEtag, () => resource);
+        if (!updated) throw new AssessmentError("ETag does not match current resource", 412);
+        return clone(updated);
+      }
+      const assessments = assessmentStore.read();
       assessments[assessmentId] = resource;
       if (!assessmentStore.write(assessments)) throw new AssessmentError("Failed to write to database", 500);
       return clone(resource);
