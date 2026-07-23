@@ -18,6 +18,7 @@ At least 1 must be from the core triad (1-3). Criterion B requires functional
 impairment; C and D rule out schizoaffective/substance/autism overlap.
 """
 from __future__ import annotations
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -53,6 +54,31 @@ CRITERIA: list[dict] = [
 
 GUARD_LABEL = {"B": "Criterion B unmet", "C": "Schizoaffective not excluded", "D": "Substance/medical not excluded"}
 RULE_VERSION = "DSM-5-TR-APA-2022"
+
+# The criteria are clinically approved for this module, but the normalized
+# diagnosis coding system has not been approved. Keep the code absent until
+# that decision exists; readiness must remain blocked in the meantime.
+SUPPORTED_CRITERIA_SETS = (
+    {
+        "diagnosis": "schizophrenia",
+        "criteriaSet": "DSM-5-TR",
+        "criteriaVersion": "APA-2022",
+        "normalizedCoding": {
+            "system": None,
+            "code": None,
+            "display": "Schizophrenia",
+            "resolutionStatus": "unresolved",
+        },
+    },
+)
+
+
+class UnsupportedDiagnosis(ValueError):
+    """Raised when a caller requests a diagnosis outside this module's scope."""
+
+    def __init__(self, diagnosis: str):
+        self.diagnosis = diagnosis
+        super().__init__(f"Unsupported diagnosis: {diagnosis}")
 
 
 class AssertionState(str, Enum):
@@ -123,8 +149,21 @@ class DiagnosisAssertion:
 Evaluation = CriteriaEvaluation
 
 
-def get_criteria() -> list[dict]:
-    """Return the criteria tree, grouped for the UI. Caller must not mutate."""
+def supported_clinical_scope() -> dict:
+    """Return the immutable contract for the module's supported scope."""
+    return {
+        "declaration": "module-owned",
+        "populations": [],
+        "workflows": ["diagnosis"],
+        "criteriaSets": deepcopy(list(SUPPORTED_CRITERIA_SETS)),
+    }
+
+
+def get_criteria(diagnosis: str = "schizophrenia") -> list[dict]:
+    """Return the criteria tree for the one supported diagnosis."""
+    normalized = diagnosis.strip().lower()
+    if normalized != "schizophrenia":
+        raise UnsupportedDiagnosis(diagnosis)
     return [c.copy() for c in CRITERIA]
 
 

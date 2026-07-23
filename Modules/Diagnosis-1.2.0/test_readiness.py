@@ -52,13 +52,13 @@ from diagnosis.store import DiagnosisStore
 # process exits clean for the next test in the same interpreter.
 
 
-def test_default_env_is_ready(tmpdb):
+def test_default_env_is_blocked_until_coding_is_approved(tmpdb):
     _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
     _swap_store(tmpdb)
     try:
         r = check_readiness()
         assert r["module"] == "diagnosis", r
-        assert r["ok"] is True, r
+        assert r["ok"] is False, r
         assert r["checks"]["db"]["ok"] is True, r
         assert r["checks"]["auth"]["ok"] is True, r
         assert r["checks"]["auth"]["configured"] is True, r
@@ -66,6 +66,8 @@ def test_default_env_is_ready(tmpdb):
         assert r["checks"]["patient"]["enabled"] is False, r
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
+        assert r["checks"]["clinicalScope"]["ok"] is False, r
+        assert r["checks"]["clinicalScope"]["coding"]["resolutionStatus"] == "unresolved", r
     finally:
         _restore_env()
 
@@ -109,7 +111,8 @@ def test_patient_lookup_enabled_and_configured(tmpdb):
         assert r["checks"]["patient"]["enabled"] is True, r
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
-        assert r["ok"] is True, r
+        assert r["ok"] is False, r
+        assert r["checks"]["clinicalScope"]["ok"] is False, r
     finally:
         _restore_env()
 
@@ -169,17 +172,18 @@ def test_response_never_leaks_base_urls(tmpdb):
 # Tests against the HTTP route.
 
 
-def test_http_ready_200_when_healthy(port, tmpdb):
+def test_http_ready_503_when_coding_is_unresolved(port, tmpdb):
     _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
     _swap_store(tmpdb)
     try:
         c = TestClient(app)
         r = c.get("/ready")
-        assert r.status_code == 200, (r.status_code, r.text)
+        assert r.status_code == 503, (r.status_code, r.text)
         body = r.json()
-        assert body["ok"] is True, body
+        assert body["ok"] is False, body
         assert body["module"] == "diagnosis", body
-        assert set(body["checks"].keys()) == {"db", "auth", "patient"}, body
+        assert set(body["checks"].keys()) == {"db", "auth", "patient", "clinicalScope"}, body
+        assert body["checks"]["clinicalScope"]["ok"] is False, body
     finally:
         _restore_env()
 
@@ -358,14 +362,14 @@ def main() -> None:
     diag_deps.store = tmpdb
     try:
         cases = [
-            ("test_default_env_is_ready", lambda: test_default_env_is_ready(tmpdb)),
+            ("test_default_env_is_blocked_until_coding_is_approved", lambda: test_default_env_is_blocked_until_coding_is_approved(tmpdb)),
             ("test_bypass_shim_fails_readiness", lambda: test_bypass_shim_fails_readiness(tmpdb)),
             ("test_auth_base_url_blank_fails", lambda: test_auth_base_url_blank_fails(tmpdb)),
             ("test_patient_lookup_enabled_and_configured", lambda: test_patient_lookup_enabled_and_configured(tmpdb)),
             ("test_patient_lookup_enabled_blank_url_fails", lambda: test_patient_lookup_enabled_blank_url_fails(tmpdb)),
             ("test_db_fault_is_false_without_raising", lambda: test_db_fault_is_false_without_raising(tmpdb)),
             ("test_response_never_leaks_base_urls", lambda: test_response_never_leaks_base_urls(tmpdb)),
-            ("test_http_ready_200_when_healthy", lambda: test_http_ready_200_when_healthy(auth_port, tmpdb)),
+            ("test_http_ready_503_when_coding_is_unresolved", lambda: test_http_ready_503_when_coding_is_unresolved(auth_port, tmpdb)),
             ("test_http_ready_503_when_bypass_on", lambda: test_http_ready_503_when_bypass_on(auth_port, tmpdb)),
             ("test_http_ready_503_when_db_down", lambda: test_http_ready_503_when_db_down(auth_port, tmpdb)),
             ("test_http_ready_body_no_url_leak", lambda: test_http_ready_body_no_url_leak(auth_port, tmpdb)),

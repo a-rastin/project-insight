@@ -50,10 +50,11 @@ from diagnosis.app import app
 # as test_csrf.py's fake auth; the patient adapter is the subject here.
 
 PSYCHIATRIST = {
+    "schemaVersion": "1.0.0",
     "authenticated": True,
-    "user_id": "u-psy-1",
-    "roles": ["psychiatrist"],
-    "session_id": "s-1",
+    "user": {"id": "u-psy-1", "roles": ["psychiatrist"]},
+    "session": {"id": "s-1"},
+    "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
 }
 
 

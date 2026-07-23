@@ -97,7 +97,8 @@ from diagnosis.api import (                         # noqa: E402
 )
 from diagnosis.criteria import (                # noqa: E402
     CRITERIA, AssertionState, CriteriaEvaluation, DiagnosisAssertion,
-    Evaluation, evaluate, get_criteria,
+    Evaluation, UnsupportedDiagnosis, evaluate, get_criteria,
+    supported_clinical_scope,
 )
 from diagnosis.diagnosis_api import legacy_decision_to_assertion  # noqa: E402
 from diagnosis.patient import (
@@ -122,6 +123,25 @@ def _fake_request(*, cookies: dict | None = None, headers: dict | None = None):
 # Rules — pure ``evaluate()``. Mirrors ``criteria._demo()`` + extras that
 # lock the duration-vs-symptom semantics and the dedupe/order contract.
 class TestCriteriaRules(unittest.TestCase):
+    def test_supported_scope_exposes_only_schizophrenia_without_invented_code(self):
+        scope = supported_clinical_scope()
+        self.assertEqual(len(scope["criteriaSets"]), 1)
+        entry = scope["criteriaSets"][0]
+        self.assertEqual(entry["diagnosis"], "schizophrenia")
+        self.assertEqual(entry["criteriaSet"], "DSM-5-TR")
+        self.assertEqual(entry["criteriaVersion"], "APA-2022")
+        self.assertEqual(entry["normalizedCoding"], {
+            "system": None,
+            "code": None,
+            "display": "Schizophrenia",
+            "resolutionStatus": "unresolved",
+        })
+
+    def test_unsupported_diagnosis_is_typed_at_the_domain_boundary(self):
+        with self.assertRaises(UnsupportedDiagnosis) as raised:
+            get_criteria("bipolar-disorder")
+        self.assertEqual(raised.exception.diagnosis, "bipolar-disorder")
+
     def test_empty_not_met(self):
         r = evaluate([])
         self.assertFalse(r.met)
@@ -351,6 +371,31 @@ class TestRestContract(unittest.TestCase):
         r = self.client.get("/diagnosis/_meta")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json()["criteria"]), 9)
+
+    def test_meta_lists_supported_scope_and_rejects_unsupported_diagnosis(self):
+        supported = self.client.get("/diagnosis/_meta")
+        self.assertEqual(supported.status_code, 200)
+        scope = supported.json()["supportedClinicalScope"]
+        self.assertEqual(
+            [entry["diagnosis"] for entry in scope["criteriaSets"]],
+            ["schizophrenia"],
+        )
+
+        rejected = self.client.get(
+            "/diagnosis/_meta?diagnosis=bipolar-disorder",
+            headers={
+                "X-Request-ID": "00000000-0000-4000-8000-000000000001",
+                "X-Correlation-ID": "00000000-0000-4000-8000-000000000002",
+            },
+        )
+        self.assertEqual(rejected.status_code, 422)
+        self.assertEqual(rejected.headers["content-type"], "application/problem+json")
+        body = rejected.json()
+        self.assertEqual(body["code"], "UNSUPPORTED_DIAGNOSIS")
+        self.assertEqual(body["status"], 422)
+        self.assertEqual(body["requestId"], "00000000-0000-4000-8000-000000000001")
+        self.assertEqual(body["correlationId"], "00000000-0000-4000-8000-000000000002")
+        self.assertEqual(body["instance"], "/diagnosis/_meta")
 
     def test_meta_serves_rule_contract(self):
         # The browser page's optimistic display derives its displayed
@@ -847,7 +892,13 @@ class TestAuthRejection(unittest.TestCase):
     def test_wrong_role_rejected_403(self):
         dep = self._dep("psychiatrist")
         req = _fake_request(headers={"cookie": "insight_session=x"})
-        payload = {"authenticated": True, "user_id": "u", "roles": ["nurse"]}
+        payload = {
+            "schemaVersion": "1.0.0",
+            "authenticated": True,
+            "user": {"id": "u", "roles": ["nurse"]},
+            "session": {"id": "s"},
+            "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+        }
         with mock.patch.object(diag_auth, "_fetch_session",
                                return_value=payload):
             with self.assertRaises(diag_auth.HTTPException) as cm:
@@ -857,8 +908,13 @@ class TestAuthRejection(unittest.TestCase):
     def test_matching_role_passes(self):
         dep = self._dep("psychiatrist", "admin")
         req = _fake_request(headers={"cookie": "insight_session=x"})
-        payload = {"authenticated": True, "user_id": "u",
-                   "roles": ["admin"], "session_id": "s"}
+        payload = {
+            "schemaVersion": "1.0.0",
+            "authenticated": True,
+            "user": {"id": "u", "roles": ["admin"]},
+            "session": {"id": "s"},
+            "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+        }
         with mock.patch.object(diag_auth, "_fetch_session",
                                return_value=payload):
             session = dep(req)
@@ -867,7 +923,13 @@ class TestAuthRejection(unittest.TestCase):
     def test_missing_user_id_fails_closed_401(self):
         dep = self._dep("psychiatrist")
         req = _fake_request(headers={"cookie": "insight_session=x"})
-        payload = {"authenticated": True, "user_id": None, "roles": ["psychiatrist"]}
+        payload = {
+            "schemaVersion": "1.0.0",
+            "authenticated": True,
+            "user": {"id": None, "roles": ["psychiatrist"]},
+            "session": {"id": "s"},
+            "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+        }
         with mock.patch.object(diag_auth, "_fetch_session", return_value=payload):
             with self.assertRaises(diag_auth.HTTPException) as cm:
                 dep(req)

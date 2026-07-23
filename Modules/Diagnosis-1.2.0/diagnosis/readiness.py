@@ -26,6 +26,9 @@ The check is **module-local** and **never leaks secrets**:
   state is "skipped" (the adapter short-circuits and never contacts the
   registry). When enabled we verify ``PATIENT_BASE_URL`` resolves to a
   non-empty string — same no-leak rule as Auth.
+- *Clinical scope* — every exposed criteria entry must have an approved
+  normalized coding mapping. The current schizophrenia criteria entry has no
+  approved mapping, so this check intentionally blocks readiness.
 
 Response shape (stable; do not drop keys without coordinating with the
 larger Insight app's readiness aggregator):
@@ -116,6 +119,27 @@ def _check_patient() -> dict[str, Any]:
     return {"ok": ok, "enabled": True, "configured": configured}
 
 
+def _check_clinical_scope() -> dict[str, Any]:
+    """Block traffic until each exposed diagnosis has approved coding."""
+    from .criteria import supported_clinical_scope
+
+    entries = supported_clinical_scope()["criteriaSets"]
+    coding = entries[0]["normalizedCoding"] if len(entries) == 1 else {
+        "system": None,
+        "code": None,
+        "resolutionStatus": "unresolved",
+    }
+    resolved = all(
+        isinstance(entry.get("normalizedCoding", {}).get("system"), str)
+        and bool(entry["normalizedCoding"]["system"].strip())
+        and isinstance(entry["normalizedCoding"].get("code"), str)
+        and bool(entry["normalizedCoding"]["code"].strip())
+        and entry["normalizedCoding"].get("resolutionStatus") == "resolved"
+        for entry in entries
+    )
+    return {"ok": resolved, "coding": coding}
+
+
 def check_readiness() -> dict[str, Any]:
     """Return the module-local readiness snapshot. Pure: no HTTP, no
     env mutation, never raises. The HTTP route in ``app.py`` wraps this
@@ -124,11 +148,17 @@ def check_readiness() -> dict[str, Any]:
     db = _check_db()
     auth = _check_auth()
     patient = _check_patient()
-    ok = db["ok"] and auth["ok"] and patient["ok"]
+    clinical_scope = _check_clinical_scope()
+    ok = db["ok"] and auth["ok"] and patient["ok"] and clinical_scope["ok"]
     return {
         "ok": ok,
         "module": "diagnosis",
-        "checks": {"db": db, "auth": auth, "patient": patient},
+        "checks": {
+            "db": db,
+            "auth": auth,
+            "patient": patient,
+            "clinicalScope": clinical_scope,
+        },
     }
 
 
@@ -180,7 +210,7 @@ def _readiness_selfcheck() -> None:
 
         r = check_readiness()
         assert r["module"] == "diagnosis", r
-        assert r["ok"] is True, ("default env should be ready", r)
+        assert r["ok"] is False, ("unresolved coding must block readiness", r)
         assert r["checks"]["db"]["ok"] is True, r
         assert r["checks"]["auth"]["configured"] is True, r
         assert r["checks"]["auth"]["bypass"] is False, r
@@ -188,6 +218,7 @@ def _readiness_selfcheck() -> None:
         assert r["checks"]["patient"]["enabled"] is False, r
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
+        assert r["checks"]["clinicalScope"]["ok"] is False, r
 
         # 2. Bypass shim on -> auth not deploy-ready; aggregator
         #    must go False so the deploy gate holds traffic.
@@ -210,7 +241,7 @@ def _readiness_selfcheck() -> None:
             assert r["checks"]["patient"]["enabled"] is True, r
             assert r["checks"]["patient"]["configured"] is True, r
             assert r["checks"]["patient"]["ok"] is True, r
-            assert r["ok"] is True, r
+            assert r["ok"] is False, r
         finally:
             _patient.PATIENT_BASE_URL = saved_patient_url
             _os.environ.pop("DIAGNOSIS_PATIENT_LOOKUP", None)

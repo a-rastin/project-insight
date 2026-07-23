@@ -43,22 +43,25 @@ from diagnosis.app import app
 
 SCENARIOS = {
     "psychiatrist": {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-psy-1",
-        "roles": ["psychiatrist"],
-        "session_id": "s-1",
+        "user": {"id": "u-psy-1", "roles": ["psychiatrist"]},
+        "session": {"id": "s-1"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
     "admin": {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-adm-1",
-        "roles": ["admin"],
-        "session_id": "s-2",
+        "user": {"id": "u-adm-1", "roles": ["admin"]},
+        "session": {"id": "s-2"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
     "nurse": {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
-        "user_id": "u-rn-1",
-        "roles": ["nurse"],
-        "session_id": "s-3",
+        "user": {"id": "u-rn-1", "roles": ["nurse"]},
+        "session": {"id": "s-3"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     },
 }
 
@@ -78,7 +81,13 @@ class _Handler(BaseHTTPRequestHandler):
         # No insight_session cookie at all -> the auth service treats the
         # caller as unauthenticated (mirrors the real Insight contract).
         if role is None:
-            payload = {"authenticated": False}
+            payload = {
+                "schemaVersion": "1.0.0",
+                "authenticated": False,
+                "user": None,
+                "session": None,
+                "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
+            }
         else:
             payload = SCENARIOS.get(role, SCENARIOS["nurse"])
         body = json.dumps(payload).encode("utf-8")

@@ -188,7 +188,8 @@ def test_back_compat_reexports_from_api_seam():
     for name, value in reexports.items():
         assert value is not None, ("missing back-compat re-export", name)
     assert diag_api.RESULT_FIELDS == (
-        "met", "a_count", "core_count", "failures", "reason", "checked")
+        "met", "a_count", "core_count", "failures", "reason", "checked",
+        "rule_version")
     assert diag_api.Submission.__name__ == "Submission"
 
 

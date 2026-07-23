@@ -54,12 +54,19 @@ Helpers:
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from .auth import Session
 from . import csrf as _csrf
-from .criteria import get_criteria, meta_contract
+from .criteria import (
+    UnsupportedDiagnosis,
+    get_criteria,
+    meta_contract,
+    supported_clinical_scope,
+)
 from .deps import require_psychiatrist_or_admin, store
 
 router = APIRouter()
@@ -75,7 +82,11 @@ MODULE_ID = settings.module_id
 
 
 @router.get("/diagnosis/_meta")
-def meta(_: Session = Depends(require_psychiatrist_or_admin)):
+def meta(
+    request: Request,
+    diagnosis: str = "schizophrenia",
+    _: Session = Depends(require_psychiatrist_or_admin),
+):
     """Return the criteria tree and the rule contract the UI derives its
     optimistic display from. Stable, no patient data. UI bootstraps from this.
 
@@ -87,7 +98,39 @@ def meta(_: Session = Depends(require_psychiatrist_or_admin)):
     ``test_unittest.py`` against every id subset. Do NOT reimplement the
     rules client-side; consume this contract.
     """
-    return {"criteria": get_criteria(), "rules": meta_contract()}
+    try:
+        criteria = get_criteria(diagnosis)
+    except UnsupportedDiagnosis:
+        return _problem(
+            request,
+            422,
+            "UNSUPPORTED_DIAGNOSIS",
+            "The requested diagnosis is outside the supported clinical scope.",
+        )
+    return {
+        "criteria": criteria,
+        "rules": meta_contract(),
+        "supportedClinicalScope": supported_clinical_scope(),
+    }
+
+
+def _problem(request: Request, status: int, code: str, detail: str) -> JSONResponse:
+    request_id = request.headers.get("X-Request-ID") or str(uuid4())
+    correlation_id = request.headers.get("X-Correlation-ID") or str(uuid4())
+    payload = {
+        "type": f"https://insight.example/problems/{code.lower()}",
+        "title": code.replace("_", " ").title(),
+        "status": status,
+        "detail": detail,
+        "instance": request.url.path,
+        "code": code,
+        "requestId": request_id,
+        "correlationId": correlation_id,
+    }
+    response = JSONResponse(payload, status_code=status, media_type="application/problem+json")
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
 
 
 @router.get("/diagnosis/_csrf")
