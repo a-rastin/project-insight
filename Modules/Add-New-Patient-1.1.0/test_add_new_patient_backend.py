@@ -13,6 +13,7 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from uuid import UUID
 
 
 PSY_HEADER = {"x-demo-auth-user": "psy-1"}
@@ -472,6 +473,62 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 self.assertEqual(encounter_status, 200)
                 self.assertEqual(encounter_response["encounter"]["patientId"], patient["id"])
 
+    def test_allergies_and_medications_are_encounter_snapshots(self) -> None:
+        with AddNewPatientServer() as base:
+            _, patient_response = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="SNAP01"),
+            )
+            patient_id = patient_response["patient"]["id"]
+            encounter_bodies = [
+                canonical_encounter_payload(
+                    patient_id,
+                    allergies=["penicillin"],
+                    currentMedications=["sertraline 50 mg"],
+                ),
+                canonical_encounter_payload(
+                    patient_id,
+                    allergies=["latex"],
+                    currentMedications=["mirtazapine 15 mg"],
+                ),
+            ]
+            encounter_ids = []
+            for body in encounter_bodies:
+                status, response = request_json(
+                    base,
+                    "/api/add-new-patient/v1/encounters",
+                    method="POST",
+                    headers=csrf_headers(base, PSY_HEADER),
+                    body=body,
+                )
+                self.assertEqual(status, 201)
+                encounter_ids.append(response["encounter"]["id"])
+
+            for encounter_id, allergies, medications in zip(
+                encounter_ids,
+                [["penicillin"], ["latex"]],
+                [["sertraline 50 mg"], ["mirtazapine 15 mg"]],
+            ):
+                status, response = request_json(
+                    base,
+                    f"/api/add-new-patient/v1/encounters/{encounter_id}",
+                    headers=PSY_HEADER,
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(response["encounter"]["allergies"], allergies)
+                self.assertEqual(response["encounter"]["currentMedications"], medications)
+
+            status, response = request_json(
+                base,
+                f"/api/add-new-patient/v1/patients/{patient_id}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 200)
+            self.assertNotIn("allergies", response["patient"])
+            self.assertNotIn("currentMedications", response["patient"])
     def test_patient_resolution_by_uuid_and_code_returns_canonical_version_and_etag(self) -> None:
         with AddNewPatientServer() as base:
             _, created = request_json(
@@ -1095,6 +1152,178 @@ class AddNewPatientBackendTest(unittest.TestCase):
                     status, _ = request_json(base, path)
                     self.assertEqual(status, 404)
 
+
+class MigrationTest(unittest.TestCase):
+    def test_legacy_records_are_backfilled_with_uuid_ids_and_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            db_path = os.path.join(tempdir, "legacy.sqlite3")
+            with sqlite3.connect(db_path) as conn:
+                conn.execute(
+                    """
+                    CREATE TABLE patients (
+                      id TEXT PRIMARY KEY,
+                      patient_code TEXT,
+                      first_name TEXT,
+                      last_name TEXT,
+                      sex TEXT,
+                      dob TEXT,
+                      phone_number TEXT,
+                      presenting_complaint TEXT,
+                      provisional_diagnosis TEXT,
+                      treatment_history TEXT,
+                      allergies TEXT,
+                      current_medications TEXT,
+                      suicidality TEXT,
+                      substance_use INTEGER,
+                      created_by_user_id TEXT,
+                      created_at TEXT,
+                      updated_at TEXT
+                    )
+                    """
+                )
+                conn.executemany(
+                    "INSERT INTO patients VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [
+                        (
+                            "legacy-patient-1",
+                            "LEG001",
+                            "Jane",
+                            "Doe",
+                            "Female",
+                            "1986-01-01",
+                            "5551234567",
+                            "Low mood",
+                            "F32.1",
+                            '["CBT"]',
+                            '["penicillin"]',
+                            '["sertraline"]',
+                            "ideation",
+                            0,
+                            "psy-1",
+                            "2026-07-01T00:00:00Z",
+                            "2026-07-01T00:00:00Z",
+                        ),
+                        (
+                            "legacy-patient-2",
+                            "LEG002",
+                            "John",
+                            "Doe",
+                            "Male",
+                            "1980-01-01",
+                            None,
+                            "Insomnia",
+                            "G47.0",
+                            "[]",
+                            "[]",
+                            '["melatonin"]',
+                            "suicidality_none",
+                            0,
+                            "psy-1",
+                            "2026-07-02T00:00:00Z",
+                            "2026-07-02T00:00:00Z",
+                        ),
+                    ],
+                )
+                conn.commit()
+            conn.close()
+
+            from add_new_patient_backend.db import SQLiteAdapter
+            from add_new_patient_backend.repository import PatientRepository
+
+            adapter = SQLiteAdapter(db_path)
+            report = adapter.initialize()
+            self.assertEqual(report["migratedPatientCount"], 2)
+            self.assertEqual(report["migratedEncounterCount"], 2)
+            self.assertEqual(report["quarantinedCount"], 0)
+            self.assertEqual(report["collisionRecordIds"], [])
+            self.assertEqual(report["unresolvedRecordIds"], [])
+
+            patients = PatientRepository(adapter).list_patients()
+            self.assertEqual({patient["patientCode"] for patient in patients}, {"LEG001", "LEG002"})
+            for patient in patients:
+                UUID(patient["id"])
+                UUID(patient["intakeId"])
+            leg001 = next(patient for patient in patients if patient["patientCode"] == "LEG001")
+            self.assertEqual(leg001["allergies"], ["penicillin"])
+            self.assertEqual(leg001["currentMedications"], ["sertraline"])
+
+    def test_code_keyed_collisions_and_unresolved_rows_are_quarantined(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            db_path = os.path.join(tempdir, "code-keyed.sqlite3")
+            with sqlite3.connect(db_path) as conn:
+                conn.executescript(
+                    """
+                    CREATE TABLE patients (
+                      id TEXT PRIMARY KEY,
+                      patient_code TEXT,
+                      first_name TEXT,
+                      last_name TEXT,
+                      sex TEXT,
+                      dob TEXT,
+                      phone_number TEXT,
+                      status TEXT,
+                      resource_version INTEGER,
+                      created_by_user_id TEXT,
+                      created_at TEXT,
+                      updated_at TEXT
+                    );
+                    CREATE TABLE patient_intake_records (
+                      id TEXT PRIMARY KEY,
+                      patient_id TEXT,
+                      encounter_date TEXT,
+                      presenting_complaint TEXT,
+                      provisional_diagnosis TEXT,
+                      treatment_history TEXT,
+                      allergies_snapshot TEXT,
+                      current_medications_snapshot TEXT,
+                      suicidality TEXT,
+                      substance_use INTEGER,
+                      created_by_user_id TEXT,
+                      created_at TEXT,
+                      updated_at TEXT
+                    );
+                    """
+                )
+                conn.executemany(
+                    "INSERT INTO patients VALUES (?, ?, 'Jane', 'Doe', 'Female', '1986-01-01', NULL, 'active', 1, 'psy-1', ?, ?)",
+                    [
+                        ("patient-good", "GOOD01", "2026-07-01T00:00:00Z", "2026-07-01T00:00:00Z"),
+                        ("patient-collision-a", "DUP001", "2026-07-02T00:00:00Z", "2026-07-02T00:00:00Z"),
+                        ("patient-collision-b", "dup001", "2026-07-03T00:00:00Z", "2026-07-03T00:00:00Z"),
+                    ],
+                )
+                conn.executemany(
+                    "INSERT INTO patient_intake_records VALUES (?, ?, ?, 'Complaint', 'Diagnosis', '[]', '[]', '[]', 'suicidality_none', 0, 'psy-1', ?, ?)",
+                    [
+                        ("encounter-good", "GOOD01", "2026-07-04T00:00:00Z", "2026-07-04T00:00:00Z", "2026-07-04T00:00:00Z"),
+                        ("encounter-collision", "DUP001", "2026-07-05T00:00:00Z", "2026-07-05T00:00:00Z", "2026-07-05T00:00:00Z"),
+                        ("encounter-unresolved", "MISSING1", "2026-07-06T00:00:00Z", "2026-07-06T00:00:00Z", "2026-07-06T00:00:00Z"),
+                    ],
+                )
+                conn.commit()
+            conn.close()
+
+            from add_new_patient_backend.db import SQLiteAdapter
+            from add_new_patient_backend.repository import PatientRepository
+
+            adapter = SQLiteAdapter(db_path)
+            report = adapter.initialize()
+            self.assertEqual(report["migratedPatientCount"], 1)
+            self.assertEqual(report["migratedEncounterCount"], 1)
+            self.assertEqual(report["quarantinedCount"], 4)
+            self.assertEqual(
+                set(report["collisionRecordIds"]),
+                {"patient-collision-a", "patient-collision-b", "encounter-collision"},
+            )
+            self.assertEqual(report["unresolvedRecordIds"], ["encounter-unresolved"])
+            self.assertNotIn("GOOD01", json.dumps(report))
+            self.assertNotIn("Jane", json.dumps(report))
+
+            patients = PatientRepository(adapter).list_patients()
+            self.assertEqual(len(patients), 1)
+            UUID(patients[0]["id"])
+            self.assertEqual(patients[0]["patientCode"], "GOOD01")
+            UUID(patients[0]["intakeId"])
 
 class AuthBoundaryTest(unittest.TestCase):
     def test_patients_endpoints_reject_unauthenticated(self) -> None:

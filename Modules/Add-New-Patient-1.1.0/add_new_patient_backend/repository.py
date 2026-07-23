@@ -138,8 +138,8 @@ class PatientRepository:
     def __init__(self, adapter: DatabaseAdapter) -> None:
         self.adapter = adapter
 
-    def initialize(self) -> None:
-        self.adapter.initialize()
+    def initialize(self) -> dict[str, Any]:
+        return self.adapter.initialize()
 
     def ping(self) -> bool:
         return self.adapter.ping()
