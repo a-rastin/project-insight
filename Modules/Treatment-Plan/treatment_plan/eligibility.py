@@ -63,6 +63,7 @@ class GenerationEligibilityPolicy:
         signals={str(x).strip().lower() for x in values if x is not None}
         if len(signals)>1: findings.append(self._f("suicide-risk-contradiction",Blocker.SAFETY,"suicide-risk","contradictory suicide-risk evidence requires explicit safety review"))
         elif signals & {"high","imminent","positive"}: findings.append(self._f("high-suicide-risk",Blocker.SAFETY,"suicide-risk","high-risk evidence requires explicit safety review"))
+        self._apply_suicide_risk_observations(context,findings)
         result=Eligibility.SAFETY_PATHWAY if any(x.blocker is Blocker.SAFETY for x in findings) else Eligibility.BLOCKED if any(x.blocker is Blocker.HARD for x in findings) else Eligibility.ELIGIBLE
         unique={(x.code,x.fact):x for x in findings}
         observer=current_observability()
@@ -70,6 +71,19 @@ class GenerationEligibilityPolicy:
         missing=sum(1 for finding in unique.values() if finding.code=="required-fact-missing")
         if missing: observer.metric("tp_missing_input_total",missing,labels={"kind":"eligibility","module":"policy"})
         return EligibilityDecision(pathway_id,result,tuple(unique.values()))
+    def _apply_suicide_risk_observations(self,context:ClinicalContext,findings:list)->None:
+        from .suicide_risk_observations import SuicideRiskResolution
+        resolved=SuicideRiskResolution().resolve_from_context(context.inputs)
+        if resolved.finding_code is None or resolved.blocker is None: return
+        detail=self._resolution_detail(resolved)
+        findings.append(self._f(resolved.finding_code,resolved.blocker,"suicide-risk",detail))
+    @staticmethod
+    def _resolution_detail(resolved)->str:
+        if resolved.resolution.value=="contradict":
+            return "Add New Patient and Medical History suicide-risk observations disagree; an approved resolution policy routes this to explicit safety review so neither module silently wins"
+        if resolved.resolution.value=="sole-source":
+            return "Only one source provided a suicide-risk observation; an approved resolution policy routes single-source signals to explicit safety review"
+        return "Add New Patient and Medical History agree on a suicide-risk signal; the approved resolution policy routes corroboration to explicit safety review"
     @staticmethod
     def _stale(value:Any,now:datetime,window:int)->bool:
         if not value:return False
