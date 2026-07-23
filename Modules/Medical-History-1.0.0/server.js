@@ -2,6 +2,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
+const { MedicalHistorySubmissionStore, isCanonicalUuid } = require("./medical-history-submission.js");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT_DIR = __dirname;
@@ -9,7 +10,8 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DATA_DIR = process.env.MEDICAL_HISTORY_DATA_DIR || path.join(ROOT_DIR, "data");
 const SESSIONS_FILE = path.join(DATA_DIR, "activation_sessions.json");
 const SUBMISSIONS_FILE = path.join(DATA_DIR, "medical_history_submissions.json");
-const SCHEMA_FILE = path.join(DATA_DIR, "medical_history_schema.json");
+const SCHEMA_FILE = path.join(ROOT_DIR, "data", "medical_history_schema.json");
+const submissionStore = new MedicalHistorySubmissionStore({ filePath: SUBMISSIONS_FILE });
 
 const COMORBIDITY_OPTIONS = [
   "Diabetes mellitus",
@@ -50,7 +52,7 @@ function normalizeCode(code) {
 async function ensureDataFiles() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await ensureJsonFile(SESSIONS_FILE, []);
-  await ensureJsonFile(SUBMISSIONS_FILE, []);
+  await submissionStore.ensure();
 }
 
 async function ensureJsonFile(filePath, defaultValue) {
@@ -100,13 +102,14 @@ async function parseBody(req) {
   });
 }
 
-function sendJson(res, status, payload) {
+function sendJson(res, status, payload, headers = {}) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
+    ...headers,
   });
   res.end(JSON.stringify(payload, null, 2));
 }
@@ -179,9 +182,9 @@ async function getActivation(req, res, code) {
   sendJson(res, 200, activation);
 }
 
-function validateSubmission(body) {
+function validateSubmission(body, { requireCode = true } = {}) {
   const errors = [];
-  if (!isValidCode(body.code)) errors.push("code must be exactly 6 alphanumeric characters");
+  if (requireCode && !isValidCode(body.code)) errors.push("code must be exactly 6 alphanumeric characters");
   if (!Array.isArray(body.pastMedicalHistory)) errors.push("pastMedicalHistory must be an array");
   if (!Array.isArray(body.drugs)) errors.push("drugs must be an array");
   const history = Array.isArray(body.pastMedicalHistory) ? body.pastMedicalHistory : [];
@@ -207,28 +210,9 @@ function validateSubmission(body) {
   }
   return errors;
 }
-async function submitMedicalHistory(req, res) {
-  const body = await parseBody(req);
-  const errors = validateSubmission(body);
-  if (errors.length) {
-    sendError(res, 422, "Medical History submission failed validation.", errors);
-    return;
-  }
 
-  const code = normalizeCode(body.code);
-  const sessions = await readJson(SESSIONS_FILE, []);
-  const activation = sessions.find((session) => session.code === code);
-  if (!activation || activation.status === "expired") {
-    sendError(res, 404, "Submit requires an active Medical History activation code.");
-    return;
-  }
-
-  const submissions = await readJson(SUBMISSIONS_FILE, []);
-  const submission = {
-    submissionId: crypto.randomUUID(),
-    code,
-    patientId: activation.context.patientId,
-    encounterId: activation.context.encounterId,
+function submissionData(body) {
+  return {
     pastMedicalHistory: body.pastMedicalHistory.map(String),
     drugs: body.drugs.map((drug) => ({
       name: String(drug.name).trim(),
@@ -243,19 +227,89 @@ async function submitMedicalHistory(req, res) {
     clozapineContraindication: body.clozapineContraindication,
     clozapineContraindications: body.clozapineContraindication ? body.clozapineContraindications.map(String) : [],
     recurrentNonAdherenceDeterioration: body.recurrentNonAdherenceDeterioration,
-    submittedAt: new Date().toISOString(),
-    submittedBy: body.submittedBy || "standalone-ui",
-    source: body.source || "medical-history-module"
   };
+}
 
-  submissions.push(submission);
-  activation.status = "submitted";
-  activation.submissionId = submission.submissionId;
-  activation.submittedAt = submission.submittedAt;
+function legacySubmissionResponse(submission) {
+  return {
+    ...submission,
+    patientId: submission.legacyPatientId ?? submission.patientId,
+    encounterId: submission.legacyEncounterId ?? submission.encounterId,
+    submittedBy: submission.author,
+  };
+}
 
-  await writeJson(SUBMISSIONS_FILE, submissions);
-  await writeJson(SESSIONS_FILE, sessions);
-  sendJson(res, 201, submission);
+function identityFromUrl(url) {
+  const patientId = url.searchParams.get("patientId");
+  const encounterId = url.searchParams.get("encounterId");
+  if (!isCanonicalUuid(patientId) || !isCanonicalUuid(encounterId)) {
+    const error = new Error("patientId and encounterId must be canonical non-nil UUIDs");
+    error.status = 422;
+    throw error;
+  }
+  return { patientId, encounterId };
+}
+
+async function sendSubmission(req, res, submission, status = 200) {
+  if (!submission) {
+    sendError(res, 404, "Medical History submission was not found.");
+    return;
+  }
+  sendJson(res, status, submission, { ETag: submission.etag });
+}
+
+async function submitMedicalHistory(req, res) {
+  const body = await parseBody(req);
+  const legacy = Object.prototype.hasOwnProperty.call(body, "code");
+  const errors = validateSubmission(body, { requireCode: legacy });
+  if (!legacy && !isCanonicalUuid(body.patientId)) errors.push("patientId must be a canonical non-nil UUID");
+  if (!legacy && !isCanonicalUuid(body.encounterId)) errors.push("encounterId must be a canonical non-nil UUID");
+  if (errors.length) {
+    sendError(res, 422, "Medical History submission failed validation.", errors);
+    return;
+  }
+
+  const data = submissionData(body);
+  let submission;
+  let sessions;
+  let activation;
+  if (legacy) {
+    const code = normalizeCode(body.code);
+    sessions = await readJson(SESSIONS_FILE, []);
+    activation = sessions.find((session) => session.code === code);
+    if (!activation || activation.status === "expired") {
+      sendError(res, 404, "Submit requires an active Medical History activation code.");
+      return;
+    }
+    const patientId = isCanonicalUuid(activation.context.patientId) ? activation.context.patientId : null;
+    const encounterId = isCanonicalUuid(activation.context.encounterId) ? activation.context.encounterId : null;
+    submission = await submissionStore.createLegacy({
+      patientId,
+      encounterId,
+      legacyPatientId: activation.context.patientId,
+      legacyEncounterId: activation.context.encounterId,
+      author: body.submittedBy || "standalone-ui",
+      data,
+      code,
+      source: body.source || "medical-history-module",
+    });
+    activation.status = "submitted";
+    activation.submissionId = submission.submissionId;
+    activation.submittedAt = submission.submittedAt;
+    await writeJson(SESSIONS_FILE, sessions);
+    await sendSubmission(req, res, legacySubmissionResponse(submission), 201);
+    return;
+  }
+
+  submission = await submissionStore.create({
+    patientId: body.patientId,
+    encounterId: body.encounterId,
+    author: body.author || body.submittedBy,
+    data,
+    status: body.status || "submitted",
+    source: body.source || "medical-history-module",
+  });
+  await sendSubmission(req, res, submission, 201);
 }
 
 async function listSubmissions(req, res, url) {
@@ -266,6 +320,20 @@ async function listSubmissions(req, res, url) {
     return;
   }
   sendJson(res, 200, submissions);
+}
+
+async function getLatestSubmission(req, res, url) {
+  const submission = await submissionStore.getLatest(identityFromUrl(url));
+  await sendSubmission(req, res, submission);
+}
+
+async function getSubmissionHistory(req, res, url) {
+  const history = await submissionStore.getHistory(identityFromUrl(url));
+  sendJson(res, 200, history, history.length ? { ETag: history[history.length - 1].etag } : {});
+}
+
+async function getSubmission(req, res, id) {
+  await sendSubmission(req, res, await submissionStore.findById(id));
 }
 
 async function serveStatic(req, res, url) {
@@ -336,6 +404,22 @@ async function route(req, res) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/latest") {
+    await getLatestSubmission(req, res, url);
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/internal/medical-history/submissions/history") {
+    await getSubmissionHistory(req, res, url);
+    return;
+  }
+
+  const submissionMatch = url.pathname.match(/^\/api\/internal\/medical-history\/submissions\/([^/]+)$/);
+  if (req.method === "GET" && submissionMatch) {
+    await getSubmission(req, res, submissionMatch[1]);
+    return;
+  }
+
   if (req.method === "GET") {
     await serveStatic(req, res, url);
     return;
@@ -361,5 +445,3 @@ ensureDataFiles()
     console.error("Failed to start Medical History module:", error);
     process.exit(1);
   });
-
-

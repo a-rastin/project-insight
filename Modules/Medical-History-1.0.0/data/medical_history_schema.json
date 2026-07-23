@@ -1,9 +1,22 @@
-﻿{
+{
   "module": "Medical History",
   "datasetVersion": "2.0.0",
-  "storage": { "type": "json", "correlationKey": "code" },
+  "storage": { "type": "json", "correlationKey": ["patientId", "encounterId"], "immutableHistory": true },
   "submission": {
-    "code": { "type": "string", "length": 6, "required": true },
+    "id": { "type": "uuid", "required": true },
+    "submissionId": { "type": "uuid", "aliasOf": "id", "required": true },
+    "patientId": { "type": "uuid", "required": true },
+    "encounterId": { "type": "uuid", "required": true },
+    "schemaVersion": { "type": "semver", "const": "1.0.0", "required": true },
+    "author": { "type": ["string", "object"], "required": true },
+    "createdAt": { "type": "utc_timestamp", "required": true },
+    "updatedAt": { "type": "utc_timestamp", "required": true },
+    "submittedAt": { "type": "utc_timestamp", "required": true },
+    "status": { "type": "string", "required": true },
+    "version": { "type": "integer", "minimum": 1, "required": true },
+    "etag": { "type": "etag", "required": true },
+    "data": { "type": "object", "required": true },
+    "code": { "type": "string", "length": 6, "required": false, "compatibilityAdapter": true },
     "pastMedicalHistory": { "type": "string_array", "required": true, "optionsSource": "GET /api/internal/medical-history/options" },
     "drugs": { "type": "object_array", "required": true, "maxItems": 20, "itemSchema": "drug_entry" },
     "substantialSuicideRisk": { "type": "boolean", "required": true, "default": false },
@@ -21,6 +34,9 @@
     { "method": "GET", "path": "/api/internal/medical-history/options" },
     { "method": "POST", "path": "/api/internal/medical-history/submissions" },
     { "method": "GET", "path": "/api/internal/medical-history/submissions" },
+    { "method": "GET", "path": "/api/internal/medical-history/submissions/latest?patientId={uuid}&encounterId={uuid}" },
+    { "method": "GET", "path": "/api/internal/medical-history/submissions/history?patientId={uuid}&encounterId={uuid}" },
+    { "method": "GET", "path": "/api/internal/medical-history/submissions/{id}" },
     { "method": "GET", "path": "/api/internal/medical-history/schema" }
   ]
 }

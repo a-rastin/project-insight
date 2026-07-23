@@ -1,6 +1,6 @@
 # Medical History Module
 
-Standalone Node.js module that collects a patient's medical history and saves each submission under a six-character activation/sample code.
+Standalone Node.js module that collects a patient's medical history as immutable, versioned submissions keyed by patient and encounter UUIDs. Six-character activation codes remain compatibility adapters for existing callers.
 
 ## Run and test
 
@@ -24,10 +24,17 @@ Conditional questions are hidden until applicable. The server independently vali
 
 ## Correlation and persistence
 
-A parent module activates this module with `POST /api/internal/medical-history/activate`. Codes are normalized to uppercase. Submissions are appended to `data/medical_history_submissions.json` and can be retrieved by code:
+A deep submission requires `patientId`, `encounterId`, and `author`; each resource includes UUID identity, schema version, timestamps, status, and a quoted ETag. Submissions are appended to `data/medical_history_submissions.json`. Six-character activation routes normalize the code and adapt legacy callers to the same append-only store:
 
 ```http
 GET /api/internal/medical-history/submissions?code=A1B2C3
+```
+
+Deep resources support latest and immutable history lookup:
+
+```http
+GET /api/internal/medical-history/submissions/latest?patientId={uuid}&encounterId={uuid}
+GET /api/internal/medical-history/submissions/history?patientId={uuid}&encounterId={uuid}
 ```
 
 Runtime files remain JSON arrays:
@@ -45,6 +52,9 @@ Set `MEDICAL_HISTORY_DATA_DIR` to use another runtime data directory (used by th
 - `GET /api/internal/medical-history/options`
 - `POST /api/internal/medical-history/submissions`
 - `GET /api/internal/medical-history/submissions[?code=...]`
+- `GET /api/internal/medical-history/submissions/latest?patientId={uuid}&encounterId={uuid}`
+- `GET /api/internal/medical-history/submissions/history?patientId={uuid}&encounterId={uuid}`
+- `GET /api/internal/medical-history/submissions/{id}`
 - `GET /api/internal/medical-history/schema`
 
 Example submission:

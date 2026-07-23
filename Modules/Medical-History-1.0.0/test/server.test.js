@@ -4,6 +4,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const os = require("node:os");
+const crypto = require("node:crypto");
 
 const port = 4300 + Math.floor(Math.random() * 500);
 const base = `http://127.0.0.1:${port}`;
@@ -12,7 +13,7 @@ let dataDir;
 
 async function request(url, options) {
   const response = await fetch(base + url, { headers: { "Content-Type": "application/json" }, ...options });
-  return { status: response.status, body: await response.json() };
+  return { status: response.status, etag: response.headers.get("etag"), body: await response.json() };
 }
 
 async function waitForServer() {
@@ -37,6 +38,17 @@ test("options expose diseases, antipsychotics, and exact clozapine contraindicat
   assert.ok(result.body.pastMedicalHistory.includes("Hypertension"));
   assert.ok(result.body.antipsychotics.includes("Clozapine"));
   assert.deepEqual(result.body.clozapineContraindications, ["Severe neutropenia", "Clozapine-induced myocarditis", "Unmanaged seizure disorder"]);
+});
+
+test("publishes deep submission identity while documenting code as compatibility metadata", async () => {
+  const result = await request("/api/internal/medical-history/schema");
+  assert.equal(result.status, 200);
+  assert.equal(result.body.storage.immutableHistory, true);
+  assert.deepEqual(result.body.storage.correlationKey, ["patientId", "encounterId"]);
+  assert.equal(result.body.submission.schemaVersion.const, "1.0.0");
+  assert.equal(result.body.submission.patientId.type, "uuid");
+  assert.equal(result.body.submission.encounterId.type, "uuid");
+  assert.equal(result.body.submission.code.compatibilityAdapter, true);
 });
 
 test("saves complete conditional history correlated with normalized code", async () => {
@@ -70,4 +82,38 @@ test("rejects over 20 drugs and invalid conditional answers", async () => {
   assert.ok(result.body.error.details.some((error) => error.includes("more than 20")));
   assert.ok(result.body.error.details.some((error) => error.includes("antipsychotic")));
   assert.ok(result.body.error.details.some((error) => error.includes("at least one clozapine")));
+});
+
+test("supports deep UUID submission identity, latest lookup, and immutable history", async () => {
+  const patientId = crypto.randomUUID();
+  const encounterId = crypto.randomUUID();
+  const first = await request("/api/internal/medical-history/submissions", {
+    method: "POST",
+    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: [], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
+  });
+  assert.equal(first.status, 201);
+  assert.equal(first.body.patientId, patientId);
+  assert.equal(first.body.encounterId, encounterId);
+  assert.equal(first.body.schemaVersion, "1.0.0");
+  assert.equal(first.body.author, "clinician-1");
+  assert.match(first.body.etag, /^"[^"]+"$/);
+  assert.equal(first.etag, first.body.etag);
+
+  const second = await request("/api/internal/medical-history/submissions", {
+    method: "POST",
+    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: ["Asthma"], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
+  });
+  assert.equal(second.status, 201);
+  assert.notEqual(second.body.id, first.body.id);
+
+  const latest = await request(`/api/internal/medical-history/submissions/latest?patientId=${patientId}&encounterId=${encounterId}`);
+  assert.equal(latest.status, 200);
+  assert.equal(latest.body.id, second.body.id);
+  assert.equal(latest.body.pastMedicalHistory[0], "Asthma");
+  assert.equal(latest.etag, latest.body.etag);
+
+  const history = await request(`/api/internal/medical-history/submissions/history?patientId=${patientId}&encounterId=${encounterId}`);
+  assert.equal(history.status, 200);
+  assert.deepEqual(history.body.map((item) => item.id), [first.body.id, second.body.id]);
+  assert.equal(history.body[0].pastMedicalHistory.length, 0);
 });

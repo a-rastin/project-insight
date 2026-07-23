@@ -2,9 +2,9 @@
 
 ## Architecture
 
-This is a dependency-free standalone Node.js module. `server.js` owns activation, validation, JSON persistence, lookup, and static serving. `public/index.html`, `public/app.js`, and `public/styles.css` implement the browser flow. `data/medical_history_schema.json` is the integration contract. `test/server.test.js` runs the real HTTP server against a temporary data directory.
+This is a dependency-free standalone Node.js module. `medical-history-submission.js` owns versioned submission identity, append-only JSON persistence, ETags, and latest/history lookup. `server.js` owns activation compatibility, validation, HTTP adaptation, and static serving. `public/index.html`, `public/app.js`, and `public/styles.css` implement the browser flow. `data/medical_history_schema.json` is the integration contract. `test/server.test.js` runs the real HTTP server against a temporary data directory.
 
-The stable boundary is `/api/internal/medical-history/*`. Another module should activate with a six-character code, open the returned `launchUrl`, and retrieve submissions using `GET /submissions?code={code}`. Codes are normalized to uppercase and stored on every submission.
+The canonical submission boundary is `/api/internal/medical-history/submissions` with patient and encounter UUIDs. Use `/submissions/latest` and `/submissions/history` for identity-based lookup. The six-character `/activate`, `/activation/{code}`, and `?code=` routes are compatibility adapters only; codes are normalized to uppercase and stored as optional legacy metadata.
 
 ## Submission model (v2)
 
@@ -32,7 +32,7 @@ All four primary Yes/No questions default to No. Prior therapy = Yes reveals the
 
 ## Persistence and testing
 
-Default runtime data is stored in `data/activation_sessions.json` and `data/medical_history_submissions.json`. `MEDICAL_HISTORY_DATA_DIR` overrides the directory so tests can run without touching real module data.
+Default runtime data is stored in `data/activation_sessions.json` and `data/medical_history_submissions.json`. Submission records are immutable history entries; `MEDICAL_HISTORY_DATA_DIR` overrides the runtime directory so tests can run without touching real module data.
 
 Verification:
 
@@ -48,12 +48,13 @@ The integration tests cover option lists, a fully populated conditional submissi
 
 When changing a collected field, keep these synchronized:
 
-1. `public/index.html` markup and defaults.
-2. `public/app.js` conditional behavior and payload mapping.
-3. `server.js` controlled options, validation, and stored record mapping.
-4. `data/medical_history_schema.json`.
-5. `test/server.test.js`.
-6. `README.md` and this handoff.
-7. `graphify-out` via `graphify --update`.
+1. `medical-history-submission.js` resource and persistence interface.
+2. `public/index.html` markup and defaults.
+3. `public/app.js` conditional behavior and payload mapping.
+4. `server.js` controlled options, validation, and adapter mapping.
+5. `data/medical_history_schema.json`.
+6. `test/server.test.js`.
+7. `README.md` and this handoff.
+8. `graphify-out` via `graphify --update`.
 
 Do not rename the internal REST routes without coordinating every parent-module integration. Runtime JSON storage is suitable only for a prototype; production PHI requires hardened identity, access control, persistence, encryption, audit, and retention controls.
