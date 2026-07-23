@@ -53,6 +53,7 @@ Read-only routes:
 - `GET /api/bn-manager/v1/contract`
 - `GET /api/bn-manager/v1/models`
 - `GET /api/bn-manager/v1/models/{stable_id}`
+- `GET /api/bn-manager/v1/models/{stable_id}/schema`
 - `GET /api/bn-manager/v1/models/schema/xml-0.3`
 - `GET /internal/dashboard/module-routes/bn-manager`
 - `GET /modules/bn-manager`

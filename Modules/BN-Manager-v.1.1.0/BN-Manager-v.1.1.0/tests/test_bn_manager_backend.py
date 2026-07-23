@@ -5,7 +5,7 @@ import unittest
 from fastapi import Request
 from fastapi.testclient import TestClient
 
-from bn_manager_backend.auth_adapter import SessionState, session_from_payload
+from bn_manager_backend.auth_adapter import SessionState
 from bn_manager_backend.main import create_app
 from bn_manager_backend.model_registry import (
     MODEL_REGISTRY,
@@ -18,12 +18,11 @@ from clinical_graph_models import compile_xmlbif
 
 class AdminSessionAdapter:
     def __init__(self) -> None:
-        self.session = session_from_payload(
-            {
-                "authenticated": True,
-                "user": {"id": "admin-1", "roles": ["Administrator"]},
-                "csrfToken": "csrf-validate",
-            }
+        self.session = SessionState(
+            active=True,
+            subject="admin-1",
+            roles=frozenset({"admin"}),
+            csrf_token="csrf-validate",
         )
 
     def fetch_session(self, request: Request) -> SessionState:
@@ -95,6 +94,58 @@ class BnManagerBackendTests(unittest.TestCase):
                 self.assertTrue(payload["model"]["file_path"].endswith(".xml"))
                 model = compile_xmlbif(payload["text"], schema_text=schema)
                 self.assertIn(entry.target_node, model.node_map())
+
+    def test_model_detail_exposes_evidence_schema_version_and_hash(self) -> None:
+        for entry in MODEL_REGISTRY:
+            with self.subTest(stable_id=entry.stable_id):
+                response = self.client.get(f"/api/bn-manager/v1/models/{entry.stable_id}")
+                self.assertEqual(response.status_code, 200)
+                payload = response.json()["data"]
+                evidence = payload["evidence_schema"]
+                self.assertEqual(evidence["stable_id"], entry.stable_id)
+                self.assertEqual(evidence["model_version"], entry.active_version)
+                self.assertRegex(evidence["model_hash"], r"^sha256:[a-f0-9]{64}$")
+                self.assertEqual(evidence["target"]["node_id"], entry.target_node)
+                self.assertTrue(evidence["target"]["states"])
+                self.assertIn("semantic_meaning", evidence["target"])
+
+                allowed_ids = {node["node_id"] for node in evidence["allowed_evidence"]}
+                self.assertNotIn(entry.target_node, allowed_ids)
+                self.assertTrue(allowed_ids)
+                for node in evidence["allowed_evidence"]:
+                    self.assertTrue(node["states"])
+                    self.assertIn(node["required"], (True, False))
+                    self.assertIn("semantic_meaning", node)
+                    self.assertIsInstance(node["semantic_meaning"], str)
+
+                required = set(evidence["required_evidence"])
+                optional = set(evidence["optional_evidence"])
+                self.assertEqual(required | optional, allowed_ids)
+                self.assertEqual(required & optional, set())
+                for node in evidence["allowed_evidence"]:
+                    if node["required"]:
+                        self.assertIn(node["node_id"], required)
+                    else:
+                        self.assertIn(node["node_id"], optional)
+
+                # Registry XML does not encode clinical required-flags yet.
+                self.assertEqual(required, set())
+                self.assertEqual(optional, allowed_ids)
+
+    def test_per_model_evidence_schema_endpoint_matches_detail(self) -> None:
+        for entry in MODEL_REGISTRY:
+            with self.subTest(stable_id=entry.stable_id):
+                detail = self.client.get(f"/api/bn-manager/v1/models/{entry.stable_id}").json()["data"]
+                schema = self.client.get(
+                    f"/api/bn-manager/v1/models/{entry.stable_id}/schema"
+                )
+                self.assertEqual(schema.status_code, 200)
+                self.assertEqual(schema.json()["data"], detail["evidence_schema"])
+
+    def test_unknown_model_schema_endpoint_returns_404(self) -> None:
+        response = self.client.get("/api/bn-manager/v1/models/bnm.does-not-exist/schema")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["error"]["code"], "BNM_MODEL_NOT_FOUND")
 
     def test_unknown_and_traversal_like_model_ids_return_404(self) -> None:
         for stable_id in (

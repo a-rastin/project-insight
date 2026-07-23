@@ -23,7 +23,14 @@ from clinical_graph_models.model import ClinicalGraphModel
 
 from .auth_adapter import AuthenticationRestAdapter, CsrfError, SessionAdapter, SessionState, assert_csrf_token
 from .config import BnManagerSettings, get_settings
-from .model_registry import get_registry_entry, list_registry_entries, read_registry_model, read_registry_schema
+from .evidence_schema import build_evidence_schema
+from .model_registry import (
+    ModelRegistryEntry,
+    get_registry_entry,
+    list_registry_entries,
+    read_registry_model,
+    read_registry_schema,
+)
 
 EVALUATION_ROLES = frozenset({"psychiatrist", "admin"})
 ADMIN_ROLES = frozenset({"admin"})
@@ -151,6 +158,10 @@ def create_app(
             }
         )
 
+    @app.get("/api/bn-manager/v1/models/{stable_id}/schema")
+    def model_evidence_schema(stable_id: str) -> dict[str, Any]:
+        return ok_response(_registry_evidence_schema(stable_id))
+
     @app.get("/api/bn-manager/v1/models/{stable_id}")
     def model_registry_detail(stable_id: str) -> dict[str, Any]:
         try:
@@ -164,6 +175,7 @@ def create_app(
             ) from exc
         except ValueError as exc:
             raise BnManagerHttpError(404, ERROR_CODES["invalid_request"], "BN Manager registry file not found.") from exc
+        evidence_schema = _evidence_schema_for_registry(entry, text)
         return ok_response(
             {
                 "model": entry.payload(),
@@ -171,6 +183,10 @@ def create_app(
                 "version": "0.3",
                 "mime_type": "application/xml",
                 "text": text,
+                "evidence_schema": evidence_schema,
+                "model_version": evidence_schema["model_version"],
+                "model_hash": evidence_schema["model_hash"],
+                "target": evidence_schema["target"],
             }
         )
 
@@ -251,6 +267,41 @@ def create_app(
 
 
 app = create_app()
+
+
+def _registry_evidence_schema(stable_id: str) -> dict[str, Any]:
+    try:
+        entry, text = read_registry_model(stable_id)
+    except KeyError as exc:
+        raise BnManagerHttpError(
+            404,
+            ERROR_CODES["model_not_found"],
+            "BN Manager registry model not found.",
+            {"stable_id": stable_id},
+        ) from exc
+    except ValueError as exc:
+        raise BnManagerHttpError(404, ERROR_CODES["invalid_request"], "BN Manager registry file not found.") from exc
+    return _evidence_schema_for_registry(entry, text)
+
+
+def _evidence_schema_for_registry(entry: ModelRegistryEntry, text: str) -> dict[str, Any]:
+    try:
+        model = compile_xmlbif(text, schema_text=read_registry_schema())
+        return build_evidence_schema(entry, model, text)
+    except XmlBifCompileError as exc:
+        raise BnManagerHttpError(
+            400,
+            ERROR_CODES["model_parse_failed"],
+            str(exc),
+            exc.details(),
+        ) from exc
+    except KeyError as exc:
+        raise BnManagerHttpError(
+            404,
+            ERROR_CODES["unknown_target_node"],
+            f"Registry target node missing from model: {exc}",
+            {"stable_id": entry.stable_id, "target": entry.target_node},
+        ) from exc
 
 
 def _evaluate_payload(payload: dict[str, Any], surface: str, session: SessionState) -> dict[str, Any]:
