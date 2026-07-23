@@ -15,7 +15,7 @@ from .auth import AuthSessionError, fetch_auth_identity
 from .config import ROOT, settings
 from .csrf import CSRF_COOKIE_NAME, CSRF_WRITE_METHODS, csrf_error, generate_csrf_token, request_has_valid_csrf, sign_csrf_token
 from .db import SQLiteAdapter
-from .models import CanonicalEncounterCreate, CanonicalPatientCreate, PatientIntake, generate_patient_code
+from .models import CanonicalEncounterCreate, CanonicalPatientCreate, PatientIntake, SCHEMA_VERSION, generate_patient_code
 from .repository import (
     IdempotencyConflict,
     PatientAliasCollision,
@@ -48,6 +48,10 @@ MOCK_AUTH_USERS = {
 MOCK_AUTH_SESSIONS: dict[str, str] = {}
 PATIENT_UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 PATIENT_CODE_PATTERN = re.compile(r"^[A-Z0-9]{6}$")
+
+
+def canonical_response(**payload: Any) -> dict[str, Any]:
+    return {"schemaVersion": SCHEMA_VERSION, **payload}
 
 
 def public_file_response(filename: str) -> FileResponse:
@@ -211,7 +215,7 @@ async def create_canonical_patient(
             errors = {"patientCode": "Patient code already exists."}
             return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "patient_alias_already_exists", "errors": errors})
         raise
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"patient": record})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=canonical_response(patient=record))
 
 
 @app.get("/api/add-new-patient/v1/patient-resolutions/{alias}", response_model=None)
@@ -234,7 +238,7 @@ async def resolve_patient_alias(
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "patient_alias_not_found"})
     if if_match is not None and if_match != resolution["etag"]:
         return JSONResponse(status_code=status.HTTP_412_PRECONDITION_FAILED, content={"error": "etag_mismatch"})
-    return JSONResponse(content=resolution, headers={"ETag": resolution["etag"]})
+    return JSONResponse(content=canonical_response(**resolution), headers={"ETag": resolution["etag"]})
 
 
 @app.get("/api/add-new-patient/v1/patients/{patient_id}", response_model=None)
@@ -245,7 +249,7 @@ async def get_canonical_patient(
     patient = repo.get_patient_identity(patient_id)
     if not patient:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
-    return {"patient": patient}
+    return canonical_response(patient=patient)
 
 
 @app.post("/api/add-new-patient/v1/encounters")
@@ -256,7 +260,7 @@ async def create_canonical_encounter(
     record = repo.create_encounter(payload.to_encounter_record(), identity["user"]["id"])
     if not record:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"encounter": record})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=canonical_response(encounter=record))
 
 
 @app.get("/api/add-new-patient/v1/encounters/{encounter_id}", response_model=None)
@@ -267,12 +271,12 @@ async def get_canonical_encounter(
     encounter = repo.get_encounter(encounter_id)
     if not encounter:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Encounter was not found."})
-    return {"encounter": encounter}
+    return canonical_response(encounter=encounter)
 
 
 @app.get("/api/patients")
 async def list_patients(_: dict[str, Any] = Depends(require_authenticated_session)) -> dict[str, Any]:
-    return {"patients": repo.list_patients()}
+    return {"schemaVersion": SCHEMA_VERSION, "patients": repo.list_patients()}
 
 
 @app.post("/api/patients")
@@ -319,7 +323,7 @@ async def get_patient_intake(
     if not result:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
     patient, intake_records = result
-    return {"patient": patient, "intakeRecords": intake_records}
+    return {"schemaVersion": SCHEMA_VERSION, "patient": patient, "intakeRecords": intake_records}
 
 
 @app.get("/api/patients/{id_or_code}", response_model=None)
@@ -330,7 +334,7 @@ async def get_patient(
     patient = repo.get_patient(id_or_code)
     if not patient:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
-    return {"patient": patient}
+    return canonical_response(patient=patient)
 
 
 @app.get("/")

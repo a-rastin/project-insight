@@ -338,6 +338,84 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertIn("updatedAt", patient)
             self.assertEqual(data["patientId"], patient["id"])
             self.assertEqual(data["encounterId"], patient["intakeId"])
+    def test_structured_clinical_fields_preserve_text_and_leave_coding_unresolved(self) -> None:
+        diagnosis = "Patient-reported mood disorder; clinician review pending"
+        medications = ["Sertraline 50 mg nightly", "Unidentified white tablet"]
+        payload = valid_payload(
+            patientCode="STRC01",
+            provisionalDiagnosis=diagnosis,
+            currentMedications=medications,
+        )
+        with AddNewPatientServer() as base:
+            status, created = request_json(
+                base,
+                "/api/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=payload,
+            )
+            self.assertEqual(status, 201)
+            patient_id = created["patient"]["id"]
+            expected_codings = [
+                {
+                    "system": None,
+                    "code": None,
+                    "display": medication,
+                    "resolutionStatus": "unresolved",
+                }
+                for medication in medications
+            ]
+            for response in (
+                created,
+                request_json(base, f"/api/patients/{patient_id}", headers=PSY_HEADER)[1],
+                request_json(base, "/api/patients/STRC01/intake", headers=PSY_HEADER)[1],
+            ):
+                self.assertEqual(response["schemaVersion"], "1.0.0")
+                record = response["patient"] if "patient" in response and "intakeRecords" not in response else response["intakeRecords"][0]
+                self.assertEqual(record["provisionalDiagnosis"], diagnosis)
+                self.assertEqual(record["diagnosisCoding"], {
+                    "system": None,
+                    "code": None,
+                    "display": diagnosis,
+                    "resolutionStatus": "unresolved",
+                })
+                self.assertEqual(record["currentMedications"], medications)
+                self.assertEqual(record["medicationCodings"], expected_codings)
+                if "sex" in record:
+                    self.assertEqual(record["sex"], "Female")
+                self.assertNotIn("gender", record)
+
+    def test_canonical_success_responses_include_schema_version(self) -> None:
+        with AddNewPatientServer() as base:
+            status, patient_response = request_json(
+                base,
+                "/api/add-new-patient/v1/patients",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_patient_payload(patientCode="VERS01"),
+            )
+            self.assertEqual(status, 201)
+            self.assertEqual(patient_response["schemaVersion"], "1.0.0")
+            patient_id = patient_response["patient"]["id"]
+
+            status, encounter_response = request_json(
+                base,
+                "/api/add-new-patient/v1/encounters",
+                method="POST",
+                headers=csrf_headers(base, PSY_HEADER),
+                body=canonical_encounter_payload(patient_id),
+            )
+            self.assertEqual(status, 201)
+            self.assertEqual(encounter_response["schemaVersion"], "1.0.0")
+
+            for path in (
+                f"/api/add-new-patient/v1/patients/{patient_id}",
+                f"/api/add-new-patient/v1/encounters/{encounter_response['encounter']['id']}",
+                f"/api/add-new-patient/v1/patient-resolutions/{patient_id}",
+            ):
+                status, response = request_json(base, path, headers=PSY_HEADER)
+                self.assertEqual(status, 200)
+                self.assertEqual(response["schemaVersion"], "1.0.0")
 
     def test_canonical_patient_can_have_multiple_encounters(self) -> None:
         with AddNewPatientServer() as base:
@@ -420,6 +498,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertEqual(
                 by_uuid,
                 {
+                    "schemaVersion": "1.0.0",
                     "patientId": patient_id,
                     "patientCode": "RES001",
                     "status": "active",
@@ -1127,7 +1206,7 @@ class AuthBoundaryTest(unittest.TestCase):
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
                 status, data = request_json(base, "/api/patients", headers={"x-auth-session": "admin-sess"})
                 self.assertEqual(status, 200)
-                self.assertEqual(data, {"patients": []})
+                self.assertEqual(data, {"schemaVersion": "1.0.0", "patients": []})
 
                 status, data = request_json(base, "/api/patients/MISSING", headers={"x-auth-session": "admin-sess"})
                 self.assertEqual(status, 404)

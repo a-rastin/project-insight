@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 TEXT_LIMIT = 2000
 DIAGNOSIS_LIMIT = 240
+SCHEMA_VERSION = "1.0.0"
 LIST_ITEM_LIMIT = 160
 ICD10_V1_PATTERN = re.compile(r"^[A-TV-Z][0-9][0-9A-Z](?:\.?[0-9A-Z])?$", re.IGNORECASE)
 

@@ -7,7 +7,7 @@ from typing import Any
 from uuid import uuid4
 
 from .db import DatabaseAdapter
-from .models import generate_patient_code
+from .models import SCHEMA_VERSION, generate_patient_code
 
 
 def now_iso() -> str:
@@ -23,6 +23,19 @@ def json_list(value: str | None) -> list[str]:
 
 def canonical_suicidality(value: str | None) -> str:
     return "suicidality_none" if value in (None, "", "none") else value
+
+
+def unresolved_coding(text: str) -> dict[str, Any]:
+    return {
+        "system": None,
+        "code": None,
+        "display": text,
+        "resolutionStatus": "unresolved",
+    }
+
+
+def medication_codings(values: list[str]) -> list[dict[str, Any]]:
+    return [unresolved_coding(value) for value in values]
 
 
 def compute_age(dob_value: str) -> int:
@@ -54,9 +67,11 @@ def patient_row(row: Any) -> dict[str, Any]:
         "encounterDate": row["encounter_date"],
         "presentingComplaint": row["presenting_complaint"],
         "provisionalDiagnosis": row["provisional_diagnosis"],
+        "diagnosisCoding": unresolved_coding(row["provisional_diagnosis"]),
         "treatmentHistory": json_list(row["treatment_history"]),
         "allergies": json_list(row["allergies_snapshot"]),
         "currentMedications": json_list(row["current_medications_snapshot"]),
+        "medicationCodings": medication_codings(json_list(row["current_medications_snapshot"])),
         "riskFlags": {
             "suicidality": canonical_suicidality(row["suicidality"]),
             "substanceUse": bool(row["substance_use"]),
@@ -71,9 +86,11 @@ def intake_row(row: Any) -> dict[str, Any]:
         "encounterDate": row["encounter_date"],
         "presentingComplaint": row["presenting_complaint"],
         "provisionalDiagnosis": row["provisional_diagnosis"],
+        "diagnosisCoding": unresolved_coding(row["provisional_diagnosis"]),
         "treatmentHistory": json_list(row["treatment_history"]),
         "allergies": json_list(row["allergies_snapshot"]),
         "currentMedications": json_list(row["current_medications_snapshot"]),
+        "medicationCodings": medication_codings(json_list(row["current_medications_snapshot"])),
         "riskFlags": {
             "suicidality": canonical_suicidality(row["suicidality"]),
             "substanceUse": bool(row["substance_use"]),
@@ -452,7 +469,7 @@ class PatientRepository:
                 """,
                 (patient_id,),
             ).fetchone()
-            response = {"patient": patient_row(row), "patientId": patient_id, "encounterId": encounter_id}
+            response = {"schemaVersion": SCHEMA_VERSION, "patient": patient_row(row), "patientId": patient_id, "encounterId": encounter_id}
             if idempotency_key:
                 conn.execute(
                     """
