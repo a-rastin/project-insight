@@ -5,7 +5,17 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+// DDI-03: one authoritative engine. Names, dose extraction, severity, and
+// clinical inference live in src/report-parser.js (the parser surface) and
+// src/ddi-engine.js (normalize / severity / index / check). This CLI adapter
+// only adds the production-ingestion policy on top: RxNorm-seeded identity,
+// revision hashing, evidence/review stamps the browser never sets. It MUST
+// NOT re-declare parser, severity, or inference helpers.
 const reportParser = require("../src/report-parser.js");
+const engine = require("../src/ddi-engine.js");
+const normalizeDrugName = engine.normalizeName;
+const cleanLine = reportParser.cleanLine;
+const extractDoseSuggestions = reportParser.extractDoseSuggestions;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -83,43 +93,16 @@ const RXNORM_SEED = new Map(Object.entries({
   zolpidem: "39993"
 }));
 
-export function slugify(value) {
+// CLI-only id slugger for the RxNorm-seeded identity policy below. It is NOT a
+// parser, severity, or inference helper; the shared engine name-normalizer
+// (engine.normalizeName) is used everywhere else.
+function slugify(value) {
   return String(value || "")
     .toLowerCase()
     .replace(/\([^)]*\)/g, "")
     .replace(/['']/g, "")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
-}
-
-export function cleanLine(line) {
-  return String(line || "")
-    .replace(/\[[^\]]*cite:[^\]]*\]/gi, "")
-    .replace(/\s+/g, " ")
-    .replace(/^[-•*]\s*/, "")
-    .trim();
-}
-
-function isNoiseLine(line) {
-  return !line ||
-    /^https?:\/\//i.test(line) ||
-    /^\d+\/\d+\/\d+,\s+\d+:\d+/i.test(line) ||
-    /^this site is intended/i.test(line) ||
-    /^interaction checker$/i.test(line) ||
-    /^enter a drug name/i.test(line) ||
-    /^no interactions found$/i.test(line) ||
-    /^interactions found$/i.test(line) ||
-    /^all interactions sort by/i.test(line);
-}
-
-export function normalizeDrugName(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, "")
-    .replace(/\b(rx|generic|dsc|all forms|various forms)\b/g, "")
-    .replace(/[^a-z0-9+/-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function drugIdFor(name) {
@@ -167,9 +150,7 @@ function addDoseSuggestions(drug, suggestions) {
   drug.doseSuggestions = drug.doseSuggestions.slice(0, 30);
 }
 
-export function extractDoseSuggestions(raw) {
-  return reportParser.extractDoseSuggestions(raw);
-}
+export { normalizeDrugName, extractDoseSuggestions };
 
 function compareRelativePaths(sourceDir, left, right) {
   const leftRelative = path.relative(sourceDir, left).split(path.sep).join("/");
