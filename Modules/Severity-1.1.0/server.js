@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { AssessmentError, createSeverityAssessmentModule } from "./severity-assessment.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,7 @@ export function createMemoryAssessmentStore(initial = {}) {
 
 export function createApp({ assessmentStore = createJsonAssessmentStore() } = {}) {
   const app = express();
+  const severityAssessments = createSeverityAssessmentModule({ assessmentStore });
 
   app.use(express.json());
   app.use(express.static(path.join(__dirname, "public")));
@@ -66,15 +68,47 @@ export function createApp({ assessmentStore = createJsonAssessmentStore() } = {}
   // CORS headers for API-first communication with other modules
   app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, If-Match");
     if (req.method === "OPTIONS") {
       return res.sendStatus(200);
     }
     next();
   });
 
-  // GET api/severity/:patient_code
+  app.post("/api/v1/severity-assessments", (req, res) => {
+    try {
+      const assessment = severityAssessments.create(req.body);
+      res.setHeader("ETag", assessment.etag);
+      return res.status(201).json(assessment);
+    } catch (error) {
+      const status = error instanceof AssessmentError ? error.status : 500;
+      return res.status(status).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/v1/severity-assessments/:assessment_id", (req, res) => {
+    const assessment = severityAssessments.read(req.params.assessment_id);
+    if (!assessment) return res.status(404).json({ error: "Assessment not found" });
+    res.setHeader("ETag", assessment.etag);
+    return res.json(assessment);
+  });
+
+  app.put("/api/v1/severity-assessments/:assessment_id", (req, res) => {
+    try {
+      const assessment = severityAssessments.update(req.params.assessment_id, req.body, {
+        ifMatch: req.get("if-match")
+      });
+      if (!assessment) return res.status(404).json({ error: "Assessment not found" });
+      res.setHeader("ETag", assessment.etag);
+      return res.json(assessment);
+    } catch (error) {
+      const status = error instanceof AssessmentError ? error.status : 500;
+      return res.status(status).json({ error: error.message });
+    }
+  });
+
+  // Legacy GET api/severity/:patient_code adapter.
   app.get("/api/severity/:patient_code", (req, res) => {
     const { patient_code } = req.params;
     if (!patient_code || patient_code.trim() === "") {
@@ -101,7 +135,7 @@ export function createApp({ assessmentStore = createJsonAssessmentStore() } = {}
     }
   });
 
-  // PUT api/severity/:patient_code
+  // Legacy PUT api/severity/:patient_code adapter.
   app.put("/api/severity/:patient_code", (req, res) => {
     const { patient_code } = req.params;
     const { status, scores, items } = req.body;
@@ -179,5 +213,4 @@ function start() {
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   start();
 }
-
 
