@@ -33,6 +33,7 @@ import sys
 import tempfile
 import types
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -91,10 +92,14 @@ from diagnosis import csrf as diag_csrf          # noqa: E402
 from diagnosis import patient as diag_patient   # noqa: E402
 from diagnosis import store as diag_store       # noqa: E402
 from diagnosis.app import app                   # noqa: E402
-from diagnosis.api import _dump_for_audit, store as api_store  # noqa: E402
-from diagnosis.criteria import (                # noqa: E402
-    CRITERIA, Evaluation, evaluate, get_criteria,
+from diagnosis.api import (                         # noqa: E402
+    RESULT_FIELDS, _dump_for_audit, store as api_store,
 )
+from diagnosis.criteria import (                # noqa: E402
+    CRITERIA, AssertionState, CriteriaEvaluation, DiagnosisAssertion,
+    Evaluation, evaluate, get_criteria,
+)
+from diagnosis.diagnosis_api import legacy_decision_to_assertion  # noqa: E402
 from diagnosis.patient import (
     Patient, _build_patient, resolve_patient,
 )
@@ -202,6 +207,57 @@ class TestCriteriaRules(unittest.TestCase):
         for field in ("met", "a_count", "core_count",
                       "failures", "reason", "checked"):
             self.assertIn(field, d, ("missing field", field))
+        self.assertIn("rule_version", RESULT_FIELDS)
+
+    def test_evaluate_returns_versioned_criteria_evaluation(self):
+        r = evaluate(["A1"])
+        self.assertIsInstance(r, CriteriaEvaluation)
+        self.assertIsInstance(r.rule_version, str)
+        self.assertEqual(r.evidence["met"], r.met)
+        self.assertEqual(r.evidence["checked"], r.checked_ids)
+        self.assertIn("rule_version", r.to_dict())
+
+    def test_diagnosis_assertion_has_explicit_state_and_provenance(self):
+        timestamp = datetime(2026, 7, 23, 12, 0, tzinfo=timezone.utc)
+        assertion = DiagnosisAssertion(
+            code="diagnosis-code-1",
+            decision_state=AssertionState.ASSERTION,
+            author="clinician-1",
+            timestamp=timestamp,
+        )
+        self.assertEqual(assertion.decision_state, "assertion")
+        self.assertEqual(assertion.to_dict(), {
+            "code": "diagnosis-code-1",
+            "decision_state": "assertion",
+            "author": "clinician-1",
+            "timestamp": timestamp.isoformat(),
+            "override_reason": None,
+        })
+
+    def test_evaluation_does_not_create_or_sign_assertion(self):
+        evaluation = evaluate(["A1", "A5", "A6", "B1", "C1", "D1"])
+        self.assertTrue(evaluation.met)
+        self.assertFalse(hasattr(evaluation, "assertion"))
+        self.assertNotIn("decision_state", evaluation.evidence)
+
+    def test_legacy_decision_maps_to_explicit_state_only_at_adapter(self):
+        timestamp = datetime(2026, 7, 23, 12, 0, tzinfo=timezone.utc)
+        confirmed = legacy_decision_to_assertion(
+            code="diagnosis-code-1",
+            decision="confirmed",
+            author="clinician-1",
+            timestamp=timestamp,
+        )
+        definite = legacy_decision_to_assertion(
+            code="diagnosis-code-1",
+            decision="definite",
+            author="clinician-1",
+            timestamp=timestamp,
+            override_reason="Clinical context requires an override.",
+        )
+        self.assertEqual(confirmed.decision_state, AssertionState.ASSERTION)
+        self.assertEqual(definite.decision_state, AssertionState.OVERRIDE)
+        self.assertNotIn("definite", definite.to_dict().values())
 
     def test_met_contract_only_failures_drives_met(self):
         # met == (not failures). Definitional; do not add side logic.

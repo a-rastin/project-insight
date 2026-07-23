@@ -4,14 +4,13 @@ Source: DSM-5-TR (APA, 2022). Charitable paraphrase for research prototype.
 The authoritative reference is the printed manual; do not treat this module
 as a diagnostic substitute — clinician confirmation is required (see api.py).
 
-This module is **decision support**, never a decision. ``Evaluation`` carries
-only checklist projections (``met`` / counts / failures / reason) and EXPOSES
-no decision-shaped field. The clinician-authority invariant (the model never
-auto-decides; bypass is always valid on an unmet checklist) is a tested
-contract: ``test_unittest.TestClinicianAuthority`` locks it at the REST +
-pure-rule layer and the boot self-check loads that suite via
-``api._http_selfcheck`` (HANDOFF §6.1). Do NOT add a ``decision`` /
-``diagnosis`` / ``verdict`` field here — that would re-break the contract.
+This module is **decision support**, never a decision. ``CriteriaEvaluation``
+carries only computed checklist evidence and its rule version. A separate
+``DiagnosisAssertion`` carries clinician-authored provenance. The clinician-authority
+invariant (the model never auto-decides; bypass is always valid on an unmet
+checklist) is a tested contract: ``test_unittest.TestClinicianAuthority``
+locks it at the REST + pure-rule layer and the boot self-check loads that suite
+via ``api._http_selfcheck`` (HANDOFF §6.1).
 
 Criterion A: >=2 of 9 characteristic symptoms, present for a significant
 portion of time during a 1-month period (or less if successfully treated).
@@ -20,6 +19,8 @@ impairment; C and D rule out schizoaffective/substance/autism overlap.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 
 # Group labels shown to clinician; ids are stable for the API contract.
 CRITERIA: list[dict] = [
@@ -51,26 +52,75 @@ CRITERIA: list[dict] = [
 ]
 
 GUARD_LABEL = {"B": "Criterion B unmet", "C": "Schizoaffective not excluded", "D": "Substance/medical not excluded"}
+RULE_VERSION = "DSM-5-TR-APA-2022"
+
+
+class AssertionState(str, Enum):
+    """Explicit states for a clinician-authored diagnosis assertion."""
+
+    ASSERTION = "assertion"
+    OVERRIDE = "override"
 
 
 @dataclass
-class Evaluation:
+class CriteriaEvaluation:
     met: bool                              # Criterion A satisfied (>=2, >=1 from core)
     checked_ids: list[str] = field(default_factory=list)
     a_count: int = 0
     core_count: int = 0
     failures: list[str] = field(default_factory=list)   # guard labels not satisfied
     reason: str = ""                       # one-line clinician-facing summary
+    rule_version: str = RULE_VERSION
 
-    def to_dict(self) -> dict:
+    @property
+    def evidence(self) -> dict:
+        """Return computed evidence without any assertion fields."""
         return {
             "met": self.met,
             "a_count": self.a_count,
             "core_count": self.core_count,
-            "failures": self.failures,
+            "failures": list(self.failures),
             "reason": self.reason,
             "checked": list(self.checked_ids),
         }
+
+    def to_dict(self) -> dict:
+        result = self.evidence
+        result["rule_version"] = self.rule_version
+        return result
+
+
+@dataclass(frozen=True)
+class DiagnosisAssertion:
+    """A clinician-authored assertion, independent of computed evidence."""
+
+    code: str
+    decision_state: AssertionState
+    author: str
+    timestamp: datetime
+    override_reason: str | None = None
+
+    def __post_init__(self):
+        if not self.code.strip():
+            raise ValueError("assertion code is required")
+        if not self.author.strip():
+            raise ValueError("assertion author is required")
+        if not isinstance(self.timestamp, datetime):
+            raise TypeError("assertion timestamp must be a datetime")
+        object.__setattr__(self, "decision_state", AssertionState(self.decision_state))
+
+    def to_dict(self) -> dict:
+        return {
+            "code": self.code,
+            "decision_state": self.decision_state.value,
+            "author": self.author,
+            "timestamp": self.timestamp.isoformat(),
+            "override_reason": self.override_reason,
+        }
+
+
+# Existing callers retain the old name while the public record is explicit.
+Evaluation = CriteriaEvaluation
 
 
 def get_criteria() -> list[dict]:
@@ -124,9 +174,9 @@ def _classify(criterion_id: str) -> dict | None:
     return None
 
 
-def evaluate(checked_ids: list[str]) -> Evaluation:
-    """Pure function: given the clinician's checked criteria, return an
-    Evaluation. No side effects, no I/O — the test surface.
+def evaluate(checked_ids: list[str]) -> CriteriaEvaluation:
+    """Pure function: given the clinician's checked criteria, return a
+    CriteriaEvaluation. No side effects, no I/O — the test surface.
 
     Rules:
       - Criterion A: count items in group 'Criterion A...' that are checked.
@@ -168,7 +218,7 @@ def evaluate(checked_ids: list[str]) -> Evaluation:
 
     reason = "DSM-5-TR schizophrenia criteria met." if met else "Criteria not met: " + "; ".join(failures)
 
-    return Evaluation(
+    return CriteriaEvaluation(
         met=met,
         checked_ids=sorted(checked),
         a_count=a_count,

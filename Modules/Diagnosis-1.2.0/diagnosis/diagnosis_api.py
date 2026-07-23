@@ -26,13 +26,14 @@ Insight integration.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .auth import Session
-from .criteria import evaluate
+from .criteria import AssertionState, DiagnosisAssertion, evaluate
 from .dashboard import _dump_for_audit
 from .deps import require_psychiatrist, require_psychiatrist_or_admin, require_csrf, store
 from .patient import resolve_patient
@@ -47,8 +48,39 @@ class Submission(BaseModel):
     decision: Literal["confirmed", "definite"] | None = None
 
 
+def legacy_decision_to_assertion(
+    *,
+    code: str,
+    decision: Literal["confirmed", "definite"] | None,
+    author: str,
+    timestamp: datetime,
+    override_reason: str | None = None,
+) -> DiagnosisAssertion | None:
+    """Translate the legacy wire decision into the explicit record state.
+
+    ``confirmed`` and ``definite`` are intentionally accepted only at this
+    adapter boundary. The domain record has no ambiguous legacy state.
+    """
+    if decision is None:
+        return None
+    state = {
+        "confirmed": AssertionState.ASSERTION,
+        "definite": AssertionState.OVERRIDE,
+    }[decision]
+    return DiagnosisAssertion(
+        code=code,
+        decision_state=state,
+        author=author,
+        timestamp=timestamp,
+        override_reason=override_reason,
+    )
+
+
 # Internal: acceptance contract. Shared by GET and PUT.
-RESULT_FIELDS = ("met", "a_count", "core_count", "failures", "reason", "checked")
+RESULT_FIELDS = (
+    "met", "a_count", "core_count", "failures", "reason", "checked",
+    "rule_version",
+)
 
 
 @router.post("/diagnosis/{code}/init")
@@ -132,5 +164,5 @@ def put_session(
     }
 
 
-__all__ = ["router", "Submission", "RESULT_FIELDS",
+__all__ = ["router", "Submission", "RESULT_FIELDS", "legacy_decision_to_assertion",
            "init_session", "get_session", "put_session"]
