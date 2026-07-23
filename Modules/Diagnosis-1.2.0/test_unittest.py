@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import subprocess
 import sys
 import tempfile
 import types
@@ -353,7 +354,52 @@ class TestRestContract(unittest.TestCase):
     def test_health_alive(self):
         r = self.client.get("/health")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json(), {"ok": True, "module": "diagnosis"})
+        self.assertEqual(r.json(), {"status": "ok"})
+
+    def test_common_contract_routes_and_request_metadata(self):
+        headers = {
+            "X-Request-ID": "00000000-0000-4000-8000-000000000011",
+            "X-Correlation-ID": "00000000-0000-4000-8000-000000000012",
+        }
+        contract = self.client.get("/contract", headers=headers)
+        self.assertEqual(contract.status_code, 200)
+        self.assertEqual(contract.json()["moduleId"], "diagnosis")
+        self.assertEqual(contract.json()["supportedClinicalScope"]["criteriaSets"][0]["diagnosis"], "schizophrenia")
+        self.assertEqual(contract.headers["X-Request-ID"], headers["X-Request-ID"])
+        self.assertEqual(contract.headers["X-Correlation-ID"], headers["X-Correlation-ID"])
+        self.assertIn("ETag", contract.headers)
+
+        schema = self.client.get("/schemas/1.0.0/problem-details")
+        self.assertEqual(schema.status_code, 200)
+        self.assertEqual(schema.json()["$id"], "https://insight.example/contracts/common/1.0.0/problem-details.schema.json")
+        missing = self.client.get("/schemas/1.0.0/not-published", headers=headers)
+        self.assertEqual(missing.status_code, 404)
+        self.assertEqual(missing.headers["content-type"], "application/problem+json")
+        self.assertEqual(missing.json()["code"], "SCHEMA_NOT_FOUND")
+        self.assertEqual(missing.json()["requestId"], headers["X-Request-ID"])
+
+    def test_package_import_does_not_eagerly_build_http_graph_or_store(self):
+        env = os.environ.copy()
+        env.pop("DIAGNOSIS_AUTH_BYPASS", None)
+        env.pop("DIAGNOSIS_DB_PATH", None)
+        env.pop("DIAGNOSIS_PATIENT_LOOKUP", None)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import sys; import diagnosis; "
+                    "assert 'diagnosis.api' not in sys.modules; "
+                    "assert 'diagnosis.deps' not in sys.modules"
+                ),
+            ],
+            cwd=HERE,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_ready_reports_bypass_alarm(self):
         # Running under the bypass shim -> readiness MUST surface
@@ -361,10 +407,9 @@ class TestRestContract(unittest.TestCase):
         # production readiness gate would fire if the shim were left on).
         r = self.client.get("/ready")
         body = r.json()
-        self.assertEqual(body["module"], "diagnosis")
-        self.assertTrue(body["checks"]["db"]["ok"])
-        self.assertTrue(body["checks"]["auth"]["bypass"])
-        self.assertFalse(body["ok"])
+        self.assertEqual(body["status"], "not_ready")
+        self.assertEqual(body["checks"]["dependencies"], "blocked")
+        self.assertEqual(body["checks"]["contractCompatibility"], "blocked")
         self.assertEqual(r.status_code, 503)
 
     def test_meta_returns_nine_criteria(self):
@@ -1110,8 +1155,16 @@ class TestPersistence(unittest.TestCase):
         row1 = self.store.get("P-T")
         out = self.store.put("P-T", patient_id="P-T",
                              checked=["A1"], decision=None)
-        self.assertGreaterEqual(out["updated_at"], row1["updated_at"])
-        self.assertGreaterEqual(row1["updated_at"], row1["created_at"])
+        for row in (row1, out):
+            self.assertIsInstance(row["created_at"], str)
+            self.assertIsInstance(row["updated_at"], str)
+            self.assertTrue(row["created_at"].endswith("Z"))
+            self.assertTrue(row["updated_at"].endswith("Z"))
+        created = datetime.fromisoformat(row1["created_at"].replace("Z", "+00:00"))
+        first_updated = datetime.fromisoformat(row1["updated_at"].replace("Z", "+00:00"))
+        second_updated = datetime.fromisoformat(out["updated_at"].replace("Z", "+00:00"))
+        self.assertGreaterEqual(first_updated, created)
+        self.assertGreaterEqual(second_updated, first_updated)
 
     def test_audit_snapshot_records_and_round_trips(self):
         self.store.init("P-A", patient_id="P-A")

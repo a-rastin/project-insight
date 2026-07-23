@@ -37,7 +37,7 @@ Source of truth files (HANDOFF §12): `diagnosis/api.py` (composition),
 | `…`                 | Elided nested object; see the cited shape section.           |
 | Status → body       | Every error response is `{"detail": <string>}` (FastAPI HTTPException). |
 | `checked`           | A JSON array of criterion `id` strings (`A1`–`A6`, `B1`, `C1`, `D1`). |
-| Timestamps          | Unix epoch seconds (int), column `created_at` / `updated_at`. |
+| Timestamps          | UTC ISO-8601 strings ending in `Z`, column `created_at` / `updated_at`. |
 | `evaluation` object | Shape defined in §7 (the `RESULT_FIELDS` contract).          |
 
 Unless noted, every JSON response is `Content-Type: application/json`.
@@ -61,8 +61,11 @@ the parent Insight app's composed router (HANDOFF §3 — `app.py`).
 | Method | Path                                          | Seam            | Purpose                                                          | Auth                              | CSRF  |
 |--------|-----------------------------------------------|-----------------|------------------------------------------------------------------|-----------------------------------|-------|
 | GET    | `/`                                           | `page.py`       | Standalone shell: serve the embeddable module UI HTML + stamp CSRF meta/cookie. | `psychiatrist` \| `admin`         | —     |
-| GET    | `/health`                                     | `app.py`        | Liveness probe.                                                  | none                              | —     |
-| GET    | `/ready`                                      | `app.py`        | Readiness probe. 200 when ok, 503 otherwise.                     | none                              | —     |
+| GET    | `/health`                                     | common adapter  | Common liveness probe.                                           | none                              | —     |
+| GET    | `/ready`                                      | common adapter  | Common readiness probe. 200 when ready, 503 otherwise.           | none                              | —     |
+| GET    | `/contract`                                   | common adapter  | Versioned module contract and supported clinical scope.          | none                              | —     |
+| GET    | `/openapi.json`                               | common adapter  | Common OpenAPI document.                                         | none                              | —     |
+| GET    | `/schemas/{version}/{name}`                   | common adapter  | Published common schema or typed problem response.                | none                              | —     |
 | GET    | `/diagnosis/_meta`                            | `dashboard.py`  | Criteria tree + `rules` contract (UI bootstrap, single source of truth). | `psychiatrist` \| `admin`         | —     |
 | GET    | `/diagnosis/_csrf`                            | `dashboard.py`  | Mint a signed CSRF token + set the `csrf` cookie.                  | `psychiatrist` \| `admin`         | —     |
 | GET    | `/internal/dashboard/module-routes/{moduleId}` | `dashboard.py` | Dashboard module-route discovery. 404 for unknown `moduleId`.      | `psychiatrist` \| `admin`         | —     |
@@ -120,7 +123,7 @@ Cheap "is the process up" probe. Does NOT check dependencies — use
 `/ready` for that (HANDOFF §9.11).
 
 ### Response
-- **200** — `{"ok": true, "module": "diagnosis"}`
+- **200** — `{"status": "ok"}`
 
 No auth. No CSRF. Never 503; never raises.
 
@@ -138,12 +141,12 @@ balancer gates traffic here, not on `/health`.
 
 ```json
 {
-  "ok": true,
-  "module": "diagnosis",
+  "status": "not_ready",
   "checks": {
-    "db":      {"ok": true},
-    "auth":    {"ok": true, "configured": true, "bypass": false},
-    "patient": {"ok": true, "enabled": false, "configured": true}
+    "migrations": "ok",
+    "configuration": "ok",
+    "contractCompatibility": "blocked",
+    "dependencies": "ok"
   }
 }
 ```

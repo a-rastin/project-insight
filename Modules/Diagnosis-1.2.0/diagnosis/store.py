@@ -18,6 +18,7 @@ import sqlite3
 import threading
 import time
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from typing import Iterator
 
 
@@ -31,6 +32,17 @@ def _resolve_path() -> str:
     return os.environ.get("DIAGNOSIS_DB_PATH") or settings.db_path
 
 
+def _now_iso() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _canonical_timestamp(value) -> str:
+    """Return UTC ISO-8601 while reading legacy epoch rows safely."""
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(value, UTC).isoformat().replace("+00:00", "Z")
+    return str(value)
+
+
 _CREATE_SESSIONS = (
     """
     CREATE TABLE IF NOT EXISTS sessions (
@@ -38,8 +50,8 @@ _CREATE_SESSIONS = (
         patient_id  TEXT,
         checked     TEXT NOT NULL DEFAULT '[]',
         decision    TEXT,
-        created_at  INTEGER NOT NULL,
-        updated_at  INTEGER NOT NULL
+        created_at  TEXT NOT NULL,
+        updated_at  TEXT NOT NULL
     )
     """
 )
@@ -50,7 +62,7 @@ _CREATE_AUDIT = (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         code        TEXT NOT NULL,
         snapshot    TEXT NOT NULL,
-        created_at  INTEGER NOT NULL
+        created_at  TEXT NOT NULL
     )
     """
 )
@@ -98,7 +110,7 @@ class DiagnosisStore:
 
     def init(self, code: str, *, patient_id: str | None = None) -> bool:
         """Insert a new empty session. Returns ``True`` if created."""
-        now = int(time.time())
+        now = _now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "INSERT OR IGNORE INTO sessions "
@@ -130,8 +142,8 @@ class DiagnosisStore:
             "patient_id": row[1],
             "checked": checked,
             "decision": row[3],
-            "created_at": row[4],
-            "updated_at": row[5],
+            "created_at": _canonical_timestamp(row[4]),
+            "updated_at": _canonical_timestamp(row[5]),
         }
 
     def put(
@@ -144,7 +156,7 @@ class DiagnosisStore:
     ) -> dict:
         """Persist checked criteria + clinician decision. Returns the
         full session row. Creates the row if it doesn't exist."""
-        now = int(time.time())
+        now = _now_iso()
         encoded = json.dumps(list(checked))
         with self._cursor() as cur:
             cur.execute("BEGIN")
@@ -178,8 +190,8 @@ class DiagnosisStore:
             "patient_id": row[1],
             "checked": json.loads(row[2]) if row[2] else [],
             "decision": row[3],
-            "created_at": row[4],
-            "updated_at": row[5],
+            "created_at": _canonical_timestamp(row[4]),
+            "updated_at": _canonical_timestamp(row[5]),
         }
 
     def audit_snapshot(self, code: str) -> str:
@@ -237,7 +249,7 @@ def _store_selfcheck() -> None:
         assert row["checked"] == [] and row["decision"] is None
 
         # 2. timestamps present + monotonic.
-        assert isinstance(row["created_at"], int) and row["created_at"] > 0
+        assert isinstance(row["created_at"], str) and row["created_at"].endswith("Z")
         assert row["updated_at"] >= row["created_at"]
 
         # 3. PUT persists checked criteria + decision; returned row matches.

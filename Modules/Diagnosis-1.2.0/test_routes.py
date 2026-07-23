@@ -109,6 +109,9 @@ def test_composed_router_has_all_paths_from_app_openapi():
         "/diagnosis/{code}",
         "/health",
         "/ready",
+        "/contract",
+        "/schemas/{version}/{name}",
+        "/openapi.json",
     }
     got = set(app.openapi()["paths"].keys())
     assert got == expected, ("composed router path set changed", expected, got)

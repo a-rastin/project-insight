@@ -180,10 +180,9 @@ def test_http_ready_503_when_coding_is_unresolved(port, tmpdb):
         r = c.get("/ready")
         assert r.status_code == 503, (r.status_code, r.text)
         body = r.json()
-        assert body["ok"] is False, body
-        assert body["module"] == "diagnosis", body
-        assert set(body["checks"].keys()) == {"db", "auth", "patient", "clinicalScope"}, body
-        assert body["checks"]["clinicalScope"]["ok"] is False, body
+        assert body["status"] == "not_ready", body
+        assert set(body["checks"].keys()) == {"migrations", "configuration", "contractCompatibility", "dependencies"}, body
+        assert body["checks"]["contractCompatibility"] == "blocked", body
     finally:
         _restore_env()
 
@@ -196,8 +195,8 @@ def test_http_ready_503_when_bypass_on(port, tmpdb):
         r = c.get("/ready")
         assert r.status_code == 503, (r.status_code, r.text)
         body = r.json()
-        assert body["ok"] is False, body
-        assert body["checks"]["auth"]["bypass"] is True, body
+        assert body["status"] == "not_ready", body
+        assert body["checks"]["dependencies"] == "blocked", body
     finally:
         _restore_env()
 
@@ -211,8 +210,7 @@ def test_http_ready_503_when_db_down(port, tmpdb):
         r = c.get("/ready")
         assert r.status_code == 503, (r.status_code, r.text)
         body = r.json()
-        assert body["checks"]["db"]["ok"] is False, body
-        assert body["ok"] is False, body
+        assert body["checks"]["dependencies"] == "blocked", body
     finally:
         _heal_tmpdb(tmpdb)
         _restore_env()

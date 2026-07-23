@@ -21,21 +21,30 @@ and reads the JSON back, mirroring ``auth.py``. Opt-in via
 ``DIAGNOSIS_PATIENT_LOOKUP=1``; default disabled preserves the prior
 diagnosis-local identity for the self-check and offline tests.
 """
-from .api import router
-from .criteria import (
-    UnsupportedDiagnosis,
-    evaluate,
-    get_criteria,
-    meta_contract,
-    supported_clinical_scope,
-)
-from .readiness import check_readiness
-
-# `app` is a heavier import (FastAPI). Expose lazily so importing the criteria
-# engine alone (e.g. for the self-check) never requires FastAPI at runtime.
+# Keep the package boundary light: the criteria engine and readiness function
+# are pure imports, while the router pulls in FastAPI, storage, and auth.
 def get_app():
     from .app import app
     return app
+
+
+def __getattr__(name: str):
+    if name == "router":
+        from .api import router
+        return router
+    if name in {
+        "UnsupportedDiagnosis",
+        "evaluate",
+        "get_criteria",
+        "meta_contract",
+        "supported_clinical_scope",
+    }:
+        from . import criteria
+        return getattr(criteria, name)
+    if name == "check_readiness":
+        from .readiness import check_readiness
+        return check_readiness
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     "router",

@@ -54,7 +54,31 @@
       "properties": {
         "declaration": {"type": "string", "minLength": 1},
         "populations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "workflows": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        "workflows": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "criteriaSets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["diagnosis", "criteriaSet", "criteriaVersion", "normalizedCoding"],
+            "properties": {
+              "diagnosis": {"type": "string", "minLength": 1},
+              "criteriaSet": {"type": "string", "minLength": 1},
+              "criteriaVersion": {"type": "string", "minLength": 1},
+              "normalizedCoding": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["system", "code", "display", "resolutionStatus"],
+                "properties": {
+                  "system": {"oneOf": [{"type": "string"}, {"type": "null"}]},
+                  "code": {"oneOf": [{"type": "string"}, {"type": "null"}]},
+                  "display": {"type": "string", "minLength": 1},
+                  "resolutionStatus": {"enum": ["resolved", "unresolved"]}
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

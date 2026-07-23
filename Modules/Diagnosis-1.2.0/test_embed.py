@@ -250,6 +250,9 @@ def test_route_layer_unchanged():
         "/diagnosis/{code}",
         "/health",
         "/ready",
+        "/contract",
+        "/openapi.json",
+        "/schemas/{version}/{name}",
     }
     got = set(app.openapi()["paths"].keys())
     assert got == expected_paths, ("pathset changed — the embeddable refactor must touch only HTML", expected_paths, got)
