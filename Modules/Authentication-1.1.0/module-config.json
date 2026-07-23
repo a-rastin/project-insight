@@ -1,0 +1,5 @@
+{
+  "moduleId": "authentication",
+  "dataDirectory": "data/authentication",
+  "databasePath": "data/authentication.sqlite3"
+}
