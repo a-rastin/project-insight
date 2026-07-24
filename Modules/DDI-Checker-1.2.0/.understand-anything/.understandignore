@@ -9,6 +9,15 @@
 
 # --- Detected directories (uncomment to exclude) ---
 
+# Vendored build trees excluded from static analysis scope so findings from
+# third-party code (e.g. misra-c2012-17.1 <stdarg.h> in the bundled SQLite
+# amalgamation under better-sqlite3) do not surface against first-party scope.
+# These are generated artifacts; editing them is reverted by npm install and
+# diverges from the audited published native build.
+node_modules/
+build/
+obj/
+
 # scripts/
 # test/
 
