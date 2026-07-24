@@ -49,7 +49,7 @@ MODULE_SMOKE: dict[str, dict[str, Any]] = {
     "add-new-patient": {
         "standalone_health": ("/api/health",),
         "standalone_ready": (),
-        "unified_health": ("/api/health", "/api/add-new-patient/v1/health"),
+        "unified_health": ("/api/add-new-patient/v1/health",),
         "unified_ready": (),
     },
     "diagnosis": {

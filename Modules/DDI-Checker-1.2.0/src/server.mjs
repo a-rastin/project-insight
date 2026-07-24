@@ -6,7 +6,9 @@
 // still calls window.DDIEngine for this packet).
 import { createRequire } from "node:module";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
+import { createServer } from "node:http";
 import { join, dirname } from "node:path";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,14 +97,24 @@ if (globalThis.Bun) {
   Deno.serve({ port }, (request) => server.fetch(request));
   console.log(`ddi-checker listening on http://0.0.0.0:${port}  basePath=/api/ddi-checker/v1`);
 } else {
-  // Node 18 ships a global fetch but no std HTTP server. The REST seam is
-  // framework-agnostic (a fetch handler), so deploy under Bun/Deno/Workers.
-  // For local Node smoke-testing use `npx wun` or route through a fetch host;
-  // the ddi-rest-adapter.cjs contract is exercised by node --test directly.
-  console.error(
-    "server.mjs ships a fetch handler for Bun/Deno/Workers runtimes. " +
-      "Node has no bundled HTTP server; run with `bun src/server.mjs` or " +
-      "PORT=8087 deno run --allow-net --allow-env --allow-read src/server.mjs.",
-  );
-  process.exit(2);
+  createServer(async (incoming, outgoing) => {
+    try {
+      const hasBody = incoming.method !== "GET" && incoming.method !== "HEAD";
+      const request = new Request(`http://${incoming.headers.host || `127.0.0.1:${port}`}${incoming.url || "/"}`, {
+        method: incoming.method,
+        headers: incoming.headers,
+        ...(hasBody ? { body: Readable.toWeb(incoming), duplex: "half" } : {}),
+      });
+      const response = await server.fetch(request);
+      outgoing.writeHead(response.status, Object.fromEntries(response.headers));
+      if (response.body) Readable.fromWeb(response.body).pipe(outgoing);
+      else outgoing.end();
+    } catch (error) {
+      console.error("ddi-checker request failed", error);
+      outgoing.writeHead(500, { "content-type": "application/json" });
+      outgoing.end(JSON.stringify({ error: "internal_server_error" }));
+    }
+  }).listen(port, "0.0.0.0", () => {
+    console.log(`ddi-checker listening on http://0.0.0.0:${port}  basePath=/api/ddi-checker/v1`);
+  });
 }

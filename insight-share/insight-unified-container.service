@@ -1,0 +1,19 @@
+[Unit]
+Description=INSIGHT unified container
+After=docker.service network-online.target
+Requires=docker.service
+# Host lifecycle owns only this unit. Module processes stay inside the container supervisor.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/insight/unified/container.env
+# INSIGHT_UNIFIED_IMAGE must be an immutable digest reference (name@sha256:<64hex>).
+ExecStartPre=-/usr/bin/docker rm -f insight-unified
+ExecStart=/usr/bin/docker run --name insight-unified --read-only --tmpfs /tmp:size=64m,mode=1777 --tmpfs /run --tmpfs /var/cache/nginx --tmpfs /var/log/nginx --cap-drop ALL --security-opt no-new-privileges --memory 2048m --pids-limit 1024 --stop-timeout 45 --publish 127.0.0.1:8080:8080 --volume insight-authentication-data:/var/lib/insight/authentication --volume insight-dashboard-data:/var/lib/insight/dashboard --volume insight-add-new-patient-data:/var/lib/insight/add-new-patient --volume insight-diagnosis-data:/var/lib/insight/diagnosis --volume insight-severity-data:/var/lib/insight/severity --volume insight-medical-history-data:/var/lib/insight/medical-history --volume insight-ddi-checker-data:/var/lib/insight/ddi-checker --volume insight-bn-manager-data:/var/lib/insight/bn-manager --volume insight-treatment-plan-data:/var/lib/insight/treatment-plan --volume /etc/insight/unified/secrets:/run/secrets:ro --env-file /etc/insight/unified/container.env ${INSIGHT_UNIFIED_IMAGE}
+ExecStop=/usr/bin/docker stop --time 45 insight-unified
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
