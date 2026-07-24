@@ -41,6 +41,7 @@ DEFAULTS = {
 
 SERVICE_NAME = "auth"
 USER_LOOKUP_BY_ID_SQL = "SELECT id FROM users WHERE id = ?"
+DELETE_SESSIONS_BY_USER_ID_SQL = "DELETE FROM sessions WHERE user_id = ?"
 REQUIRED_CONFIG = (
     "AUTH_DB_PATH",
     "AUTH_JWT_SECRET",
@@ -1050,7 +1051,7 @@ def set_user_disabled(user_id: int | str, disabled: bool, actor_user_id: int | N
             raise LastActiveAdminError("cannot disable the last active admin")
         conn.execute("UPDATE users SET disabled = ? WHERE id = ?", (1 if disabled else 0, user_id))
         if disabled:
-            conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+            conn.execute(DELETE_SESSIONS_BY_USER_ID_SQL, (user_id,))
 
 
 def reset_user_password(user_id: int | str, temporary_password: str | None = None) -> str:
@@ -1073,7 +1074,7 @@ def reset_user_password(user_id: int | str, temporary_password: str | None = Non
             """,
             (hash_password(new_password), user_id),
         )
-        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        conn.execute(DELETE_SESSIONS_BY_USER_ID_SQL, (user_id,))
     return new_password
 
 
@@ -1101,7 +1102,7 @@ def change_user_password(user_id: int | str, current_password: str, new_password
             """,
             (hash_password(new_password), user_id),
         )
-        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        conn.execute(DELETE_SESSIONS_BY_USER_ID_SQL, (user_id,))
 
 
 def update_user_role(user_id: int | str, role: str, actor_user_id: int | None = None) -> None:
@@ -1134,7 +1135,7 @@ def update_user_role(user_id: int | str, role: str, actor_user_id: int | None = 
         )
         if canonical_role == "psychiatrist":
             conn.execute("DELETE FROM disclaimer_acceptances WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        conn.execute(DELETE_SESSIONS_BY_USER_ID_SQL, (user_id,))
 
 
 def set_disclaimer_signed(user_id: int | str) -> None:
@@ -1187,7 +1188,7 @@ def revoke_sessions_for_user(user_id: int | str) -> None:
     user_id = resolved_user_id
     conn = get_conn()
     with _tx(conn):
-        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        conn.execute(DELETE_SESSIONS_BY_USER_ID_SQL, (user_id,))
 
 
 def _get_session_record(token: str):
