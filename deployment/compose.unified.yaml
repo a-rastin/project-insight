@@ -8,10 +8,11 @@ services:
     init: false
     read_only: true
     environment:
-      TP_ENV: production
+      TP_ENV: development
       TP_AUTHENTICATION_SESSION_URL: ${TP_AUTHENTICATION_SESSION_URL:?set Authentication session URL}
       TP_TRUSTED_INTERNAL_ORIGINS: ${TP_TRUSTED_INTERNAL_ORIGINS:?set trusted Authentication origin}
       TP_BN_MANAGER_URL: http://127.0.0.1:8108
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-local-dev-secret-change-me-in-production-min32bytes-long-padding-aaaa}
     ports:
       - "127.0.0.1:8080:8080"
     tmpfs:
@@ -20,6 +21,7 @@ services:
       - /var/cache/nginx
       - /var/log/nginx
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID, NET_BIND_SERVICE]
     security_opt: [no-new-privileges:true]
     stop_grace_period: 45s
     volumes:

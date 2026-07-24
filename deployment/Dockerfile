@@ -48,6 +48,8 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 
 WORKDIR /opt
 COPY deployment /opt/deployment
+COPY contracts /opt/contracts
+ENV PYTHONPATH=/opt:/opt/modules/treatment-plan
 COPY Modules/Authentication-1.1.0 /opt/modules/authentication
 COPY Modules/Dashboard-1.2.0 /opt/modules/dashboard
 COPY Modules/Add-New-Patient-1.1.0 /opt/modules/add-new-patient

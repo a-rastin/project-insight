@@ -15,6 +15,9 @@
 **/*_test.js
 **/*.test.js
 **/*.test.mjs
+!Modules/Diagnosis-1.2.0/test_*.py
+!Modules/Diagnosis-1.2.0/diagnosis/static/**
+!Modules/DDI-Checker-1.2.0/test/*.test.mjs
 **/fixtures
 **/*fixture*
 **/data/patients.json
