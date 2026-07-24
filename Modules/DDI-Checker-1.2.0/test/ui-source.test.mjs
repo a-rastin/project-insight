@@ -68,6 +68,27 @@ test("storage failures are persistent and KB mutations roll back", () => {
   assert.match(app, /quota_exceeded/);
 });
 
+test("report upload reads files in parallel and never awaits inside the import loop", () => {
+  const app = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
+  const uploadBody = app.match(/async function uploadReports\(event\)\s*\{([\s\S]*?)\n  \}\n/)?.[1] || "";
+  assert.ok(uploadBody, "uploadReports body must be present");
+
+  assert.match(uploadBody, /Promise\.all\(/, "file contents must be read concurrently with Promise.all");
+  assert.match(uploadBody, /\.text\(\)/, "each file is read via file.text()");
+
+  const parallelReadEnd = uploadBody.indexOf("await Promise.all(");
+  assert.ok(parallelReadEnd !== -1, "the single await must guard the parallel Promise.all read");
+  const afterRead = uploadBody.slice(parallelReadEnd);
+  const closing = afterRead.indexOf(");", "await Promise.all(".length);
+  assert.ok(closing !== -1, "Promise.all must be closed");
+  const afterPromise = uploadBody.slice(parallelReadEnd + closing + 2);
+  assert.doesNotMatch(afterPromise, /\bawait\b/, "no await inside the serial parse/merge loop");
+
+  const loopMatch = uploadBody.match(/for\s*\((?:const file of files|let i = 0;[^)]*)\)\s*\{([\s\S]*?)\n    \}/);
+  assert.ok(loopMatch, "uploadReports must keep a per-file serial loop for parse/merge");
+  assert.doesNotMatch(loopMatch[1], /\bawait\b/, "the per-file loop must not await inside the body");
+});
+
 test("DDI-05: the UI loads the KB from the canonical server interface, not the duplicate active-kb.js artifact", () => {
   const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const app = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");

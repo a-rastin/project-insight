@@ -594,9 +594,11 @@
 
     let importedCount = 0;
     const failures = [];
-    for (const file of files) {
+    const fileTexts = await Promise.all(files.map((file) => file.text()));
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const raw = fileTexts[i];
       try {
-        const raw = await file.text();
         const parsed = engine.parseReportText(raw, file.name, { version: kb.version });
         importedCount += mergeParsedReport(parsed, file.name);
       } catch (error) {
