@@ -32,6 +32,7 @@ from __future__ import annotations
 import importlib
 import os
 import sys
+from math import isclose
 from pathlib import Path
 
 # Make the diagnosis package importable regardless of cwd.
@@ -115,9 +116,9 @@ def test_defaults_match_prior_hardcoded_constants():
         s = cfg._load()
         assert s.db_path == "diagnosis_store.db", s.db_path
         assert s.auth_url == "http://localhost:9000", s.auth_url
-        assert s.auth_timeout_s == 2.0, s.auth_timeout_s
+        assert isclose(s.auth_timeout_s, 2.0), s.auth_timeout_s
         assert s.patient_url == "http://localhost:9000", s.patient_url
-        assert s.patient_timeout_s == 2.0, s.patient_timeout_s
+        assert isclose(s.patient_timeout_s, 2.0), s.patient_timeout_s
         assert s.patient_lookup is False, s.patient_lookup
         assert s.cors_origins == ("*",), s.cors_origins
         assert s.mock_auth is False, s.mock_auth
@@ -153,9 +154,9 @@ def test_custom_env_rebuilds_snapshot():
         s = cfg._load()
         assert s.db_path == "/tmp/x.db", s.db_path
         assert s.auth_url == "http://auth:7000", s.auth_url
-        assert s.auth_timeout_s == 5.0, s.auth_timeout_s
+        assert isclose(s.auth_timeout_s, 5.0), s.auth_timeout_s
         assert s.patient_url == "http://patients:7000", s.patient_url
-        assert s.patient_timeout_s == 9.0, s.patient_timeout_s
+        assert isclose(s.patient_timeout_s, 9.0), s.patient_timeout_s
         assert s.patient_lookup is True, s.patient_lookup
         assert s.cors_origins == (
             "https://a.local", "https://b.local",
@@ -236,7 +237,7 @@ def test_auth_module_sourced_from_settings():
         import diagnosis.auth as auth
         importlib.reload(auth)
         assert auth.AUTH_BASE_URL == "http://localhost:9000", auth.AUTH_BASE_URL
-        assert auth.AUTH_TIMEOUT_S == 2.0, auth.AUTH_TIMEOUT_S
+        assert isclose(auth.AUTH_TIMEOUT_S, 2.0), auth.AUTH_TIMEOUT_S
     finally:
         _restore_env(snap)
         # Restore the live module globals to the post-test-import snapshot
@@ -269,7 +270,7 @@ def test_patient_module_sourced_from_settings():
         import diagnosis.patient as patient
         importlib.reload(patient)
         assert patient.PATIENT_BASE_URL == "http://localhost:9000", patient.PATIENT_BASE_URL
-        assert patient.PATIENT_TIMEOUT_S == 2.0, patient.PATIENT_TIMEOUT_S
+        assert isclose(patient.PATIENT_TIMEOUT_S, 2.0), patient.PATIENT_TIMEOUT_S
     finally:
         _restore_env(snap)
 

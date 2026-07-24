@@ -186,6 +186,7 @@ def _config_selfcheck() -> None:
     Run: ``python -m diagnosis.config``
     """
     import os as _os
+    from math import isclose
 
     saved = {
         k: _os.environ.get(k)
@@ -205,9 +206,9 @@ def _config_selfcheck() -> None:
         s = _load()
         assert s.db_path == "diagnosis_store.db", s.db_path
         assert s.auth_url == "http://localhost:9000", s.auth_url
-        assert s.auth_timeout_s == 2.0, s.auth_timeout_s
+        assert isclose(s.auth_timeout_s, 2.0), s.auth_timeout_s
         assert s.patient_url == "http://localhost:9000", s.patient_url
-        assert s.patient_timeout_s == 2.0, s.patient_timeout_s
+        assert isclose(s.patient_timeout_s, 2.0), s.patient_timeout_s
         assert s.patient_lookup is False, s.patient_lookup
         assert s.cors_origins == ("*",), s.cors_origins
         assert s.mock_auth is False, s.mock_auth
