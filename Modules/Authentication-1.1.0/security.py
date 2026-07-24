@@ -40,6 +40,7 @@ DEFAULTS = {
 }
 
 SERVICE_NAME = "auth"
+USER_LOOKUP_BY_ID_SQL = "SELECT id FROM users WHERE id = ?"
 REQUIRED_CONFIG = (
     "AUTH_DB_PATH",
     "AUTH_JWT_SECRET",
@@ -934,7 +935,7 @@ def get_user(username: str):
 def _user_id_for_ref(user_ref: int | str) -> int | None:
     with _conn_lock:
         if isinstance(user_ref, int) or (isinstance(user_ref, str) and user_ref.isdigit()):
-            row = get_conn().execute("SELECT id FROM users WHERE id = ?", (int(user_ref),)).fetchone()
+            row = get_conn().execute(USER_LOOKUP_BY_ID_SQL, (int(user_ref),)).fetchone()
         else:
             row = get_conn().execute("SELECT id FROM users WHERE user_uuid = ?", (user_ref,)).fetchone()
     return int(row["id"]) if row else None
@@ -1060,7 +1061,7 @@ def reset_user_password(user_id: int | str, temporary_password: str | None = Non
     new_password = temporary_password or secrets.token_urlsafe(18)
     conn = get_conn()
     with _tx(conn):
-        user = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        user = conn.execute(USER_LOOKUP_BY_ID_SQL, (user_id,)).fetchone()
         if user is None:
             raise UserNotFoundError(user_id)
         conn.execute(

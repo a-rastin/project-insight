@@ -44,6 +44,18 @@ class Auth03SecurityTests(AuthTestCase):
         finally:
             security._now = original_now
 
+    def test_user_lookup_sql_is_defined_as_a_single_constant(self):
+        expected = "SELECT id FROM users WHERE id = ?"
+        self.assertEqual(security.USER_LOOKUP_BY_ID_SQL, expected)
+
+    def test_reset_and_disclaimer_resolve_user_id_consistently(self):
+        user_id = security.register_user("auth03-ref", "psychiatrist", "secret")
+        security.set_disclaimer_signed(user_id)
+        self.assertIsNone(security._user_id_for_ref("nonexistent-uuid"))
+        self.assertIsNone(security._user_id_for_ref(999999))
+        new_password = security.reset_user_password(user_id)
+        self.assertTrue(new_password)
+
     def test_login_attempt_storage_is_bounded_and_success_recovers(self):
         with patch.dict(
             os.environ,
