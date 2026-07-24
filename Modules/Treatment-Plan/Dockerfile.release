@@ -1,11 +1,11 @@
-FROM node:22.17.0-alpine3.22 AS frontend
+FROM node:22.17.0-alpine3.22@sha256:fc3e945f920b7e3000cd1af86c4ae406ec70c72f328b667baf0f3a8910d69eed AS frontend
 WORKDIR /src
 COPY frontend/package*.json ./
 RUN npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build
 
-FROM python:3.13.5-slim-bookworm AS runtime
+FROM python:3.13.5-slim-bookworm@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419 AS runtime
 ARG VCS_REF=unknown
 LABEL org.opencontainers.image.title="INSIGHT Treatment Plan" \
       org.opencontainers.image.revision=$VCS_REF \
@@ -20,7 +20,7 @@ WORKDIR /app
 RUN groupadd --gid 10001 treatment-plan && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin treatment-plan \
     && install -d -o 10001 -g 10001 /data
 COPY requirements.lock ./
-RUN pip install --no-cache-dir --requirement requirements.lock
+RUN pip install --no-cache-dir --require-hashes --requirement requirements.lock
 COPY --chown=10001:10001 treatment_plan ./treatment_plan
 COPY --chown=10001:10001 --from=frontend /src/dist ./frontend/dist
 USER 10001:10001

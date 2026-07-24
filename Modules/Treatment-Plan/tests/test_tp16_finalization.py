@@ -256,6 +256,54 @@ class TP16FinalizationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.ledger.get_finalization(PLAN_ID))
         self.assertNotEqual(self.initial.etag, updated.etag)
 
+    def _bn_manager_source(self, clinical_status: str | None) -> SourceVersion:
+        return SourceVersion(
+            "bn-manager",
+            "model-registry",
+            "1.0.0",
+            "2026-07-23T19:00:00Z",
+            "sha256:" + "b" * 64,
+            status="current",
+            clinical_status=clinical_status,
+        )
+
+    async def test_finalize_rejects_bn_manager_source_without_approved_clinical_status(self):
+        finalizer = self.finalizer(RecordingPort())
+        for clinical_status in (None, "unvalidated", "retired"):
+            with self.subTest(clinical_status=clinical_status):
+                ctx = FinalizationContext(
+                    current_medications=context().current_medications,
+                    safety_candidates=context().safety_candidates,
+                    safety_facts=SafetyFacts(),
+                    sources=(self._bn_manager_source(clinical_status),),
+                )
+                with self.assertRaisesRegex(
+                    SafetyRecalculationFailed,
+                    "bn-manager.*approved|approved.*bn-manager",
+                ):
+                    await finalizer.finalize(
+                        PLAN_ID,
+                        expected_etag=self.initial.etag,
+                        command=command(),
+                        context=ctx,
+                    )
+
+    async def test_finalize_accepts_bn_manager_source_with_approved_clinical_status(self):
+        finalizer = self.finalizer(RecordingPort())
+        ctx = FinalizationContext(
+            current_medications=context().current_medications,
+            safety_candidates=context().safety_candidates,
+            safety_facts=SafetyFacts(),
+            sources=(self._bn_manager_source("approved"),),
+        )
+        final_plan = await finalizer.finalize(
+            PLAN_ID,
+            expected_etag=self.initial.etag,
+            command=command(),
+            context=ctx,
+        )
+        self.assertEqual("finalized", final_plan["status"])
+
 
 if __name__ == "__main__":
     unittest.main()
