@@ -18,7 +18,7 @@ from scripts.verify_deployment import (
 )
 from scripts.package_release import immutable_image_reference, scan_evidence_for_image, write_scan_evidence
 from treatment_plan.config import ConfigurationError, Settings
-from treatment_plan.deployment import migration_gate, settings_from_environment
+from treatment_plan.deployment import main, migration_gate, settings_from_environment
 
 
 ROOT = Path(__file__).parents[1]
@@ -133,6 +133,19 @@ class TP22DeploymentTests(unittest.TestCase):
             self.assertEqual("trivy", evidence["scanner"])
             self.assertEqual(image, evidence["image"])
             self.assertEqual(digest, evidence["digest"])
+
+    def test_deployment_main_command_dispatch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "runtime.db"
+            environment = {
+                "TP_ENV": "test",
+                "TP_DATABASE_PATH": str(database),
+            }
+            with patch.dict(os.environ, environment, clear=True), patch("sys.argv", ["deployment.py", "migration-gate"]):
+                self.assertEqual(0, main())
+            with patch.dict(os.environ, environment, clear=True), patch("sys.argv", ["deployment.py", "serve"]), patch("treatment_plan.deployment.serve") as mock_serve:
+                self.assertEqual(0, main())
+                mock_serve.assert_called_once()
 
 
 if __name__ == "__main__":

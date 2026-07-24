@@ -73,8 +73,8 @@ def main() -> int:
     if args.command == "migration-gate":
         changed = migration_gate(settings)
         print("migration gate passed" + (": " + ", ".join(changed) if changed else ": current"))
-        return 0
-    serve(settings)
+    else:
+        serve(settings)
     return 0
 
 
