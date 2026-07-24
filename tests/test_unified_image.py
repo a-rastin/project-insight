@@ -95,6 +95,24 @@ class UnifiedImageTests(unittest.TestCase):
             self.assertIn(f"location {module['basePath']}", nginx)
             self.assertIn(f"location {module['proxyPrefix']}", nginx)
 
+    def test_nginx_serves_authentication_root_and_dashboard_static_shell(self):
+        nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        # Authentication is the application landing page at "/".
+        self.assertIn("location / {", nginx)
+        self.assertIn("proxy_pass http://127.0.0.1:8101;", nginx)
+        self.assertIn("proxy_set_header Host $host;", nginx)
+        self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
+        self.assertIn("proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;", nginx)
+        # Dashboard shell lives under /dashboard/{admin,user} per the Authentication contract.
+        self.assertIn("location = /dashboard {", nginx)
+        self.assertIn("return 302 /dashboard/;", nginx)
+        self.assertIn("location = /dashboard/ {", nginx)
+        self.assertIn("location = /dashboard/admin {", nginx)
+        self.assertIn("location = /dashboard/user {", nginx)
+        self.assertIn("location /dashboard/ {", nginx)
+        self.assertIn("alias /opt/modules/dashboard/;", nginx)
+        self.assertIn('add_header Cache-Control "no-store";', nginx)
+
     def test_vps_topology_keeps_host_nginx_on_tls_and_systemd_on_digest_only(self):
         unit = (DEPLOYMENT / "insight-unified-container.service").read_text(encoding="utf-8")
         nginx = (DEPLOYMENT / "nginx-vps.conf").read_text(encoding="utf-8")
