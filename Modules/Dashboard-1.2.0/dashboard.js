@@ -147,7 +147,7 @@ async function load() {
     try {
       const result = await api.activate();
       state.sessionId = result.sessionId;
-      setUrlToSession(result.dashboardUrl);
+      setUrlToSession();
     } catch (error) {
       state.error = error;
       renderAccess({ error });
@@ -241,7 +241,7 @@ async function activateDevRole(role) {
     state.sessionId = result.sessionId;
     state.devRole = role;
     state.signedOut = false;
-    setUrlToSession(result.dashboardUrl);
+    setUrlToSession();
     state.model = await api.workspace();
     renderWorkspace();
   } catch (error) {
