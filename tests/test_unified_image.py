@@ -65,6 +65,7 @@ class UnifiedImageTests(unittest.TestCase):
                 "ddi-checker",
                 "bn-manager",
                 "treatment-plan",
+                "gateway-readiness",
                 "nginx",
             },
         )
@@ -89,6 +90,7 @@ class UnifiedImageTests(unittest.TestCase):
             self.assertNotIn(f'"{port}:', compose)
         self.assertIn("/run/secrets:ro", compose)
         self.assertIn("INSIGHT_UNIFIED_IMAGE", compose)
+        self.assertIn("http://127.0.0.1:8080/readyz", dockerfile)
 
     def test_nginx_routes_unique_base_paths_on_gateway_only(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
@@ -98,6 +100,8 @@ class UnifiedImageTests(unittest.TestCase):
         for module in self.manifest["modules"]:
             self.assertIn(f"location {module['basePath']}", nginx)
             self.assertIn(f"location {module['proxyPrefix']}", nginx)
+        self.assertIn("location = /readyz { proxy_pass http://127.0.0.1:8110; }", nginx)
+        self.assertIn("location = /healthz { proxy_pass http://127.0.0.1:8110; }", nginx)
 
     def test_nginx_serves_authentication_root_and_dashboard_static_shell(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")

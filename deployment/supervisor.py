@@ -42,6 +42,11 @@ def build_process_specs(manifest: dict[str, Any]) -> dict[str, ProcessSpec]:
             cwd=module["workingDirectory"],
             env=environment,
         )
+    specs["gateway-readiness"] = ProcessSpec(
+        command=("python", "/opt/deployment/gateway_readiness.py"),
+        cwd="/opt/deployment",
+        env={},
+    )
     specs["nginx"] = ProcessSpec(
         command=("nginx", "-g", "daemon off;", "-c", "/opt/deployment/nginx.conf"),
         cwd="/opt/deployment",
