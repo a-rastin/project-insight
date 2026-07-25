@@ -85,6 +85,40 @@ class AuthRouteTests(AuthTestCase):
         self.assertIsNone(security.resolve_session(token))
         self.assertEqual(self.client_with_session_token(token).get("/api/auth/session/legacy").status_code, 401)
 
+    def test_user_management_page_creates_and_lists_admin_and_psychiatrist_accounts(self):
+        self.assertEqual(self.raw_client().get("/modules/user-management").status_code, 401)
+
+        admin_client = self.login_admin()
+        page = admin_client.get("/modules/user-management")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("User Management", page.text)
+
+        for username, role in (("new-admin", "admin"), ("new-psychiatrist", "psychiatrist")):
+            created = admin_client.post(
+                "/api/auth/register",
+                json={"username": username, "password": "initial-password", "role": role},
+            )
+            self.assertEqual(created.status_code, 201)
+
+        users = admin_client.get("/api/auth/admin/users").json()["users"]
+        self.assertEqual(
+            {user["username"]: user["role"] for user in users if user["username"].startswith("new-")},
+            {"new-admin": "admin", "new-psychiatrist": "psychiatrist"},
+        )
+        duplicate = admin_client.post(
+            "/api/auth/register",
+            json={"username": "new-admin", "password": "initial-password", "role": "admin"},
+        )
+        self.assertEqual(duplicate.status_code, 409)
+
+        psychiatrist_client = self.client()
+        login = psychiatrist_client.post(
+            "/api/auth/login",
+            json={"username": "new-psychiatrist", "password": "initial-password", "role": "psychiatrist"},
+        )
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(psychiatrist_client.get("/modules/user-management").status_code, 401)
+
     def test_psychiatrist_disclaimer_gate(self):
         admin_client = self.login_admin()
         created = admin_client.post(

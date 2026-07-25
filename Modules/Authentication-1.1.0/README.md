@@ -33,6 +33,9 @@ SQLite, bcrypt, JWT signing, role gating, and the disclaimer gate.
 | POST | `/api/auth/admin/users/{id}/enable` | `{ ok, message }` (admin-only) | Re-enable a disabled account. |
 | POST | `/api/auth/admin/users/{id}/reset-password` | `{ ok, user_id, temporary_password }` (admin-only) | Set or generate a temporary password and revoke sessions. |
 | PATCH | `/api/auth/admin/users/{id}/role` | `{ ok, message }` (admin-only) | Update an account role when policy allows it. |
+| GET | `/modules/user-management/contract` | Dashboard module metadata | User-management discovery contract. |
+| GET | `/modules/user-management/ready` | `{ status: "ready" }` | User-management readiness for Dashboard discovery. |
+| GET | `/modules/user-management` | Admin-only HTML page | Account-management UI backed by Authentication APIs. |
 
 Default administrator credentials: `Admin` / `Admin` (configurable via env).
 

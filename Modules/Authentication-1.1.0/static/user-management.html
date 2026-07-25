@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INSIGHT User Management</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 72rem; color: #18212f; }
+    header, form, .actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    header { justify-content: space-between; }
+    form { padding: 1rem; background: #f1f5f9; }
+    input, select, button { font: inherit; padding: .45rem .6rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { border-bottom: 1px solid #cbd5e1; padding: .6rem; text-align: left; vertical-align: middle; }
+    #message { min-height: 1.5rem; }
+    .error { color: #b42318; } .success { color: #087443; }
+    @media (max-width: 48rem) { body { margin: 1rem; } table { font-size: .85rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>User Management</h1><p>Create and manage administrator and psychiatrist accounts.</p></div>
+    <a href="/dashboard/admin">Return to dashboard</a>
+  </header>
+  <p id="message" role="status" aria-live="polite"></p>
+  <form id="create-account">
+    <label>Username <input name="username" required maxlength="64" autocomplete="username"></label>
+    <label>Initial password <input name="password" type="password" required maxlength="256" autocomplete="new-password"></label>
+    <label>Role <select name="role"><option value="psychiatrist">Psychiatrist</option><option value="admin">Administrator</option></select></label>
+    <button type="submit">Create account</button>
+  </form>
+  <table>
+    <thead><tr><th>Username</th><th>Role</th><th>Status</th><th>Password</th><th>Role change</th></tr></thead>
+    <tbody id="accounts"></tbody>
+  </table>
+  <script>
+    const message = document.querySelector('#message');
+    const accounts = document.querySelector('#accounts');
+    let csrfToken;
+
+    const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+    function show(text, tone = 'error') { message.textContent = text; message.className = tone; }
+    async function csrf() {
+      if (csrfToken) return csrfToken;
+      const response = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Could not start secure request.');
+      csrfToken = (await response.json()).csrf_token;
+      return csrfToken;
+    }
+    async function request(path, method = 'GET', body) {
+      const headers = body !== undefined ? { 'Content-Type': 'application/json', 'X-CSRF-Token': await csrf() } : {};
+      const response = await fetch(path, { method, headers, credentials: 'same-origin', body: body === undefined ? undefined : JSON.stringify(body) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `Request failed (${response.status}).`);
+      return data;
+    }
+    function render(users) {
+      accounts.innerHTML = users.map((user) => {
+        const id = escapeHtml(user.user_uuid);
+        const role = escapeHtml(user.role);
+        return `<tr><td>${escapeHtml(user.username)}</td><td>${role}</td><td>${user.disabled ? 'Disabled' : 'Active'}</td><td><button data-action="reset" data-id="${id}">Reset password</button></td><td class="actions"><select data-role-for="${id}"><option value="psychiatrist"${role === 'psychiatrist' ? ' selected' : ''}>Psychiatrist</option><option value="admin"${role === 'admin' ? ' selected' : ''}>Administrator</option></select><button data-action="role" data-id="${id}">Change role</button><button data-action="${user.disabled ? 'enable' : 'disable'}" data-id="${id}">${user.disabled ? 'Enable' : 'Disable'}</button></td></tr>`;
+      }).join('');
+    }
+    async function load() {
+      try { render((await request('/api/auth/admin/users')).users); }
+      catch (error) { show(error.message); }
+    }
+    document.querySelector('#create-account').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      try {
+        await request('/api/auth/register', 'POST', Object.fromEntries(form));
+        event.currentTarget.reset(); show('Account created.', 'success'); await load();
+      } catch (error) { show(error.message); }
+    });
+    accounts.addEventListener('click', async (event) => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const { action, id } = button.dataset;
+      try {
+        if (action === 'role') await request(`/api/auth/admin/users/${id}/role`, 'PATCH', { role: document.querySelector(`[data-role-for="${id}"]`).value });
+        else {
+          const result = await request(`/api/auth/admin/users/${id}/${action === 'reset' ? 'reset-password' : action}`, 'POST', action === 'reset' ? {} : {});
+          if (action === 'reset') show(`Temporary password: ${result.temporary_password}`, 'success');
+          else show(result.message, 'success');
+        }
+        await load();
+      } catch (error) { show(error.message); }
+    });
+    load();
+  </script>
+</body>
+</html>

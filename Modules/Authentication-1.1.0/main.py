@@ -1,15 +1,17 @@
 import os
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 try:
+    from . import security
     from .contract import contract_payload, openapi_document, schema
-    from .router import HealthResponse, ReadinessResponse, liveness, readiness, router
+    from .router import HealthResponse, ReadinessResponse, _require_admin, liveness, readiness, router
 except ImportError:  # Keeps `python main.py` working from this directory.
+    import security
     from contract import contract_payload, openapi_document, schema
-    from router import HealthResponse, ReadinessResponse, liveness, readiness, router
+    from router import HealthResponse, ReadinessResponse, _require_admin, liveness, readiness, router
 
 # Stays standalone-runnable: `uvicorn modules.auth.main:app` from the repo
 # root, OR `python main.py` from inside modules/auth/. Either works.
@@ -56,6 +58,29 @@ def healthz():
 @app.get("/readyz", response_model=ReadinessResponse, tags=["ops"])
 def readyz(response: Response):
     return readiness(response)
+
+
+@app.get("/modules/user-management/contract")
+def user_management_contract():
+    return {
+        "moduleId": "user-management",
+        "interfaceVersion": "1.0.0",
+        "basePath": "/modules/user-management",
+    }
+
+
+@app.get("/modules/user-management/ready")
+def user_management_ready():
+    report = security.readiness_report()
+    if report["ok"]:
+        return {"status": "ready"}
+    return JSONResponse(status_code=503, content={"status": "not-ready"})
+
+
+@app.get("/modules/user-management")
+def user_management(request: Request):
+    _require_admin(request)
+    return FileResponse(os.path.join(_dir, "static", "user-management.html"))
 
 
 @app.get("/{full_path:path}")

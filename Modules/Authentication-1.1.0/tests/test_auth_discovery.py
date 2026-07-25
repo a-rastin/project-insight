@@ -46,6 +46,20 @@ class AuthDiscoveryTests(AuthTestCase):
                             for route in contract["compatibilityRoutes"]))
         self.assertEqual(contract["compatibility"]["sessionAuthority"], "/api/auth/session")
 
+    def test_user_management_discovery_contract_and_readiness(self):
+        client = self.raw_client()
+        contract = client.get("/modules/user-management/contract")
+        self.assertEqual(contract.status_code, 200)
+        self.assertEqual(
+            contract.json(),
+            {
+                "moduleId": "user-management",
+                "interfaceVersion": "1.0.0",
+                "basePath": "/modules/user-management",
+            },
+        )
+        self.assertEqual(client.get("/modules/user-management/ready").json(), {"status": "ready"})
+
     def test_openapi_and_published_schemas_are_consistent(self):
         client = self.raw_client()
         openapi_response = client.get("/openapi.json")
