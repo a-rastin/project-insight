@@ -37,6 +37,7 @@ from .criteria import AssertionState, DiagnosisAssertion, evaluate
 from .dashboard import _dump_for_audit
 from .deps import require_psychiatrist, require_psychiatrist_or_admin, require_csrf, store
 from .patient import resolve_patient
+from .readiness import clinical_feature_status
 
 
 router = APIRouter()
@@ -83,12 +84,22 @@ RESULT_FIELDS = (
 )
 
 
+def require_clinical_feature() -> None:
+    """Keep unapproved clinical workflows unavailable without failing readiness."""
+    if not clinical_feature_status()["available"]:
+        raise HTTPException(
+            status_code=409,
+            detail="Clinical diagnosis feature disabled: coding approval pending",
+        )
+
+
 @router.post("/diagnosis/{code}/init")
 def init_session(
     code: str,
     request: Request,
     _: Session = Depends(require_psychiatrist),
     __: None = Depends(require_csrf),
+    ___: None = Depends(require_clinical_feature),
 ):
     if not code.strip():
         raise HTTPException(status_code=400, detail="Patient code required")
@@ -98,7 +109,11 @@ def init_session(
 
 
 @router.get("/diagnosis/{code}")
-def get_session(code: str, _: Session = Depends(require_psychiatrist_or_admin)):
+def get_session(
+    code: str,
+    _: Session = Depends(require_psychiatrist_or_admin),
+    __: None = Depends(require_clinical_feature),
+):
     """Return criteria tree and the patient's current evaluation state.
 
     404 if the patient code has never been seen. The caller (other Insight
@@ -124,6 +139,7 @@ def put_session(
     request: Request,
     _: Session = Depends(require_psychiatrist),
     __: None = Depends(require_csrf),
+    ___: None = Depends(require_clinical_feature),
 ):
     """Persist the clinician's checked criteria and final decision.
 
@@ -165,4 +181,4 @@ def put_session(
 
 
 __all__ = ["router", "Submission", "RESULT_FIELDS", "legacy_decision_to_assertion",
-           "init_session", "get_session", "put_session"]
+           "init_session", "get_session", "put_session", "require_clinical_feature"]

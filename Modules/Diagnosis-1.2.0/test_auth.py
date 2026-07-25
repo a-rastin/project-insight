@@ -39,7 +39,12 @@ os.environ["DIAGNOSIS_DB_PATH"] = TEST_DB_PATH
 from fastapi.testclient import TestClient
 
 from diagnosis import auth as diag_auth
+from diagnosis import diagnosis_api as diag_api
 from diagnosis.app import app
+
+# Existing authorization tests exercise a released clinical workflow. Stub only
+# feature availability; no test supplies a clinical coding identifier.
+diag_api.clinical_feature_status = lambda: {"available": True}
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +239,19 @@ def test_psychiatrist_can_read_and_write(port):
     _exercise(c)
 
 
+def test_psychiatrist_is_told_when_clinical_feature_is_disabled(port):
+    c = _client_for("psychiatrist", port)
+    _arm_with_csrf(c)
+    saved = diag_api.clinical_feature_status
+    diag_api.clinical_feature_status = lambda: {"available": False, "reason": "clinical_scope_unresolved"}
+    try:
+        r = c.post("/diagnosis/__feature_disabled__/init")
+        assert r.status_code == 409, (r.status_code, r.text)
+        assert r.json()["detail"] == "Clinical diagnosis feature disabled: coding approval pending", r.text
+    finally:
+        diag_api.clinical_feature_status = saved
+
+
 def test_admin_can_read_but_not_write(port):
     c = _client_for("admin", port)
     code = "__admin_test__"
@@ -304,6 +322,8 @@ def main() -> None:
          lambda: test_nurse_role_is_403_on_every_protected_path(_global_port)),
         ("test_psychiatrist_can_read_and_write",
          lambda: test_psychiatrist_can_read_and_write(_global_port)),
+        ("test_psychiatrist_is_told_when_clinical_feature_is_disabled",
+         lambda: test_psychiatrist_is_told_when_clinical_feature_is_disabled(_global_port)),
         ("test_admin_can_read_but_not_write",
          lambda: test_admin_can_read_but_not_write(_global_port)),
         ("test_admin_can_read_existing_session_after_psychiatrist_seeds_it",

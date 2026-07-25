@@ -32,7 +32,10 @@ from fastapi.testclient import TestClient
 
 from diagnosis import auth as diag_auth
 from diagnosis import csrf as diag_csrf
+from diagnosis import diagnosis_api as diag_api
 from diagnosis.app import app
+
+diag_api.clinical_feature_status = lambda: {"available": True}
 
 
 # ---------------------------------------------------------------------------

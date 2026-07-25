@@ -41,8 +41,11 @@ os.environ["DIAGNOSIS_PATIENT_LOOKUP"] = "1"
 from fastapi.testclient import TestClient
 
 from diagnosis import auth as diag_auth
+from diagnosis import diagnosis_api as diag_api
 from diagnosis import patient as diag_patient
 from diagnosis.app import app
+
+diag_api.clinical_feature_status = lambda: {"available": True}
 
 
 # ---------------------------------------------------------------------------

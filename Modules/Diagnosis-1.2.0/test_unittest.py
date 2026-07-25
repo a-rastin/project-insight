@@ -78,6 +78,9 @@ import diagnosis.deps as _diag_deps  # noqa: E402
 _importlib.reload(_diag_deps)
 import diagnosis.diagnosis_api as _diag_diagnosis_api  # noqa: E402
 _importlib.reload(_diag_diagnosis_api)
+# REST contract tests cover released-workflow behavior; availability is mocked
+# without inventing a normalized clinical coding record.
+_diag_diagnosis_api.clinical_feature_status = lambda: {"available": True}
 import diagnosis.dashboard as _diag_dashboard  # noqa: E402
 _importlib.reload(_diag_dashboard)
 import diagnosis.api as _diag_api  # noqa: E402
