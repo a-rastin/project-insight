@@ -10,12 +10,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from verify_unified_deployment import (  # noqa: E402
     MODULE_SMOKE,
+    _probe_ok,
     hardened_unified_run_command,
     immutable_image_reference,
     image_digest,
     load_manifest,
     scan_evidence_path,
     smoke_matrix,
+    verify_paths,
     verify_all_modules_smoke_matrix,
     verify_topology_contracts,
     write_scan_evidence,
@@ -46,6 +48,27 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
         self.assertIn("/health", MODULE_SMOKE["severity"]["standalone_health"])
         self.assertIn("/health", MODULE_SMOKE["ddi-checker"]["standalone_health"])
         self.assertIn("/health", MODULE_SMOKE["diagnosis"]["standalone_health"])
+
+    def test_diagnosis_unified_probes_are_canonical_and_module_specific(self):
+        probes = MODULE_SMOKE["diagnosis"]
+        self.assertEqual(("/api/diagnosis/v1/health",), probes["unified_health"])
+        self.assertEqual(("/api/diagnosis/v1/ready",), probes["unified_ready"])
+        self.assertFalse(_probe_ok(200, b'{"ok": true, "service": "auth"}', expected_module="diagnosis"))
+        self.assertTrue(_probe_ok(200, b'{"ok": true, "module": "diagnosis"}', expected_module="diagnosis"))
+
+    def test_verifier_reports_diagnosis_503_body(self):
+        body = b'{"ok":false,"module":"diagnosis","checks":{"clinicalScope":{"ok":false,"coding":{"resolutionStatus":"unresolved"}}}}'
+        with patch("verify_unified_deployment.request", return_value=(503, {}, body)):
+            with self.assertRaises(RuntimeError) as context:
+                verify_paths(
+                    "http://gateway.test",
+                    ["/api/diagnosis/v1/ready"],
+                    label="unified diagnosis ready",
+                    expected_module="diagnosis",
+                )
+        message = str(context.exception)
+        self.assertIn("checks.clinicalScope.ok=false", message)
+        self.assertIn("resolutionStatus=unresolved", message)
 
     def test_topology_contracts_tls_loopback_restart_and_volumes(self):
         result = verify_topology_contracts(ROOT)

@@ -55,8 +55,9 @@ MODULE_SMOKE: dict[str, dict[str, Any]] = {
     "diagnosis": {
         "standalone_health": ("/health",),
         "standalone_ready": ("/ready",),
-        "unified_health": ("/health", "/api/diagnosis/v1/health", "/modules/diagnosis/health"),
-        "unified_ready": ("/ready", "/api/diagnosis/v1/ready", "/modules/diagnosis/ready"),
+        "unified_health": ("/api/diagnosis/v1/health",),
+        "unified_ready": ("/api/diagnosis/v1/ready",),
+        "expected_module": "diagnosis",
     },
     "severity": {
         "standalone_health": ("/health",),
@@ -141,6 +142,9 @@ def request(url: str, *, attempts: int = 1, timeout: float = 5.0) -> tuple[int, 
         try:
             with urllib.request.urlopen(url, timeout=timeout) as response:
                 return response.status, {key.lower(): value for key, value in response.headers.items()}, response.read()
+        except urllib.error.HTTPError as exc:
+            # HTTP errors often contain structured readiness diagnostics.
+            return exc.code, {key.lower(): value for key, value in exc.headers.items()}, exc.read()
         except Exception as exc:  # noqa: BLE001 - transport retries
             error = exc
             time.sleep(1)
@@ -171,7 +175,7 @@ def smoke_matrix(manifest: dict[str, Any] | None = None) -> list[dict[str, Any]]
     return rows
 
 
-def _probe_ok(status: int, body: bytes) -> bool:
+def _probe_ok(status: int, body: bytes, *, expected_module: str | None = None) -> bool:
     if status != 200:
         return False
     try:
@@ -180,6 +184,10 @@ def _probe_ok(status: int, body: bytes) -> bool:
         return False
     if not isinstance(payload, dict):
         return False
+    if expected_module is not None:
+        actual_module = payload.get("module") or payload.get("service")
+        if actual_module != expected_module:
+            return False
     if payload.get("ok") is True:
         return True
     status_value = payload.get("status")
@@ -193,7 +201,34 @@ def _probe_ok(status: int, body: bytes) -> bool:
     return False
 
 
-def verify_paths(base_url: str, paths: list[str], *, label: str, attempts: int = 5) -> str:
+def _probe_failure(status: int, body: bytes) -> str:
+    """Render safe, actionable readiness fields from a non-success response."""
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return f"HTTP {status}"
+    if not isinstance(payload, dict):
+        return f"HTTP {status}"
+    details: list[str] = []
+    checks = payload.get("checks")
+    clinical_scope = checks.get("clinicalScope") if isinstance(checks, dict) else None
+    if isinstance(clinical_scope, dict):
+        if isinstance(clinical_scope.get("ok"), bool):
+            details.append(f"checks.clinicalScope.ok={str(clinical_scope['ok']).lower()}")
+        coding = clinical_scope.get("coding")
+        if isinstance(coding, dict) and isinstance(coding.get("resolutionStatus"), str):
+            details.append(f"resolutionStatus={coding['resolutionStatus']}")
+    return f"HTTP {status}" + ("; " + "; ".join(details) if details else "")
+
+
+def verify_paths(
+    base_url: str,
+    paths: list[str],
+    *,
+    label: str,
+    attempts: int = 5,
+    expected_module: str | None = None,
+) -> str:
     base = base_url.rstrip("/")
     if not paths:
         return ""
@@ -205,9 +240,9 @@ def verify_paths(base_url: str, paths: list[str], *, label: str, attempts: int =
         except RuntimeError as exc:
             errors.append(str(exc))
             continue
-        if _probe_ok(status, body):
+        if _probe_ok(status, body, expected_module=expected_module):
             return path
-        errors.append(f"{url} -> HTTP {status}")
+        errors.append(f"{url} -> {_probe_failure(status, body)}")
     raise RuntimeError(f"{label} failed: " + "; ".join(errors))
 
 
@@ -229,7 +264,13 @@ def verify_unified_gateway(base_url: str, *, manifest: dict[str, Any] | None = N
         module_id = row["moduleId"]
         verify_paths(base, row["unified_health"], label=f"unified {module_id} health", attempts=15 if module_id == data["modules"][0]["moduleId"] else 5)
         if row["unified_ready"]:
-            verify_paths(base, row["unified_ready"], label=f"unified {module_id} ready", attempts=5)
+            verify_paths(
+                base,
+                row["unified_ready"],
+                label=f"unified {module_id} ready",
+                attempts=5,
+                expected_module=MODULE_SMOKE[module_id].get("expected_module"),
+            )
         # REST ownership surface via gateway basePath and module shell via proxyPrefix.
         for path in (row["basePath"], row["proxyPrefix"]):
             url = base + path
