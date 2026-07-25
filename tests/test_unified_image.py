@@ -59,6 +59,14 @@ class UnifiedImageTests(unittest.TestCase):
         )
         self.assertEqual("0", dashboard["environment"]["DASHBOARD_MOCK_AUTH"])
 
+    def test_add_new_patient_manifest_uses_unified_authentication_endpoint(self):
+        module = next(module for module in self.manifest["modules"] if module["moduleId"] == "add-new-patient")
+        self.assertEqual(
+            "http://127.0.0.1:8101/api/auth/session",
+            module["environment"]["AUTH_SESSION_URL"],
+        )
+        self.assertEqual("0", module["environment"]["ADD_NEW_PATIENT_MOCK_AUTH"])
+
     def test_supervisor_declares_all_module_processes_and_gateway(self):
         specs = build_process_specs(self.manifest)
         self.assertEqual(
@@ -115,6 +123,13 @@ class UnifiedImageTests(unittest.TestCase):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
         self.assertIn(
             "location /modules/user-management {\n            proxy_pass http://127.0.0.1:8101;\n        }",
+            nginx,
+        )
+
+    def test_nginx_proxies_versioned_add_new_patient_api(self):
+        nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn(
+            "location /api/add-new-patient/v1 {\n            proxy_pass http://127.0.0.1:8103;\n        }",
             nginx,
         )
 
