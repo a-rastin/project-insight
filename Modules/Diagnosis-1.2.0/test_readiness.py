@@ -203,6 +203,7 @@ def test_unresolved_coding_is_exposed_as_disabled_feature_not_unready(port, tmpd
         assert r.status_code == 200, (r.status_code, r.text)
         body = r.json()
         assert body["status"] == "ready", body
+        assert body["module"] == "diagnosis", body
         assert set(body["checks"].keys()) == {"migrations", "configuration", "contractCompatibility", "dependencies"}, body
         assert body["checks"]["contractCompatibility"] == "ok", body
     finally:

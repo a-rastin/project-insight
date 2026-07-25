@@ -33,7 +33,7 @@ def _problem(request: Request, status: int, code: str, detail: str):
     }
 
 
-def install_common_routes(app, registry, *, contract: dict, readiness=None):
+def install_common_routes(app, registry, *, contract: dict, readiness=None, module_id: str | None = None):
     """Mount common routes on an app; module handlers remain outside this adapter."""
 
     @app.middleware("http")
@@ -58,7 +58,10 @@ def install_common_routes(app, registry, *, contract: dict, readiness=None):
         checks = await result if inspect.isawaitable(result) else result
         checks = {key: checks.get(key, "unknown") for key in _READINESS_KEYS}
         is_ready = all(value in ("ok", True) for value in checks.values())
-        return JSONResponse({"status": "ready" if is_ready else "not_ready", "checks": checks}, status_code=200 if is_ready else 503)
+        payload = {"status": "ready" if is_ready else "not_ready", "checks": checks}
+        if module_id is not None:
+            payload["module"] = module_id
+        return JSONResponse(payload, status_code=200 if is_ready else 503)
 
     @app.get("/contract")
     async def module_contract():

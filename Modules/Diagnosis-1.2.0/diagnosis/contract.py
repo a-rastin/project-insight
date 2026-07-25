@@ -75,6 +75,7 @@ def install_common_routes(app) -> None:
         registry,
         contract=contract_payload(),
         readiness=common_readiness,
+        module_id=settings.module_id,
     )
 
 
