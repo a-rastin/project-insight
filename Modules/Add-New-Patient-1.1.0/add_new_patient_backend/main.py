@@ -30,7 +30,7 @@ app = FastAPI(title="Add New Patient Backend")
 
 MODULE_ID = "add-new-patient"
 MODULE_TITLE = "Add New Patient"
-MODULE_HREF = f"/modules/{MODULE_ID}"
+MODULE_HREF = f"/modules/{MODULE_ID}/"
 MODULE_ROUTE = {"moduleId": MODULE_ID, "title": MODULE_TITLE, "href": MODULE_HREF}
 
 PUBLIC_FILES = {"index.html", "styles.css", "app.js"}
@@ -143,6 +143,24 @@ async def require_psychiatrist_session(request: Request) -> dict[str, Any]:
 @app.get("/api/health")
 async def health() -> dict[str, str]:
     return {"module": "Add New Patient", "status": "ok"}
+
+
+@app.get("/modules/add-new-patient/contract")
+async def dashboard_contract() -> dict[str, str]:
+    return {
+        "moduleId": MODULE_ID,
+        "interfaceVersion": "1.0.0",
+        "basePath": MODULE_HREF,
+    }
+
+
+@app.get("/modules/add-new-patient/ready")
+async def dashboard_ready() -> JSONResponse:
+    try:
+        repo.ping()
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "not_ready"})
+    return JSONResponse(content={"status": "ready"})
 
 
 @app.get("/internal/dashboard/module-routes/add-new-patient")

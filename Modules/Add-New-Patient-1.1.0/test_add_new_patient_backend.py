@@ -38,8 +38,9 @@ class MockAuthenticationServer:
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:
-                token = self.headers.get("x-auth-session") or self.headers.get("x-auth-session-id") or ""
-                owner.requests.append({"path": self.path, "x-auth-session": token})
+                cookie = self.headers.get("Cookie") or ""
+                token = next((part.split("=", 1)[1] for part in cookie.split(";") if part.strip().startswith("insight_session=")), "")
+                owner.requests.append({"path": self.path, "cookie": cookie})
                 status, payload = owner.payloads.get(token, (401, {"authenticated": False}))
                 body = json.dumps(payload).encode("utf-8")
                 self.send_response(status)
@@ -172,7 +173,12 @@ def csrf_headers(base: str, headers: dict[str, str] | None = None) -> dict[str, 
     with urlopen(req, timeout=5) as response:
         payload = json.loads(response.read().decode("utf-8"))
         cookie = response.headers["set-cookie"].split(";", 1)[0]
-    return {**(headers or {}), "cookie": cookie, "x-csrf-token": payload["csrfToken"]}
+    existing_cookie = (headers or {}).get("cookie")
+    return {
+        **(headers or {}),
+        "cookie": "; ".join(part for part in (existing_cookie, cookie) if part),
+        "x-csrf-token": payload["csrfToken"],
+    }
 
 
 def valid_payload(**overrides: object) -> dict:
@@ -244,9 +250,11 @@ def future_iso() -> str:
 
 def auth_payload(**overrides: dict) -> dict:
     payload = {
+        "schemaVersion": "1.0.0",
         "authenticated": True,
         "session": {"id": "auth-1", "expiresAt": future_iso()},
-        "user": {"id": "psy-1", "role": "PSYCHIATRIST", "fullName": "Verified Clinician", "title": "Dr."},
+        "user": {"id": "psy-1", "roles": ["psychiatrist"], "displayName": "Verified Clinician"},
+        "gates": {"disclaimerAccepted": True, "passwordChangeRequired": False},
     }
     for key, value in overrides.items():
         if isinstance(value, dict) and isinstance(payload.get(key), dict):
@@ -271,7 +279,7 @@ class AuthIdentityNormalizationTest(unittest.TestCase):
     def test_normalize_authenticated_accepts_admin_but_psychiatrist_rejects_it(self) -> None:
         from add_new_patient_backend.auth import normalize_authenticated_session, normalize_psychiatrist_session
 
-        payload = auth_payload(user={"id": "admin-1", "role": "ADMIN", "fullName": "Admin"})
+        payload = auth_payload(user={"id": "admin-1", "roles": ["ADMIN"], "displayName": "Admin"})
         self.assertIsNotNone(normalize_authenticated_session(payload))
         self.assertIsNone(normalize_psychiatrist_session(payload))
 
@@ -281,12 +289,9 @@ class AuthIdentityNormalizationTest(unittest.TestCase):
         blocked_payloads = [
             auth_payload(session=None),
             auth_payload(authenticated=False),
-            auth_payload(session={"expired": True}),
             auth_payload(session={"expiresAt": "2000-01-01T00:00:00Z"}),
-            auth_payload(user={"mustChangePassword": True, "id": "psy-1", "role": "PSYCHIATRIST"}),
-            auth_payload(session={"status": "PASSWORD_RESET_REQUIRED"}),
-            auth_payload(disclaimerBlocked=True),
-            auth_payload(status="DISCLAIMER_REQUIRED"),
+            auth_payload(gates={"disclaimerAccepted": True, "passwordChangeRequired": True}),
+            auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}),
         ]
         for payload in blocked_payloads:
             with self.subTest(payload=payload):
@@ -309,9 +314,26 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 {
                     "moduleId": "add-new-patient",
                     "title": "Add New Patient",
-                    "href": "/modules/add-new-patient",
+                    "href": "/modules/add-new-patient/",
                 },
             )
+
+    def test_dashboard_discovery_contract_and_readiness(self) -> None:
+        with AddNewPatientServer() as base:
+            contract_status, contract = request_json(base, "/modules/add-new-patient/contract")
+            ready_status, ready = request_json(base, "/modules/add-new-patient/ready")
+
+        self.assertEqual(contract_status, 200)
+        self.assertEqual(
+            contract,
+            {
+                "moduleId": "add-new-patient",
+                "interfaceVersion": "1.0.0",
+                "basePath": "/modules/add-new-patient/",
+            },
+        )
+        self.assertEqual(ready_status, 200)
+        self.assertEqual(ready, {"status": "ready"})
 
     def test_create_patient_returns_201_with_full_record(self) -> None:
         with AddNewPatientServer() as base:
@@ -967,14 +989,14 @@ class AddNewPatientBackendTest(unittest.TestCase):
             mock_auth.set_payload("psy-sess", auth_payload())
             mock_auth.set_payload(
                 "admin-sess",
-                auth_payload(user={"id": "admin-1", "role": "ADMIN", "fullName": "Admin"}),
+                auth_payload(user={"id": "admin-1", "roles": ["ADMIN"], "displayName": "Admin"}),
             )
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
                 create_status, _ = request_json(
                     base,
                     "/api/patients",
                     method="POST",
-                    headers=csrf_headers(base, {"x-auth-session": "psy-sess"}),
+                    headers=csrf_headers(base, {"cookie": "insight_session=psy-sess"}),
                     body=valid_payload(),
                 )
                 if create_status != 201:
@@ -982,7 +1004,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 status, data = request_json(
                     base,
                     "/api/patients/TEST01/intake",
-                    headers={"x-auth-session": "admin-sess"},
+                    headers={"cookie": "insight_session=admin-sess"},
                 )
                 self.assertEqual(status, 200)
                 self.assertEqual(data["patient"]["patientCode"], "TEST01")
@@ -993,14 +1015,14 @@ class AddNewPatientBackendTest(unittest.TestCase):
             mock_auth.set_payload("psy-sess", auth_payload())
             mock_auth.set_payload(
                 "nurse-sess",
-                auth_payload(user={"id": "nurse-1", "role": "NURSE", "fullName": "Nurse"}),
+                auth_payload(user={"id": "nurse-1", "roles": ["NURSE"], "displayName": "Nurse"}),
             )
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
                 create_status, _ = request_json(
                     base,
                     "/api/patients",
                     method="POST",
-                    headers=csrf_headers(base, {"x-auth-session": "psy-sess"}),
+                    headers=csrf_headers(base, {"cookie": "insight_session=psy-sess"}),
                     body=valid_payload(),
                 )
                 if create_status != 201:
@@ -1008,7 +1030,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 status, data = request_json(
                     base,
                     "/api/patients/TEST01/intake",
-                    headers={"x-auth-session": "nurse-sess"},
+                    headers={"cookie": "insight_session=nurse-sess"},
                 )
                 self.assertEqual(status, 403)
                 self.assertEqual(data, {"error": "psychiatrist_or_admin_required"})
@@ -1377,7 +1399,7 @@ class AuthBoundaryTest(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertTrue(data["authenticated"])
             self.assertEqual(data["user"]["id"], "psy-1")
-            self.assertEqual(data["user"]["role"], "PSYCHIATRIST")
+            self.assertEqual(data["user"]["roles"], ["psychiatrist"])
 
     def test_mock_auth_session_404_when_mock_disabled(self) -> None:
         with MockAuthenticationServer() as mock_auth:
@@ -1389,7 +1411,7 @@ class AuthBoundaryTest(unittest.TestCase):
     def test_real_auth_session_returns_401_when_unknown_session(self) -> None:
         with MockAuthenticationServer() as mock_auth:
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
-                status, data = request_json(base, "/api/patients", headers={"x-auth-session": "unknown"})
+                status, data = request_json(base, "/api/patients", headers={"cookie": "insight_session=unknown"})
                 self.assertEqual(status, 401)
                 self.assertEqual(data, {"error": "authentication_session_required"})
 
@@ -1401,26 +1423,26 @@ class AuthBoundaryTest(unittest.TestCase):
                     base,
                     "/api/patients",
                     method="POST",
-                    headers=csrf_headers(base, {"x-auth-session": "auth-1"}),
+                    headers=csrf_headers(base, {"cookie": "insight_session=auth-1"}),
                     body=valid_payload(),
                 )
                 self.assertEqual(status, 201)
                 self.assertEqual(data["patient"]["patientCode"], "TEST01")
                 self.assertEqual(mock_auth.requests[0]["path"], "/api/auth/session")
-                self.assertEqual(mock_auth.requests[0]["x-auth-session"], "auth-1")
+                self.assertIn("insight_session=auth-1", mock_auth.requests[0]["cookie"])
 
     def test_real_auth_session_rejects_admin_role(self) -> None:
         with MockAuthenticationServer() as mock_auth:
             mock_auth.set_payload(
                 "admin-sess",
-                auth_payload(user={"id": "admin-1", "role": "ADMIN", "fullName": "Admin"}),
+                auth_payload(user={"id": "admin-1", "roles": ["ADMIN"], "displayName": "Admin"}),
             )
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
                 status, data = request_json(
                     base,
                     "/api/patients",
                     method="POST",
-                    headers=csrf_headers(base, {"x-auth-session": "admin-sess"}),
+                    headers=csrf_headers(base, {"cookie": "insight_session=admin-sess"}),
                     body=valid_payload(),
                 )
                 self.assertEqual(status, 401)
@@ -1430,25 +1452,25 @@ class AuthBoundaryTest(unittest.TestCase):
         with MockAuthenticationServer() as mock_auth:
             mock_auth.set_payload(
                 "admin-sess",
-                auth_payload(user={"id": "admin-1", "role": "ADMIN", "fullName": "Admin"}),
+                auth_payload(user={"id": "admin-1", "roles": ["ADMIN"], "displayName": "Admin"}),
             )
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
-                status, data = request_json(base, "/api/patients", headers={"x-auth-session": "admin-sess"})
+                status, data = request_json(base, "/api/patients", headers={"cookie": "insight_session=admin-sess"})
                 self.assertEqual(status, 200)
                 self.assertEqual(data, {"schemaVersion": "1.0.0", "patients": []})
 
-                status, data = request_json(base, "/api/patients/MISSING", headers={"x-auth-session": "admin-sess"})
+                status, data = request_json(base, "/api/patients/MISSING", headers={"cookie": "insight_session=admin-sess"})
                 self.assertEqual(status, 404)
                 self.assertEqual(data, {"message": "Patient was not found."})
 
     def test_blocked_disclaimer_status_rejected(self) -> None:
         with MockAuthenticationServer() as mock_auth:
-            mock_auth.set_payload("auth-blocked", auth_payload(status="DISCLAIMER_REQUIRED"))
+            mock_auth.set_payload("auth-blocked", auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}))
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
                 status, data = request_json(
                     base,
                     "/api/patients",
-                    headers={"x-auth-session": "auth-blocked"},
+                    headers={"cookie": "insight_session=auth-blocked"},
                 )
                 self.assertEqual(status, 401)
                 self.assertEqual(data, {"error": "authentication_session_required"})
@@ -1456,7 +1478,7 @@ class AuthBoundaryTest(unittest.TestCase):
     def test_auth_session_unavailable_returns_502(self) -> None:
         # ponytail: point at a port nobody owns -> connection refused -> AuthSessionError -> 502
         with AddNewPatientServer(auth_session_url="http://127.0.0.1:1/api/auth/session") as base:
-            status, data = request_json(base, "/api/patients", headers={"x-auth-session": "auth-1"})
+            status, data = request_json(base, "/api/patients", headers={"cookie": "insight_session=auth-1"})
             self.assertEqual(status, 502)
             self.assertEqual(data["error"], "authentication_session_unavailable")
 
