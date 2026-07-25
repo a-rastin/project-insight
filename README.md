@@ -133,13 +133,28 @@ The unified image itself pins Python `3.13.5` and Node.js `22.17.0`.
 
 From repository root:
 
+Linux, macOS, or WSL:
+
 ```bash
 docker build -f deployment/Dockerfile -t insight-unified:dev .
 
 export INSIGHT_UNIFIED_IMAGE='insight-unified:dev'
 export AUTH_JWT_SECRET='replace-with-at-least-32-random-bytes'
 export TP_AUTHENTICATION_SESSION_URL='http://127.0.0.1:8101/api/auth/session'
-export TP_TRUSTED_INTERNAL_ORIGINS='http://127.0.0.1:8080'
+export TP_TRUSTED_INTERNAL_ORIGINS='http://127.0.0.1:8101'
+
+docker compose -f deployment/compose.unified.yaml up -d --no-build
+```
+
+Windows PowerShell:
+
+```powershell
+docker build -f deployment/Dockerfile -t insight-unified:dev .
+
+$env:INSIGHT_UNIFIED_IMAGE = 'insight-unified:dev'
+$env:AUTH_JWT_SECRET = 'replace-with-at-least-32-random-bytes'
+$env:TP_AUTHENTICATION_SESSION_URL = 'http://127.0.0.1:8101/api/auth/session'
+$env:TP_TRUSTED_INTERNAL_ORIGINS = 'http://127.0.0.1:8101'
 
 docker compose -f deployment/compose.unified.yaml up -d --no-build
 ```
@@ -150,6 +165,13 @@ Wait for startup, then check readiness:
 curl --fail --show-error http://127.0.0.1:8080/readyz
 python3 scripts/verify_unified_deployment.py unified \
   --base-url http://127.0.0.1:8080
+```
+
+On Windows PowerShell:
+
+```powershell
+curl.exe --fail --show-error http://127.0.0.1:8080/readyz
+python .\scripts\verify_unified_deployment.py unified --base-url http://127.0.0.1:8080
 ```
 
 Open <http://127.0.0.1:8080/>.
@@ -182,7 +204,7 @@ Compose reads these variables before starting the unified container:
 | `INSIGHT_UNIFIED_IMAGE` | Yes | `insight-unified:dev` | Image to run. Production must use `name@sha256:<64-hex>`. |
 | `AUTH_JWT_SECRET` | Production | Random value of at least 32 bytes | Signs Authentication JWTs. Compose fallback is development-only. |
 | `TP_AUTHENTICATION_SESSION_URL` | Yes | `http://127.0.0.1:8101/api/auth/session` | Internal Treatment Plan session-validation endpoint. |
-| `TP_TRUSTED_INTERNAL_ORIGINS` | Yes | `http://127.0.0.1:8080` | Comma-separated trusted origins for Treatment Plan internal calls. |
+| `TP_TRUSTED_INTERNAL_ORIGINS` | Yes | `http://127.0.0.1:8101` | Comma-separated trusted origins for Treatment Plan internal calls. |
 | `TP_ENV` | No | `development` | Treatment Plan runtime mode; Compose currently sets development. |
 | `INSIGHT_SECRETS_DIR` | No | `./deployment/secrets-empty` | Host directory mounted read-only at `/run/secrets`. |
 
