@@ -45,6 +45,9 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
                 return False
 
         class Opener:
+            def __init__(self, buttons):
+                self.buttons = buttons
+
             def open(self, request, timeout):
                 calls.append(request)
                 path = request.full_url.removeprefix("http://gateway.test")
@@ -53,14 +56,16 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
                     "/api/auth/login": (200, {"ok": True, "next": "/dashboard/admin"}),
                     "/api/auth/session": (200, {"authenticated": True, "user": {"roles": ["admin"]}}),
                     "/internal/dashboard/session": (201, {"sessionId": "dashboard-session"}),
-                    "/internal/dashboard/workspace": (200, {"workspace": {"kind": "ADMIN", "buttons": []}}),
+                    "/internal/dashboard/workspace": (200, {"workspace": {"kind": "ADMIN", "buttons": self.buttons}}),
                     "/internal/dashboard/config": (200, {"mockAuthEnabled": False}),
                 }
                 return Response(*responses[path])
 
-        result = verify_authenticated_dashboard_handoff("http://gateway.test", opener=Opener())
+        user_management = [{"id": "user-management", "title": "User Management", "status": "available"}]
+        result = verify_authenticated_dashboard_handoff("http://gateway.test", opener=Opener(user_management))
 
         self.assertEqual(result["workspace"]["kind"], "ADMIN")
+        self.assertEqual(result["workspace"]["buttons"], user_management)
         self.assertFalse(result["mockAuthEnabled"])
         self.assertEqual(
             [request.full_url.removeprefix("http://gateway.test") for request in calls],
@@ -80,6 +85,8 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
             json.loads(login.data.decode("utf-8")),
             {"username": "Admin", "password": "Admin", "role": "admin"},
         )
+        with self.assertRaisesRegex(RuntimeError, "User Management"):
+            verify_authenticated_dashboard_handoff("http://gateway.test", opener=Opener([]))
 
     def test_smoke_matrix_covers_every_manifest_module(self):
         manifest = load_manifest()

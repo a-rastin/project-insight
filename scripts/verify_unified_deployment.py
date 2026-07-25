@@ -339,6 +339,9 @@ def verify_authenticated_dashboard_handoff(base_url: str, *, opener: Any | None 
     workspace_status, workspace = call("/internal/dashboard/workspace")
     if workspace_status != 200 or workspace.get("workspace", {}).get("kind") != "ADMIN":
         raise RuntimeError("authenticated dashboard handoff did not load Admin workspace")
+    buttons = workspace["workspace"].get("buttons", [])
+    if not any(button.get("id") == "user-management" and button.get("status") == "available" for button in buttons):
+        raise RuntimeError("authenticated dashboard handoff did not expose available User Management")
     config_status, configuration = call("/internal/dashboard/config")
     if config_status != 200 or configuration.get("mockAuthEnabled") is not False:
         raise RuntimeError("unified Dashboard must explicitly disable mock Authentication")
