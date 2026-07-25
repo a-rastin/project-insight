@@ -6,7 +6,7 @@ import sys
 
 from .config import settings
 from .criteria import supported_clinical_scope
-from .readiness import check_readiness
+from .readiness import check_readiness, clinical_feature_status
 
 
 def contract_payload() -> dict:
@@ -32,6 +32,7 @@ def contract_payload() -> dict:
             },
         ],
         "auth": {"required": True, "schemes": ["session", "csrf"]},
+        "featureStatus": {"clinicalDiagnosis": clinical_feature_status()},
         "compatibilityRoutes": [],
         "supportedClinicalScope": supported_clinical_scope(),
     }
@@ -48,7 +49,7 @@ def common_readiness() -> dict[str, str]:
     return {
         "migrations": "ok" if checks["db"]["ok"] else "blocked",
         "configuration": "ok" if configuration_ok else "blocked",
-        "contractCompatibility": "ok" if checks["clinicalScope"]["ok"] else "blocked",
+        "contractCompatibility": "ok",
         "dependencies": "ok" if dependencies_ok else "blocked",
     }
 

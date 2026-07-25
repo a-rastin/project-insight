@@ -409,7 +409,7 @@ class TestRestContract(unittest.TestCase):
         body = r.json()
         self.assertEqual(body["status"], "not_ready")
         self.assertEqual(body["checks"]["dependencies"], "blocked")
-        self.assertEqual(body["checks"]["contractCompatibility"], "blocked")
+        self.assertEqual(body["checks"]["contractCompatibility"], "ok")
         self.assertEqual(r.status_code, 503)
 
     def test_meta_returns_nine_criteria(self):

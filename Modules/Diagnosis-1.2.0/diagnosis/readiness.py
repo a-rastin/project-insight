@@ -26,15 +26,16 @@ The check is **module-local** and **never leaks secrets**:
   state is "skipped" (the adapter short-circuits and never contacts the
   registry). When enabled we verify ``PATIENT_BASE_URL`` resolves to a
   non-empty string — same no-leak rule as Auth.
-- *Clinical scope* — every exposed criteria entry must have an approved
-  normalized coding mapping. The current schizophrenia criteria entry has no
-  approved mapping, so this check intentionally blocks readiness.
+- *Clinical scope* — every exposed criteria entry needs an approved normalized
+  coding mapping before clinical operations are available. It is feature state,
+  not process readiness, so unresolved coding never marks healthy dependencies
+  as unready.
 
 Response shape (stable; do not drop keys without coordinating with the
 larger Insight app's readiness aggregator):
 
     {
-      "ok":        bool,             # AND of every check's ok
+      "ok":        bool,             # AND of operational dependency checks
       "module":    "diagnosis",
       "checks":    {
           "db":      {"ok": bool},
@@ -122,7 +123,7 @@ def _check_patient() -> dict[str, Any]:
 
 
 def _check_clinical_scope() -> dict[str, Any]:
-    """Block traffic until each exposed diagnosis has approved coding."""
+    """Report whether clinical Diagnosis operations have approved coding."""
     from .criteria import supported_clinical_scope
 
     entries = supported_clinical_scope()["criteriaSets"]
@@ -142,6 +143,13 @@ def _check_clinical_scope() -> dict[str, Any]:
     return {"ok": resolved, "coding": coding}
 
 
+def clinical_feature_status() -> dict[str, Any]:
+    """Return release state for clinical operations without blocking readiness."""
+    if _check_clinical_scope()["ok"]:
+        return {"available": True}
+    return {"available": False, "reason": "clinical_scope_unresolved"}
+
+
 def check_readiness() -> dict[str, Any]:
     """Return the module-local readiness snapshot. Pure: no HTTP, no
     env mutation, never raises. The HTTP route in ``app.py`` wraps this
@@ -151,7 +159,7 @@ def check_readiness() -> dict[str, Any]:
     auth = _check_auth()
     patient = _check_patient()
     clinical_scope = _check_clinical_scope()
-    ok = db["ok"] and auth["ok"] and patient["ok"] and clinical_scope["ok"]
+    ok = db["ok"] and auth["ok"] and patient["ok"]
     return {
         "ok": ok,
         "module": "diagnosis",
@@ -161,10 +169,11 @@ def check_readiness() -> dict[str, Any]:
             "patient": patient,
             "clinicalScope": clinical_scope,
         },
+        "featureStatus": {"clinicalDiagnosis": clinical_feature_status()},
     }
 
 
-__all__ = ["check_readiness"]
+__all__ = ["check_readiness", "clinical_feature_status"]
 
 
 # --- ponytail: one runnable self-check. No framework. Fail = bug. ---------
