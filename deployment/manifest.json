@@ -58,7 +58,7 @@
       "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
       "workingDirectory": "/opt/modules/diagnosis",
       "command": ["python", "-m", "diagnosis", "--host", "127.0.0.1", "--port", "8104"],
-      "environment": {"PORT": "8104", "DIAGNOSIS_HOST": "127.0.0.1", "DIAGNOSIS_PORT": "8104", "DIAGNOSIS_DB_PATH": "/var/lib/insight/diagnosis/diagnosis.sqlite3"},
+      "environment": {"PORT": "8104", "DIAGNOSIS_HOST": "127.0.0.1", "DIAGNOSIS_PORT": "8104", "DIAGNOSIS_DB_PATH": "/var/lib/insight/diagnosis/diagnosis.sqlite3", "AUTH_BASE_URL": "http://127.0.0.1:8101"},
       "databasePath": "/var/lib/insight/diagnosis/diagnosis.sqlite3"
     },
     {

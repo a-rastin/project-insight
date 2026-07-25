@@ -93,7 +93,9 @@ def _check_auth() -> dict[str, Any]:
     (would surface an internal host / IP to the caller)."""
     from . import auth as _auth
     raw = getattr(_auth, "AUTH_BASE_URL", "") or ""
-    configured = (raw.strip() if isinstance(raw, str) else str(raw)) != ""
+    configured_url = raw.strip() if isinstance(raw, str) else str(raw)
+    # Port 9000 is only legacy standalone default; unified Authentication owns 8101.
+    configured = configured_url not in {"", "http://localhost:9000"}
     bypass = os.environ.get("DIAGNOSIS_AUTH_BYPASS") == "1"
     # The module can only delegate safely when it's configured AND the
     # bypass shim is off. The bypass is for the in-process self-check /

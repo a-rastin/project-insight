@@ -103,6 +103,21 @@ def test_auth_base_url_blank_fails(tmpdb):
         _restore_env()
 
 
+def test_auth_base_url_legacy_default_fails(tmpdb):
+    _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
+    _swap_store(tmpdb)
+    saved = diag_auth.AUTH_BASE_URL
+    diag_auth.AUTH_BASE_URL = "http://localhost:9000"
+    try:
+        r = check_readiness()
+        assert r["checks"]["auth"]["configured"] is False, r
+        assert r["checks"]["auth"]["ok"] is False, r
+        assert r["ok"] is False, r
+    finally:
+        diag_auth.AUTH_BASE_URL = saved
+        _restore_env()
+
+
 def test_patient_lookup_enabled_and_configured(tmpdb):
     _set_env(bypass=None, lookup="1", patient_url="http://127.0.0.1:9000")
     _swap_store(tmpdb)
@@ -363,6 +378,7 @@ def main() -> None:
             ("test_default_env_is_blocked_until_coding_is_approved", lambda: test_default_env_is_blocked_until_coding_is_approved(tmpdb)),
             ("test_bypass_shim_fails_readiness", lambda: test_bypass_shim_fails_readiness(tmpdb)),
             ("test_auth_base_url_blank_fails", lambda: test_auth_base_url_blank_fails(tmpdb)),
+            ("test_auth_base_url_legacy_default_fails", lambda: test_auth_base_url_legacy_default_fails(tmpdb)),
             ("test_patient_lookup_enabled_and_configured", lambda: test_patient_lookup_enabled_and_configured(tmpdb)),
             ("test_patient_lookup_enabled_blank_url_fails", lambda: test_patient_lookup_enabled_blank_url_fails(tmpdb)),
             ("test_db_fault_is_false_without_raising", lambda: test_db_fault_is_false_without_raising(tmpdb)),
