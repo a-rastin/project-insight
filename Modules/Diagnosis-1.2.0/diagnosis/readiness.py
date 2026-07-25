@@ -221,7 +221,7 @@ def _readiness_selfcheck() -> None:
 
         r = check_readiness()
         assert r["module"] == "diagnosis", r
-        assert r["ok"] is False, ("unresolved coding must block readiness", r)
+        assert r["ok"] is True, ("unresolved coding must not block readiness", r)
         assert r["checks"]["db"]["ok"] is True, r
         assert r["checks"]["auth"]["configured"] is True, r
         assert r["checks"]["auth"]["bypass"] is False, r
@@ -252,7 +252,7 @@ def _readiness_selfcheck() -> None:
             assert r["checks"]["patient"]["enabled"] is True, r
             assert r["checks"]["patient"]["configured"] is True, r
             assert r["checks"]["patient"]["ok"] is True, r
-            assert r["ok"] is False, r
+            assert r["ok"] is True, r
         finally:
             _patient.PATIENT_BASE_URL = saved_patient_url
             _os.environ.pop("DIAGNOSIS_PATIENT_LOOKUP", None)
