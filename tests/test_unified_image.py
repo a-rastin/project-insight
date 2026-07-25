@@ -97,6 +97,8 @@ class UnifiedImageTests(unittest.TestCase):
 
     def test_nginx_serves_authentication_root_and_dashboard_static_shell(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn("include /etc/nginx/mime.types;", nginx)
+        self.assertIn("default_type application/octet-stream;", nginx)
         # Authentication is the application landing page at "/".
         self.assertIn("location / {", nginx)
         self.assertIn("proxy_pass http://127.0.0.1:8101;", nginx)
@@ -111,6 +113,7 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("location = /dashboard/user {", nginx)
         self.assertIn("location /dashboard/ {", nginx)
         self.assertIn("alias /opt/modules/dashboard/;", nginx)
+        self.assertEqual(nginx.count("default_type text/html;"), 3)
         self.assertIn('add_header Cache-Control "no-store";', nginx)
 
     def test_vps_topology_keeps_host_nginx_on_tls_and_systemd_on_digest_only(self):
