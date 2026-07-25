@@ -260,10 +260,16 @@ def verify_unified_gateway(base_url: str, *, manifest: dict[str, Any] | None = N
     if f":{gateway_port}" not in base and not base.endswith(str(gateway_port)):
         # Allow operators to pass https edge URLs; still require path checks below.
         pass
+    verify_paths(
+        base,
+        ["/readyz"],
+        label="unified gateway ready",
+        attempts=15,
+        expected_module="unified-gateway",
+    )
     for row in smoke_matrix(data):
         module_id = row["moduleId"]
-        verify_paths(base, row["unified_health"], label=f"unified {module_id} health", attempts=15 if module_id == data["modules"][0]["moduleId"] else 5)
-        if row["unified_ready"]:
+        if module_id == "diagnosis":
             verify_paths(
                 base,
                 row["unified_ready"],

@@ -19,6 +19,7 @@ from verify_unified_deployment import (  # noqa: E402
     smoke_matrix,
     verify_paths,
     verify_all_modules_smoke_matrix,
+    verify_unified_gateway,
     verify_topology_contracts,
     write_scan_evidence,
 )
@@ -69,6 +70,15 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
         message = str(context.exception)
         self.assertIn("checks.clinicalScope.ok=false", message)
         self.assertIn("resolutionStatus=unresolved", message)
+
+    def test_unified_verifier_uses_gateway_aggregate_not_health_aliases(self):
+        calls = []
+        with patch("verify_unified_deployment.verify_paths", side_effect=lambda _base, paths, **_kwargs: calls.append(paths)):
+            with patch("verify_unified_deployment.request", return_value=(200, {}, b"{}")):
+                verify_unified_gateway("http://gateway.test")
+        self.assertIn(["/readyz"], calls)
+        self.assertIn(["/api/diagnosis/v1/ready"], calls)
+        self.assertNotIn(["/health"], calls)
 
     def test_topology_contracts_tls_loopback_restart_and_volumes(self):
         result = verify_topology_contracts(ROOT)
