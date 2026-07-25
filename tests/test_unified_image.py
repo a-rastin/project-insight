@@ -105,7 +105,7 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("proxy_set_header Host $host;", nginx)
         self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
         self.assertIn("proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;", nginx)
-        # Dashboard shell lives under /dashboard/{admin,user} per the Authentication contract.
+        # Role links normalize to one shell, avoiding extensionless HTML aliases.
         self.assertIn("location = /dashboard {", nginx)
         self.assertIn("return 302 /dashboard/;", nginx)
         self.assertIn("location = /dashboard/ {", nginx)
@@ -113,8 +113,17 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("location = /dashboard/user {", nginx)
         self.assertIn("location /dashboard/ {", nginx)
         self.assertIn("alias /opt/modules/dashboard/;", nginx)
-        self.assertEqual(nginx.count("default_type text/html;"), 3)
+        self.assertEqual(nginx.count("default_type text/html;"), 1)
         self.assertIn('add_header Cache-Control "no-store";', nginx)
+        self.assertIn('add_header X-Content-Type-Options "nosniff";', nginx)
+        for role in ("admin", "user"):
+            route = f"location = /dashboard/{role} {{\n            return 302 /dashboard/;\n        }}"
+            self.assertIn(route, nginx)
+
+    def test_dashboard_shell_uses_gateway_absolute_assets(self):
+        shell = (ROOT / "Modules" / "Dashboard-1.2.0" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('href="/dashboard/styles.css"', shell)
+        self.assertIn('src="/dashboard/dashboard.js"', shell)
 
     def test_vps_topology_keeps_host_nginx_on_tls_and_systemd_on_digest_only(self):
         unit = (DEPLOYMENT / "insight-unified-container.service").read_text(encoding="utf-8")
