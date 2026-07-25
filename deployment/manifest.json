@@ -74,7 +74,7 @@
       "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
       "workingDirectory": "/opt/modules/dashboard",
       "command": ["python", "-m", "uvicorn", "dashboard_backend.main:app", "--host", "127.0.0.1", "--port", "8102"],
-      "environment": {"PORT": "8102", "DASHBOARD_DB_PATH": "/var/lib/insight/dashboard/dashboard.sqlite3"},
+      "environment": {"PORT": "8102", "DASHBOARD_DB_PATH": "/var/lib/insight/dashboard/dashboard.sqlite3", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session", "DASHBOARD_MOCK_AUTH": "0"},
       "databasePath": "/var/lib/insight/dashboard/dashboard.sqlite3"
     },
     {

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import http.cookiejar
 import json
 import re
 import shutil
@@ -295,6 +296,55 @@ def verify_unified_gateway(base_url: str, *, manifest: dict[str, Any] | None = N
                 raise RuntimeError(f"unified route {url} returned server error {status}")
 
 
+def verify_authenticated_dashboard_handoff(base_url: str, *, opener: Any | None = None) -> dict[str, Any]:
+    """Exercise seeded Admin authentication through Dashboard session activation."""
+    if opener is None:
+        cookies = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookies))
+    base = base_url.rstrip("/")
+
+    def call(path: str, *, method: str = "GET", payload: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
+        request_headers = {"accept": "application/json", **(headers or {})}
+        data = json.dumps(payload).encode("utf-8") if payload is not None else None
+        if data is not None:
+            request_headers["content-type"] = "application/json"
+        request = urllib.request.Request(base + path, data=data, method=method, headers=request_headers)
+        try:
+            with opener.open(request, timeout=5) as response:
+                return response.status, json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            body = error.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"authenticated dashboard handoff {path} returned HTTP {error.code}: {body}") from error
+        except Exception as error:  # noqa: BLE001 - report handoff transport failures
+            raise RuntimeError(f"authenticated dashboard handoff failed for {path}: {error}") from error
+
+    csrf_status, csrf = call("/api/auth/csrf")
+    token = csrf.get("csrf_token")
+    if csrf_status != 200 or not isinstance(token, str) or not token:
+        raise RuntimeError("authenticated dashboard handoff did not receive a CSRF token")
+    login_status, _ = call(
+        "/api/auth/login",
+        method="POST",
+        payload={"username": "Admin", "password": "Admin", "role": "admin"},
+        headers={"x-csrf-token": token},
+    )
+    if login_status != 200:
+        raise RuntimeError(f"authenticated dashboard handoff login returned HTTP {login_status}")
+    auth_status, auth = call("/api/auth/session")
+    if auth_status != 200 or auth.get("authenticated") is not True or "admin" not in auth.get("user", {}).get("roles", []):
+        raise RuntimeError("authenticated dashboard handoff did not establish an Admin Authentication session")
+    dashboard_status, dashboard_session = call("/internal/dashboard/session", method="POST", payload={})
+    if dashboard_status != 201 or not isinstance(dashboard_session.get("sessionId"), str):
+        raise RuntimeError(f"authenticated dashboard handoff returned HTTP {dashboard_status} from Dashboard session activation")
+    workspace_status, workspace = call("/internal/dashboard/workspace")
+    if workspace_status != 200 or workspace.get("workspace", {}).get("kind") != "ADMIN":
+        raise RuntimeError("authenticated dashboard handoff did not load Admin workspace")
+    config_status, configuration = call("/internal/dashboard/config")
+    if config_status != 200 or configuration.get("mockAuthEnabled") is not False:
+        raise RuntimeError("unified Dashboard must explicitly disable mock Authentication")
+    return {"workspace": workspace["workspace"], "mockAuthEnabled": configuration["mockAuthEnabled"]}
+
+
 def verify_topology_contracts(root: Path = ROOT) -> dict[str, bool]:
     """Offline contracts: TLS, loopback bind, restart policy, writable volumes, digest gate."""
     unit = (root / "deployment" / "insight-unified-container.service").read_text(encoding="utf-8")
@@ -407,6 +457,7 @@ def verify_container(image: str, *, recovery: bool) -> None:
     try:
         run(hardened_unified_run_command(image, name, port))
         verify_unified_gateway(f"http://127.0.0.1:{port}")
+        verify_authenticated_dashboard_handoff(f"http://127.0.0.1:{port}")
         if recovery:
             run(["docker", "kill", name])
             run(["docker", "start", name])
@@ -656,6 +707,7 @@ def main() -> int:
         print(f"{args.module_id} standalone smoke passed")
     elif args.command == "unified":
         verify_unified_gateway(args.base_url)
+        verify_authenticated_dashboard_handoff(args.base_url)
         print("unified gateway smoke passed")
     elif args.command == "container":
         verify_container(args.image, recovery=args.recovery)

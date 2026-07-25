@@ -56,7 +56,23 @@ async function renderScenario(role) {
   };
   globalThis.history = { replaceState() {} };
   globalThis.fetch = async (url) => {
-    assert.match(String(url), /\/internal\/dashboard\/workspace\?session=/);
+    if (url === "/internal/dashboard/config") {
+      return {
+        ok: true,
+        async json() {
+          return { mockAuthEnabled: false };
+        }
+      };
+    }
+    if (url === "/internal/dashboard/session") {
+      return {
+        ok: true,
+        async json() {
+          return { sessionId: `${role.toLowerCase()}-session` };
+        }
+      };
+    }
+    assert.equal(String(url), "/internal/dashboard/workspace");
     return {
       ok: true,
       async json() {
@@ -94,4 +110,3 @@ assert.doesNotMatch(adminHtml, /Dr\. Ari Morgan/);
 for (const title of ["Add New User", "Logs", "Backup", "List of Users"]) {
   assert.match(adminHtml, new RegExp(title));
 }
-

@@ -51,6 +51,14 @@ class UnifiedImageTests(unittest.TestCase):
         diagnosis = next(module for module in self.manifest["modules"] if module["moduleId"] == "diagnosis")
         self.assertEqual("http://127.0.0.1:8101", diagnosis["environment"]["AUTH_BASE_URL"])
 
+    def test_dashboard_manifest_uses_unified_authentication_endpoint(self):
+        dashboard = next(module for module in self.manifest["modules"] if module["moduleId"] == "dashboard")
+        self.assertEqual(
+            "http://127.0.0.1:8101/api/auth/session",
+            dashboard["environment"]["AUTH_SESSION_URL"],
+        )
+        self.assertEqual("0", dashboard["environment"]["DASHBOARD_MOCK_AUTH"])
+
     def test_supervisor_declares_all_module_processes_and_gateway(self):
         specs = build_process_specs(self.manifest)
         self.assertEqual(

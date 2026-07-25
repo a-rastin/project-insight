@@ -44,6 +44,7 @@ let state = {
   view: "loading",
   error: null,
   devRole: null,
+  mockAuthEnabled: false,
   signedOut: params.get("signedOut") === "1"
 };
 
@@ -58,6 +59,9 @@ const api = {
   },
   workspace() {
     return request("/internal/dashboard/workspace");
+  },
+  runtimeConfig() {
+    return request("/internal/dashboard/config");
   },
   acceptDisclaimer() {
     return request("/internal/dashboard/disclaimer/accept", { method: "POST" });
@@ -82,7 +86,12 @@ async function request(url, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || data.detail || "Request failed");
+  if (!response.ok) {
+    const message = data.detail
+      ? `${data.error || "Request failed"}: ${data.detail}`
+      : data.error || "Request failed";
+    throw new Error(message);
+  }
   return data;
 }
 
@@ -108,10 +117,6 @@ function fmtDate(value) {
   } catch {
     return value || "Unknown";
   }
-}
-
-function isLocalDev() {
-  return ["localhost", "127.0.0.1", "::1", ""].includes(location.hostname);
 }
 
 function roleMeta(role) {
@@ -141,6 +146,13 @@ async function load() {
   if (state.signedOut) {
     renderAccess({ signedOut: true });
     return;
+  }
+
+  try {
+    const configuration = await api.runtimeConfig();
+    state.mockAuthEnabled = configuration.mockAuthEnabled === true;
+  } catch {
+    state.mockAuthEnabled = false;
   }
 
   if (!state.sessionId) {
@@ -183,7 +195,6 @@ function renderLoading() {
 }
 
 function renderAccess({ error, signedOut } = {}) {
-  const local = isLocalDev();
   app.innerHTML = `
     <main class="access-screen">
       <section class="access-panel">
@@ -193,7 +204,7 @@ function renderAccess({ error, signedOut } = {}) {
           <p class="muted">${signedOut ? "Dashboard session ended." : "Authenticated activation is required before workspace data loads."}</p>
         </div>
         ${error ? `<p class="inline-error">${escapeHtml(error.message)}</p>` : ""}
-        ${local ? renderDevAccess() : renderAuthNotice()}
+        ${state.mockAuthEnabled ? renderDevAccess() : renderAuthNotice()}
       </section>
     </main>
   `;
@@ -229,7 +240,11 @@ function renderAuthNotice() {
   return `
     <div class="auth-panel">
       <strong>Authentication required</strong>
-      <p>Open Dashboard from authenticated host app, or pass a valid Dashboard session URL.</p>
+      <p>Dashboard could not validate your Authentication session. Return to sign-in or retry.</p>
+      <div class="dev-actions">
+        <a href="/">Return to sign-in</a>
+        <button id="resumeWorkspace" class="primary">Retry auth</button>
+      </div>
     </div>
   `;
 }
@@ -433,7 +448,7 @@ async function signOut() {
       // Local reset still ends Dashboard session in this browser.
     }
   }
-  state = { sessionId: null, model: null, view: "access", error: null, devRole: null, signedOut: true };
+  state = { sessionId: null, model: null, view: "access", error: null, devRole: null, mockAuthEnabled: false, signedOut: true };
   clearUrl("?signedOut=1");
   renderAccess({ signedOut: true });
 }

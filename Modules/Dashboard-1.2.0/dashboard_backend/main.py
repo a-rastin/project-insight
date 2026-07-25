@@ -143,6 +143,11 @@ async def readyz() -> Any:
     return {"ok": True}
 
 
+@app.get("/internal/dashboard/config")
+async def runtime_configuration() -> dict[str, bool]:
+    return {"mockAuthEnabled": settings.use_mock_auth}
+
+
 @app.post("/internal/dashboard/session")
 async def create_dashboard_session(request: Request) -> JSONResponse:
     await parse_json_body(request)

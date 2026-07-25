@@ -296,6 +296,13 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(request_json(base, "/healthz")[0], 200)
             self.assertEqual(request_json(base, "/readyz")[0], 200)
 
+    def test_runtime_configuration_discloses_mock_auth_capability(self) -> None:
+        with DashboardServer() as base:
+            status, configuration = request_json(base, "/internal/dashboard/config")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(configuration, {"mockAuthEnabled": False})
+
     def test_dataset_schema_keeps_only_dashboard_owned_tables(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             db_path = os.path.join(tempdir, "dashboard.sqlite3")
@@ -533,6 +540,22 @@ class DashboardBackendTest(unittest.TestCase):
         self.assertNotIn("?session=", javascript)
         self.assertNotIn("patientUuid", javascript)
         self.assertNotIn("encounterUuid", javascript)
+
+    def test_browser_source_uses_backend_mock_auth_capability(self) -> None:
+        source = (os.path.dirname(__file__) + "/dashboard.js")
+        with open(source, encoding="utf-8") as handle:
+            javascript = handle.read()
+
+        self.assertIn('request("/internal/dashboard/config")', javascript)
+        self.assertIn("state.mockAuthEnabled", javascript)
+        self.assertNotIn("function isLocalDev()", javascript)
+
+    def test_browser_source_includes_authentication_error_detail(self) -> None:
+        source = (os.path.dirname(__file__) + "/dashboard.js")
+        with open(source, encoding="utf-8") as handle:
+            javascript = handle.read()
+
+        self.assertIn("`${data.error || \"Request failed\"}: ${data.detail}`", javascript)
 
     def test_dashboard_does_not_own_patient_mutation_endpoint(self) -> None:
         with DashboardServer() as base:

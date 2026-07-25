@@ -19,6 +19,7 @@ from verify_unified_deployment import (  # noqa: E402
     smoke_matrix,
     verify_paths,
     verify_all_modules_smoke_matrix,
+    verify_authenticated_dashboard_handoff,
     verify_unified_gateway,
     verify_topology_contracts,
     write_scan_evidence,
@@ -26,6 +27,60 @@ from verify_unified_deployment import (  # noqa: E402
 
 
 class TP22UnifiedVerificationTests(unittest.TestCase):
+    def test_authenticated_dashboard_handoff_uses_authentication_cookie_flow(self):
+        calls = []
+
+        class Response:
+            def __init__(self, status, payload):
+                self.status = status
+                self._body = json.dumps(payload).encode("utf-8")
+
+            def read(self):
+                return self._body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+        class Opener:
+            def open(self, request, timeout):
+                calls.append(request)
+                path = request.full_url.removeprefix("http://gateway.test")
+                responses = {
+                    "/api/auth/csrf": (200, {"csrf_token": "csrf-token"}),
+                    "/api/auth/login": (200, {"ok": True, "next": "/dashboard/admin"}),
+                    "/api/auth/session": (200, {"authenticated": True, "user": {"roles": ["admin"]}}),
+                    "/internal/dashboard/session": (201, {"sessionId": "dashboard-session"}),
+                    "/internal/dashboard/workspace": (200, {"workspace": {"kind": "ADMIN", "buttons": []}}),
+                    "/internal/dashboard/config": (200, {"mockAuthEnabled": False}),
+                }
+                return Response(*responses[path])
+
+        result = verify_authenticated_dashboard_handoff("http://gateway.test", opener=Opener())
+
+        self.assertEqual(result["workspace"]["kind"], "ADMIN")
+        self.assertFalse(result["mockAuthEnabled"])
+        self.assertEqual(
+            [request.full_url.removeprefix("http://gateway.test") for request in calls],
+            [
+                "/api/auth/csrf",
+                "/api/auth/login",
+                "/api/auth/session",
+                "/internal/dashboard/session",
+                "/internal/dashboard/workspace",
+                "/internal/dashboard/config",
+            ],
+        )
+        login = calls[1]
+        self.assertEqual(login.get_method(), "POST")
+        self.assertEqual(login.get_header("X-csrf-token"), "csrf-token")
+        self.assertEqual(
+            json.loads(login.data.decode("utf-8")),
+            {"username": "Admin", "password": "Admin", "role": "admin"},
+        )
+
     def test_smoke_matrix_covers_every_manifest_module(self):
         manifest = load_manifest()
         rows = verify_all_modules_smoke_matrix()
