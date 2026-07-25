@@ -111,6 +111,13 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("location = /readyz { proxy_pass http://127.0.0.1:8110; }", nginx)
         self.assertIn("location = /healthz { proxy_pass http://127.0.0.1:8110; }", nginx)
 
+    def test_nginx_proxies_user_management_to_authentication(self):
+        nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn(
+            "location /modules/user-management {\n            proxy_pass http://127.0.0.1:8101;\n        }",
+            nginx,
+        )
+
     def test_nginx_serves_authentication_root_and_dashboard_static_shell(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
         self.assertIn("include /etc/nginx/mime.types;", nginx)
