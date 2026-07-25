@@ -116,6 +116,7 @@ class UnifiedImageTests(unittest.TestCase):
         # Role links normalize to one shell, avoiding extensionless HTML aliases.
         self.assertIn("location = /dashboard {", nginx)
         self.assertIn("return 302 /dashboard/;", nginx)
+        self.assertIn("absolute_redirect off;", nginx)
         self.assertIn("location = /dashboard/ {", nginx)
         self.assertIn("location = /dashboard/admin {", nginx)
         self.assertIn("location = /dashboard/user {", nginx)
