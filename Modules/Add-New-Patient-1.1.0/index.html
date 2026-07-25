@@ -18,7 +18,19 @@
           <button class="primary-action" id="activateModuleButton" type="button">
             Add New Patient
           </button>
+          <button class="secondary-action" id="listPatientsButton" type="button">View Patients</button>
         </div>
+      </section>
+
+      <section class="patient-view" id="patientsView" aria-labelledby="patientsTitle" hidden>
+        <header class="topbar">
+          <h2 id="patientsTitle">Patients</h2>
+          <button class="secondary-action" id="patientsBackButton" type="button">Back to Dashboard</button>
+        </header>
+        <table>
+          <thead><tr><th>Code</th><th>Name</th><th>Age</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody id="patientList"></tbody>
+        </table>
       </section>
 
       <section class="patient-view" id="patientView" aria-labelledby="formTitle" hidden>

@@ -11,6 +11,9 @@ test("dashboard view renders with activate control", () => {
   assert.match(html, /id="dashboardView"/);
   assert.match(html, /id="activateModuleButton"[^>]*type="button"/);
   assert.match(html, /id="dashboardTitle"[\s\S]*?>Add New Patient</);
+  assert.match(html, /id="listPatientsButton"[^>]*type="button"/);
+  assert.match(html, /id="patientsView"/);
+  assert.match(html, /id="patientList"/);
 });
 
 test("form exposes demographics + clinical fields", () => {

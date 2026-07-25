@@ -191,6 +191,7 @@ async def mock_auth_session(request: Request) -> JSONResponse:
 
 
 @app.get("/api/add-new-patient/csrf")
+@app.get("/api/add-new-patient/v1/csrf")
 async def csrf() -> JSONResponse:
     token = generate_csrf_token()
     response = JSONResponse(content={"csrfToken": token})
@@ -266,6 +267,9 @@ async def get_canonical_patient(
 ) -> dict[str, Any] | JSONResponse:
     patient = repo.get_patient_identity(patient_id)
     if not patient:
+        resolved = repo.get_patient(patient_id)
+        patient = repo.get_patient_identity(resolved["id"]) if resolved else None
+    if not patient:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Patient was not found."})
     return canonical_response(patient=patient)
 
@@ -293,11 +297,13 @@ async def get_canonical_encounter(
 
 
 @app.get("/api/patients")
+@app.get("/api/add-new-patient/v1/patients")
 async def list_patients(_: dict[str, Any] = Depends(require_authenticated_session)) -> dict[str, Any]:
     return {"schemaVersion": SCHEMA_VERSION, "patients": repo.list_patients()}
 
 
 @app.post("/api/patients")
+@app.post("/api/add-new-patient/v1/intakes")
 async def create_patient(
     payload: PatientIntake,
     identity: dict[str, Any] = Depends(require_psychiatrist_session),

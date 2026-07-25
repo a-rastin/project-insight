@@ -335,6 +335,26 @@ class AddNewPatientBackendTest(unittest.TestCase):
         self.assertEqual(ready_status, 200)
         self.assertEqual(ready, {"status": "ready"})
 
+    def test_versioned_intake_api_creates_lists_and_resolves_patients(self) -> None:
+        with AddNewPatientServer() as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            self.assertEqual(request_json(base, "/api/add-new-patient/v1/csrf")[0], 200)
+            status, created = request_json(
+                base,
+                "/api/add-new-patient/v1/intakes",
+                method="POST",
+                headers=headers,
+                body=valid_payload(),
+            )
+            self.assertEqual(status, 201)
+            status, listed = request_json(base, "/api/add-new-patient/v1/patients", headers=PSY_HEADER)
+            self.assertEqual(status, 200)
+            self.assertEqual([patient["patientCode"] for patient in listed["patients"]], ["TEST01"])
+            status, resolved = request_json(base, "/api/add-new-patient/v1/patients/TEST01", headers=PSY_HEADER)
+
+        self.assertEqual(status, 200)
+        self.assertEqual(resolved["patient"]["id"], created["patient"]["id"])
+
     def test_create_patient_returns_201_with_full_record(self) -> None:
         with AddNewPatientServer() as base:
             status, data = request_json(base, "/api/patients", method="POST", headers=csrf_headers(base, PSY_HEADER), body=valid_payload())
@@ -691,7 +711,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertEqual(status, 409)
             self.assertEqual(data["error"], "patient_alias_already_exists")
 
-    def test_canonical_patient_lookup_does_not_accept_patient_code(self) -> None:
+    def test_canonical_patient_lookup_accepts_patient_code(self) -> None:
         with AddNewPatientServer() as base:
             request_json(
                 base,
@@ -705,8 +725,8 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 "/api/add-new-patient/v1/patients/CAN001",
                 headers=PSY_HEADER,
             )
-            self.assertEqual(status, 404)
-            self.assertEqual(data, {"message": "Patient was not found."})
+            self.assertEqual(status, 200)
+            self.assertEqual(data["patient"]["patientCode"], "CAN001")
 
     def test_encounter_canonical_route_requires_patient_uuid(self) -> None:
         with AddNewPatientServer() as base:

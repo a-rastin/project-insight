@@ -151,6 +151,10 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
   const dashboardView = getRequiredElement(root, "#dashboardView");
   const patientView = getRequiredElement(root, "#patientView");
   const activateModuleButton = getRequiredElement(root, "#activateModuleButton");
+  const listPatientsButton = getRequiredElement(root, "#listPatientsButton");
+  const patientsView = getRequiredElement(root, "#patientsView");
+  const patientsBackButton = getRequiredElement(root, "#patientsBackButton");
+  const patientList = getRequiredElement(root, "#patientList");
   const backButton = getRequiredElement(root, "#backButton");
   const patientForm = getRequiredElement(root, "#patientForm");
   const patientCode = getRequiredElement(root, "#patientCode");
@@ -232,8 +236,36 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
 
   function returnToDashboard() {
     patientView.hidden = true;
+    patientsView.hidden = true;
     dashboardView.hidden = false;
     activateModuleButton.focus();
+  }
+
+  async function showPatients() {
+    dashboardView.hidden = true;
+    patientsView.hidden = false;
+    patientList.replaceChildren();
+    try {
+      const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/patients`, { credentials: "include" });
+      const result = await readJsonResponse(response);
+      if (!response.ok) throw new Error("Patient list unavailable");
+      for (const patient of result.patients || []) {
+        const row = document.createElement("tr");
+        for (const value of [patient.patientCode, `${patient.firstName} ${patient.lastName}`, patient.age, patient.status, patient.createdAt]) {
+          const cell = document.createElement("td");
+          cell.textContent = String(value ?? "");
+          row.append(cell);
+        }
+        patientList.append(row);
+      }
+    } catch {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 5;
+      cell.textContent = "Patient list unavailable.";
+      row.append(cell);
+      patientList.append(row);
+    }
   }
 
   function getPatientPayload() {
@@ -257,7 +289,7 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
   }
 
   async function getCsrfToken() {
-    const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/csrf`, {
+    const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/csrf`, {
       credentials: "include"
     });
     const result = await readJsonResponse(response);
@@ -271,7 +303,7 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
 
   async function savePatient(payload) {
     const csrfToken = await getCsrfToken();
-    const response = await fetch(`${normalizedApiBaseUrl}/api/patients`, {
+    const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/intakes`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -355,7 +387,9 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
   }
 
   activateModuleButton.addEventListener("click", activateModule);
+  listPatientsButton.addEventListener("click", showPatients);
   backButton.addEventListener("click", returnToDashboard);
+  patientsBackButton.addEventListener("click", returnToDashboard);
   regenerateCodeButton.addEventListener("click", regenerateCode);
   patientForm.addEventListener("submit", submitPatient);
   patientForm.elements.phoneNumber.addEventListener("input", formatPhoneInput);
@@ -366,7 +400,9 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
     generateCode: generateBrowserPatientCode,
     destroy() {
       activateModuleButton.removeEventListener("click", activateModule);
+      listPatientsButton.removeEventListener("click", showPatients);
       backButton.removeEventListener("click", returnToDashboard);
+      patientsBackButton.removeEventListener("click", returnToDashboard);
       regenerateCodeButton.removeEventListener("click", regenerateCode);
       patientForm.removeEventListener("submit", submitPatient);
       patientForm.elements.phoneNumber.removeEventListener("input", formatPhoneInput);
