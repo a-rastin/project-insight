@@ -8,6 +8,12 @@
       "title": "User Management",
       "roles": ["ADMIN"],
       "contractUrl": "http://127.0.0.1:8101/modules/user-management/contract"
+    },
+    {
+      "moduleId": "add-new-patient",
+      "title": "Add New Patient",
+      "roles": ["PSYCHIATRIST"],
+      "contractUrl": "http://127.0.0.1:8103/modules/add-new-patient/contract"
     }
   ]
 }

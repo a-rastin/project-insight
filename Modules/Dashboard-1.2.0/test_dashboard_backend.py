@@ -369,7 +369,12 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(workspace["workspace"]["title"], "Workspace")
             self.assertEqual(
                 [button["title"] for button in workspace["workspace"]["buttons"]],
-                [],
+                ["Add New Patient"],
+            )
+            self.assertEqual(workspace["workspace"]["buttons"][0]["id"], "add-new-patient")
+            self.assertEqual(
+                workspace["workspace"]["buttons"][0]["routeDiscovery"]["href"],
+                "/internal/dashboard/module-routes/add-new-patient",
             )
             self.assertNotIn("cards", workspace["workspace"])
             self.assertNotIn("patients", workspace)
