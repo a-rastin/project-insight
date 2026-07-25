@@ -262,4 +262,12 @@ async def dashboard_index() -> FileResponse:
     return FileResponse(ROOT / "index.html")
 
 
+@app.get("/dashboard/{full_path:path}")
+async def dashboard_spa_fallback(full_path: str) -> FileResponse:
+    candidate = ROOT / full_path
+    if full_path and candidate.is_file():
+        return FileResponse(candidate)
+    return FileResponse(ROOT / "index.html")
+
+
 app.mount("/dashboard", StaticFiles(directory=Path(ROOT), html=True), name="dashboard-static")

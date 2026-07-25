@@ -1,0 +1,1 @@
+/root/projects/insight/Modules/Dashboard-1.2.0/api-contract.md

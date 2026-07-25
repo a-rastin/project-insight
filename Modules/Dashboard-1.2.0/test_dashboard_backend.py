@@ -547,6 +547,20 @@ class DashboardBackendTest(unittest.TestCase):
 
             self.assertEqual(status, 404)
 
+    def test_dashboard_spa_routes_serve_index_html(self) -> None:
+        with DashboardServer() as base:
+            for path in ("/dashboard/", "/dashboard/admin", "/dashboard/user"):
+                req = Request(f"{base}{path}")
+                with urlopen(req, timeout=5) as response:
+                    self.assertEqual(response.status, 200, msg=path)
+                    body = response.read().decode("utf-8")
+                    self.assertIn("<title>Dashboard Workspace</title>", body, msg=path)
+            static_req = Request(f"{base}/dashboard/dashboard.js")
+            with urlopen(static_req, timeout=5) as response:
+                self.assertEqual(response.status, 200)
+                body = response.read().decode("utf-8")
+                self.assertIn("ROLE_META", body)
+
     def test_signed_out_dashboard_sessions_stop_workspace_access(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "admin-1")

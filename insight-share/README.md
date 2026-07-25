@@ -27,7 +27,8 @@ following fixes applied:
 | `insight-unified.image.tar` | The prebuilt Docker image (`insight-unified:local-build`). |
 | `SHA256SUMS` | Integrity checksum for the prebuilt image archive. |
 | `docker-compose.yaml` | Unified stack: one container + 9 named volumes; binds `127.0.0.1:8080`. |
-| `run.sh` | One-command launcher. Loads the image if missing, creates a persistent local secret, and waits until the container is healthy. |
+| `run.cmd` / `run.ps1` | Windows launcher. Verifies and loads the image, creates a persistent local secret, waits for health, then opens Insight. |
+| `run.sh` | Linux/macOS launcher with equivalent startup behavior. |
 | `nginx.conf` | In-container nginx gateway (modules on ports 8101-8109). |
 | `nginx-vps.conf` | Optional host-edge TLS + security-header nginx config. |
 | `supervisor.py` | In-container PID 1 (via `tini`) that runs nginx + all module backends. |
@@ -45,6 +46,24 @@ following fixes applied:
   (see `nginx-vps.conf`).
 
 ## Quick start
+
+### Windows
+
+1. Install and start Docker Desktop using Linux containers.
+2. Extract `insight-windows-amd64.zip`.
+3. Double-click `run.cmd`.
+
+PowerShell alternative:
+
+```powershell
+.\run.ps1
+```
+
+The first launch verifies and imports the bundled image, starts all services,
+waits for readiness, and opens Insight in the default browser. No source build
+or network download is required after obtaining the ZIP.
+
+### Linux / macOS
 
 ```bash
 tar -xzf insight-share.tar.gz

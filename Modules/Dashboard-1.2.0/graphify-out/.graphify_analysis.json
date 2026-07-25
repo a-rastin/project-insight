@@ -1,0 +1,465 @@
+{
+  "communities": {
+    "0": [
+      "HANDOFF.md::AUTH_BASE_URL",
+      "HANDOFF.md::AUTH_SESSION_TIMEOUT_MS",
+      "HANDOFF.md::AUTH_SESSION_URL",
+      "HANDOFF.md::Ari_Morgan",
+      "HANDOFF.md::AuthSessionError",
+      "HANDOFF.md::Authentication_Module",
+      "HANDOFF.md::DASHBOARD_DB_PATH",
+      "HANDOFF.md::DASHBOARD_MOCK_AUTH",
+      "HANDOFF.md::DashboardServer",
+      "HANDOFF.md::Disclaimer_Concept",
+      "HANDOFF.md::Error_Envelope",
+      "HANDOFF.md::MOCK_AUTH_SESSIONS",
+      "HANDOFF.md::MOCK_AUTH_USERS",
+      "HANDOFF.md::MODULE_BUTTONS",
+      "HANDOFF.md::Mina_Rahimi",
+      "HANDOFF.md::MockAuthenticationServer",
+      "HANDOFF.md::Mock_Auth_System",
+      "HANDOFF.md::Module_Route_Placeholders",
+      "HANDOFF.md::PORT_Config",
+      "HANDOFF.md::Settings_Config",
+      "HANDOFF.md::Uvicorn_Server",
+      "HANDOFF.md::Workspace_Button_Contracts",
+      "HANDOFF.md::Workspace_Model",
+      "HANDOFF.md::X_Demo_Auth_User_Header",
+      "HANDOFF.md::dashboard_backend_auth",
+      "HANDOFF.md::dashboard_backend_config",
+      "HANDOFF.md::dashboard_backend_main",
+      "HANDOFF.md::dashboard_backend_repository",
+      "HANDOFF.md::dashboard_js",
+      "HANDOFF.md::normalize_auth_identity",
+      "HANDOFF.md::npm_start_command",
+      "HANDOFF.md::npm_test_command",
+      "HANDOFF.md::package_json",
+      "HANDOFF.md::require_auth_identity",
+      "HANDOFF.md::require_session",
+      "HANDOFF.md::server_py",
+      "HANDOFF.md::styles_css",
+      "HANDOFF.md::test_dashboard_backend",
+      "HANDOFF.md::test_dashboard_frontend",
+      "index.html::Index_Html"
+    ],
+    "1": [
+      "test_dashboard_backend",
+      "test_dashboard_backend_auth_payload",
+      "test_dashboard_backend_create_session",
+      "test_dashboard_backend_dashboardbackendtest",
+      "test_dashboard_backend_dashboardbackendtest_test_admin_workspace_model_has_exact_buttons_only",
+      "test_dashboard_backend_dashboardbackendtest_test_auth_adapter_forwards_only_session_cookie_and_correlation_metadata",
+      "test_dashboard_backend_dashboardbackendtest_test_auth_role_change_is_not_spoofable_by_request_body",
+      "test_dashboard_backend_dashboardbackendtest_test_browser_source_does_not_persist_identifiers_or_put_them_in_history",
+      "test_dashboard_backend_dashboardbackendtest_test_contract_uses_mocked_authentication_session_endpoint",
+      "test_dashboard_backend_dashboardbackendtest_test_dashboard_creates_sessions_from_authentication_identity_not_body_identity",
+      "test_dashboard_backend_dashboardbackendtest_test_dashboard_does_not_own_patient_mutation_endpoint",
+      "test_dashboard_backend_dashboardbackendtest_test_dashboard_refuses_activation_without_authentication_session",
+      "test_dashboard_backend_dashboardbackendtest_test_dashboard_session_cookie_supports_refresh_without_url_state",
+      "test_dashboard_backend_dashboardbackendtest_test_dashboard_spa_routes_serve_index_html",
+      "test_dashboard_backend_dashboardbackendtest_test_health_and_readiness",
+      "test_dashboard_backend_dashboardbackendtest_test_invalid_auth_session_returns_401",
+      "test_dashboard_backend_dashboardbackendtest_test_module_routes_remain_role_scoped",
+      "test_dashboard_backend_dashboardbackendtest_test_psychiatrist_workspace_model_has_exact_buttons_and_route_discovery",
+      "test_dashboard_backend_dashboardbackendtest_test_runtime_discovery_reports_every_configured_module_state",
+      "test_dashboard_backend_dashboardbackendtest_test_session_expiry_is_enforced_after_dashboard_session_creation",
+      "test_dashboard_backend_dashboardbackendtest_test_signed_out_dashboard_sessions_stop_workspace_access",
+      "test_dashboard_backend_dashboardbackendtest_test_workflow_context_expires_when_authentication_is_revoked",
+      "test_dashboard_backend_dashboardbackendtest_test_workflow_contexts_are_server_owned_and_independent_across_tabs",
+      "test_dashboard_backend_dashboardserver",
+      "test_dashboard_backend_dashboardserver_enter",
+      "test_dashboard_backend_dashboardserver_exit",
+      "test_dashboard_backend_dashboardserver_init",
+      "test_dashboard_backend_free_port",
+      "test_dashboard_backend_future_iso",
+      "test_dashboard_backend_mockauthenticationserver",
+      "test_dashboard_backend_mockauthenticationserver_enter",
+      "test_dashboard_backend_mockauthenticationserver_exit",
+      "test_dashboard_backend_mockauthenticationserver_init",
+      "test_dashboard_backend_mockauthenticationserver_set_payload",
+      "test_dashboard_backend_mockmoduleserver",
+      "test_dashboard_backend_mockmoduleserver_enter",
+      "test_dashboard_backend_mockmoduleserver_exit",
+      "test_dashboard_backend_mockmoduleserver_init",
+      "test_dashboard_backend_request_json",
+      "test_dashboard_backend_session_headers"
+    ],
+    "2": [
+      "dashboard_backend_main",
+      "dashboard_backend_main_accept_disclaimer",
+      "dashboard_backend_main_canonical_uuid",
+      "dashboard_backend_main_create_dashboard_session",
+      "dashboard_backend_main_create_workflow_context",
+      "dashboard_backend_main_dashboard_index",
+      "dashboard_backend_main_dashboard_spa_fallback",
+      "dashboard_backend_main_delete_dashboard_session",
+      "dashboard_backend_main_discover_registered_module",
+      "dashboard_backend_main_display_name_for",
+      "dashboard_backend_main_healthz",
+      "dashboard_backend_main_http_exception_handler",
+      "dashboard_backend_main_json_error",
+      "dashboard_backend_main_module_route",
+      "dashboard_backend_main_module_route_discovery",
+      "dashboard_backend_main_modules_for_role",
+      "dashboard_backend_main_parse_json_body",
+      "dashboard_backend_main_py_any",
+      "dashboard_backend_main_py_request",
+      "dashboard_backend_main_readyz",
+      "dashboard_backend_main_require_auth_identity",
+      "dashboard_backend_main_require_session",
+      "dashboard_backend_main_root",
+      "dashboard_backend_main_with_dashboard_fields",
+      "dashboard_backend_main_workflow_context",
+      "dashboard_backend_main_workflow_status",
+      "dashboard_backend_main_workspace",
+      "dashboard_backend_main_workspace_for",
+      "fileresponse",
+      "httpexception",
+      "jsonresponse",
+      "server"
+    ],
+    "3": [
+      "connection",
+      "dashboard_backend_db",
+      "dashboard_backend_db_databaseadapter",
+      "dashboard_backend_db_databaseadapter_connect",
+      "dashboard_backend_db_databaseadapter_initialize",
+      "dashboard_backend_db_databaseadapter_ping",
+      "dashboard_backend_db_rationale_61",
+      "dashboard_backend_db_sqliteadapter",
+      "dashboard_backend_db_sqliteadapter_connect",
+      "dashboard_backend_db_sqliteadapter_init",
+      "dashboard_backend_db_sqliteadapter_initialize",
+      "dashboard_backend_db_sqliteadapter_ping",
+      "dashboard_backend_repository",
+      "dashboard_backend_repository_dashboardrepository",
+      "dashboard_backend_repository_dashboardrepository_accept_disclaimer",
+      "dashboard_backend_repository_dashboardrepository_create_session",
+      "dashboard_backend_repository_dashboardrepository_create_workflow_context",
+      "dashboard_backend_repository_dashboardrepository_deactivate_session",
+      "dashboard_backend_repository_dashboardrepository_get_session",
+      "dashboard_backend_repository_dashboardrepository_get_workflow_context",
+      "dashboard_backend_repository_dashboardrepository_init",
+      "dashboard_backend_repository_dashboardrepository_initialize",
+      "dashboard_backend_repository_dashboardrepository_ping",
+      "dashboard_backend_repository_dashboardrepository_record_event",
+      "dashboard_backend_repository_dashboardrepository_update_session_auth",
+      "dashboard_backend_repository_now_iso",
+      "dashboard_backend_repository_py_any",
+      "dashboard_backend_repository_session_row",
+      "protocol",
+      "test_dashboard_backend_dashboardbackendtest_test_dataset_schema_keeps_only_dashboard_owned_tables"
+    ],
+    "4": [
+      "dashboard",
+      "dashboard_acceptdisclaimer",
+      "dashboard_activatedevrole",
+      "dashboard_api",
+      "dashboard_app",
+      "dashboard_buttonmeta",
+      "dashboard_clearurl",
+      "dashboard_escapehtml",
+      "dashboard_fmtdate",
+      "dashboard_islocaldev",
+      "dashboard_launchmodule",
+      "dashboard_load",
+      "dashboard_params",
+      "dashboard_renderaccess",
+      "dashboard_renderauthnotice",
+      "dashboard_renderdevaccess",
+      "dashboard_renderdisclaimer",
+      "dashboard_renderloading",
+      "dashboard_rendermetric",
+      "dashboard_rendermodulerow",
+      "dashboard_rendernavbutton",
+      "dashboard_renderworkspace",
+      "dashboard_request",
+      "dashboard_role_meta",
+      "dashboard_rolemeta",
+      "dashboard_seturltosession",
+      "dashboard_signout",
+      "dashboard_state",
+      "dashboard_status_meta",
+      "dashboard_statusbadge"
+    ],
+    "5": [
+      "HANDOFF.md::Backup_Module_Downstream",
+      "HANDOFF.md::Bayesian_Module_Downstream",
+      "HANDOFF.md::DashboardRepository",
+      "HANDOFF.md::Dashboard_Module",
+      "HANDOFF.md::DatabaseAdapter_Protocol",
+      "HANDOFF.md::FastAPI_Backend",
+      "HANDOFF.md::FastAPI_Library",
+      "HANDOFF.md::Guideline_Module_Downstream",
+      "HANDOFF.md::INSIGHT_Workspace_Concept",
+      "HANDOFF.md::Internal_REST_Boundary",
+      "HANDOFF.md::Legacy_Node_Server",
+      "HANDOFF.md::Logs_Module_Downstream",
+      "HANDOFF.md::Patient_Module_Downstream",
+      "HANDOFF.md::Postgres_Upgrade_Path",
+      "HANDOFF.md::SQLiteAdapter",
+      "HANDOFF.md::SQLite_Database",
+      "HANDOFF.md::Setting_Module_Downstream",
+      "HANDOFF.md::Treatment_Module_Downstream",
+      "HANDOFF.md::User_Management_Module_Downstream",
+      "HANDOFF.md::dashboard_backend_db",
+      "dataset-schema.md::Dataset_Schema_Doc",
+      "dataset-schema.md::dashboard_sessions_Table",
+      "dataset-schema.md::workspace_events_Table"
+    ],
+    "6": [
+      "api_contract_admin_role",
+      "api_contract_authentication_session_endpoint",
+      "api_contract_authentication_session_mismatch",
+      "api_contract_authentication_session_required",
+      "api_contract_authentication_session_unavailable",
+      "api_contract_configuration",
+      "api_contract_dashboard_session",
+      "api_contract_dashboard_session_endpoint",
+      "api_contract_dashboard_session_required",
+      "api_contract_disclaimer_acceptance",
+      "api_contract_discovery_states",
+      "api_contract_health_readiness",
+      "api_contract_module_registry",
+      "api_contract_module_route_discovery",
+      "api_contract_primary_insight_flow",
+      "api_contract_psychiatrist_role",
+      "api_contract_role_scoped_workspace",
+      "api_contract_server_side_identifier_protection",
+      "api_contract_sign_out",
+      "api_contract_workflow_context",
+      "api_contract_workspace_endpoint",
+      "api_contract_workspace_summary_alias"
+    ],
+    "7": [
+      "dashboard_backend_auth",
+      "dashboard_backend_auth_auth_session_url",
+      "dashboard_backend_auth_authsessionerror",
+      "dashboard_backend_auth_fetch_auth_identity",
+      "dashboard_backend_auth_fetch_json",
+      "dashboard_backend_auth_forwarded_auth_headers",
+      "dashboard_backend_auth_normalize_auth_identity",
+      "dashboard_backend_auth_parse_expiry",
+      "dashboard_backend_auth_py_any",
+      "dashboard_backend_auth_py_request",
+      "datetime",
+      "exception",
+      "test_dashboard_backend_authsessionnormalizationtest",
+      "test_dashboard_backend_authsessionnormalizationtest_test_auth_identity_rejects_legacy_identity_shapes",
+      "test_dashboard_backend_authsessionnormalizationtest_test_auth_identity_rejects_missing_and_blocked_sessions",
+      "test_dashboard_backend_authsessionnormalizationtest_test_auth_identity_requires_verified_session_and_derives_profile"
+    ],
+    "8": [
+      "dashboard_backend_config",
+      "dashboard_backend_config_settings",
+      "dashboard_backend_config_settings_init",
+      "dashboard_backend_config_settings_module_registration",
+      "dashboard_backend_discovery",
+      "dashboard_backend_discovery_discover_module",
+      "dashboard_backend_discovery_moduleregistration",
+      "dashboard_backend_discovery_py_any",
+      "dashboard_backend_discovery_ready_url_for",
+      "dashboard_backend_discovery_request_json"
+    ],
+    "9": [
+      "readme",
+      "readme_dashboard_module",
+      "readme_files",
+      "readme_health",
+      "readme_module_interface",
+      "readme_postgres_upgrade_path",
+      "readme_run",
+      "readme_test",
+      "readme_workspace_rules"
+    ],
+    "10": [
+      "package",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_type",
+      "package_version"
+    ],
+    "11": [
+      "test_dashboard_frontend",
+      "test_dashboard_frontend_fakeelement",
+      "test_dashboard_frontend_renderscenario",
+      "test_dashboard_frontend_workspacemodel"
+    ],
+    "12": [
+      "dashboard_backend_init",
+      "dashboard_backend_init_rationale_1"
+    ],
+    "13": [
+      "HANDOFF.md::X_Dashboard_Session_Header"
+    ],
+    "14": [
+      "requirements.txt::Python_Dependencies"
+    ]
+  },
+  "cohesion": {
+    "0": 0.05512820512820513,
+    "1": 0.15128205128205127,
+    "2": 0.1774193548387097,
+    "3": 0.10344827586206896,
+    "4": 0.1471264367816092,
+    "5": 0.1067193675889328,
+    "6": 0.11688311688311688,
+    "7": 0.25833333333333336,
+    "8": 0.4222222222222222,
+    "9": 0.2222222222222222,
+    "10": 0.25,
+    "11": 0.5,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0
+  },
+  "gods": [
+    {
+      "id": "test_dashboard_backend_dashboardserver",
+      "label": "DashboardServer",
+      "degree": 24
+    },
+    {
+      "id": "test_dashboard_backend_dashboardbackendtest",
+      "label": "DashboardBackendTest",
+      "degree": 23
+    },
+    {
+      "id": "dashboard_backend_repository_dashboardrepository",
+      "label": "DashboardRepository",
+      "degree": 21
+    },
+    {
+      "id": "test_dashboard_backend_request_json",
+      "label": "request_json()",
+      "degree": 20
+    },
+    {
+      "id": "HANDOFF.md::Dashboard_Module",
+      "label": "Dashboard Module (v1.2.0)",
+      "degree": 19
+    },
+    {
+      "id": "dashboard_backend_db_sqliteadapter",
+      "label": "SQLiteAdapter",
+      "degree": 14
+    },
+    {
+      "id": "test_dashboard_backend_mockauthenticationserver",
+      "label": "MockAuthenticationServer",
+      "degree": 14
+    },
+    {
+      "id": "dashboard_renderworkspace",
+      "label": "renderWorkspace()",
+      "degree": 13
+    },
+    {
+      "id": "HANDOFF.md::dashboard_backend_main",
+      "label": "dashboard_backend/main.py",
+      "degree": 12
+    },
+    {
+      "id": "dashboard_backend_auth_fetch_auth_identity",
+      "label": "fetch_auth_identity()",
+      "degree": 10
+    }
+  ],
+  "surprises": [
+    {
+      "source": "AuthSessionNormalizationTest",
+      "target": "SQLiteAdapter",
+      "source_files": [
+        "test_dashboard_backend.py",
+        "dashboard_backend/db.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "DashboardBackendTest",
+      "target": "SQLiteAdapter",
+      "source_files": [
+        "test_dashboard_backend.py",
+        "dashboard_backend/db.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "DashboardServer",
+      "target": "SQLiteAdapter",
+      "source_files": [
+        "test_dashboard_backend.py",
+        "dashboard_backend/db.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "MockAuthenticationServer",
+      "target": "SQLiteAdapter",
+      "source_files": [
+        "test_dashboard_backend.py",
+        "dashboard_backend/db.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "MockModuleServer",
+      "target": "SQLiteAdapter",
+      "source_files": [
+        "test_dashboard_backend.py",
+        "dashboard_backend/db.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `DashboardRepository` connect `Community 3` to `Community 1`, `Community 2`, `Community 7`?",
+      "why": "High betweenness centrality (0.077) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `SQLiteAdapter` connect `Community 3` to `Community 1`, `Community 2`, `Community 7`?",
+      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `DashboardServer` (e.g. with `SQLiteAdapter` and `DashboardRepository`) actually correct?",
+      "why": "`DashboardServer` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `DashboardBackendTest` (e.g. with `SQLiteAdapter` and `DashboardRepository`) actually correct?",
+      "why": "`DashboardBackendTest` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 6 inferred relationships involving `DashboardRepository` (e.g. with `DatabaseAdapter` and `AuthSessionNormalizationTest`) actually correct?",
+      "why": "`DashboardRepository` has 6 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 8 inferred relationships involving `Dashboard Module (v1.2.0)` (e.g. with `Backup Module (Downstream)` and `Bayesian Module (Downstream)`) actually correct?",
+      "why": "`Dashboard Module (v1.2.0)` has 8 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `version`, `private` to the rest of the system?",
+      "why": "57 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

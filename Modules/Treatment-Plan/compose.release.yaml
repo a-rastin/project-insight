@@ -1,6 +1,6 @@
 services:
   treatment-plan:
-    image: ${TP_IMAGE:-insight-treatment-plan:0.1.0}
+    image: ${TP_IMAGE:?set TP_IMAGE to an immutable digest}
     build:
       context: .
       dockerfile: Dockerfile.release

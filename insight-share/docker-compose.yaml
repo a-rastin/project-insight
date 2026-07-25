@@ -1,10 +1,6 @@
 services:
   insight-unified:
-    build:
-      context: ..
-      dockerfile: deployment/Dockerfile
-    # Prefer immutable digest: export INSIGHT_UNIFIED_IMAGE='registry/insight-unified@sha256:…'
-    image: ${INSIGHT_UNIFIED_IMAGE:?set INSIGHT_UNIFIED_IMAGE to an immutable digest}
+    image: ${INSIGHT_UNIFIED_IMAGE:-insight-unified:local-build}
     init: false
     restart: unless-stopped
     read_only: true
