@@ -41,8 +41,8 @@ GET /readyz
 - Workspace responses include `currentDateTime` and `displayName`.
 - Psychiatrist display names use `Dr. {fullName}`.
 - Psychiatrist buttons: `Add New Patient`, `Patient Follow-up`, `List of Patients`, `Setting`.
-- Admin buttons: `Add New User`, `Logs`, `Backup`, `List of Users`.
-- Buttons route through REST-discovered placeholder module routes.
+- Admin button: `User Management`.
+- Button routes through REST-discovered Authentication-owned user-management module.
 - Dashboard does not implement patient, treatment, admin log, backup, or user-management module logic.
 
 ## Module Interface
@@ -94,4 +94,3 @@ Every protected Dashboard endpoint verifies the local dashboard session and re-c
 ## Postgres Upgrade Path
 
 Route handlers depend on `DashboardRepository`, not SQLite directly. SQL access is isolated behind `DatabaseAdapter`; replacing `SQLiteAdapter` with a Postgres adapter should preserve REST behavior and repository method contracts.
-

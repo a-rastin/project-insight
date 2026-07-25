@@ -49,10 +49,7 @@ Dashboard does not own or store these datasets:
 | dashboard.psychiatrist.button.followUp | Patient Follow-up |
 | dashboard.psychiatrist.button.list | List of Patients |
 | dashboard.psychiatrist.button.setting | Setting |
-| dashboard.admin.button.addUser | Add New User |
-| dashboard.admin.button.logs | Logs |
-| dashboard.admin.button.backup | Backup |
-| dashboard.admin.button.listUsers | List of Users |
+| dashboard.admin.button.userManagement | User Management |
 
 ## Module Route Placeholders
 

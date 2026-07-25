@@ -2,5 +2,12 @@
   "moduleId": "dashboard",
   "dataDirectory": "data/dashboard",
   "databasePath": "data/dashboard.sqlite3",
-  "moduleRegistry": []
+  "moduleRegistry": [
+    {
+      "moduleId": "user-management",
+      "title": "User Management",
+      "roles": ["ADMIN"],
+      "contractUrl": "http://127.0.0.1:8101/modules/user-management/contract"
+    }
+  ]
 }

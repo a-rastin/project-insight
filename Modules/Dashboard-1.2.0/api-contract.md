@@ -196,7 +196,7 @@ Role button sets:
 | Role | Button ids | Button titles |
 | --- | --- | --- |
 | `PSYCHIATRIST` | `add-new-patient`, `patient-follow-up`, `list-of-patients`, `setting` | `Add New Patient`, `Patient Follow-up`, `List of Patients`, `Setting` |
-| `ADMIN` | `add-new-user`, `logs`, `backup`, `list-of-users` | `Add New User`, `Logs`, `Backup`, `List of Users` |
+| `ADMIN` | `user-management` | `User Management` |
 
 Errors:
 

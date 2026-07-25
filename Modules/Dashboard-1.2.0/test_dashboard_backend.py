@@ -376,7 +376,7 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertNotIn("drafts", workspace)
             self.assertNotIn("followUps", workspace)
 
-    def test_admin_workspace_model_has_exact_buttons_only(self) -> None:
+    def test_admin_workspace_includes_user_management_from_default_registry(self) -> None:
         with DashboardServer() as base:
             created = create_session(base, "admin-1")
             status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(created))
@@ -385,10 +385,10 @@ class DashboardBackendTest(unittest.TestCase):
             self.assertEqual(workspace["displayName"], "Ari Morgan")
             datetime.fromisoformat(workspace["currentDateTime"].replace("Z", "+00:00"))
             self.assertEqual(workspace["workspace"]["title"], "Workspace")
-            self.assertEqual(
-                [button["title"] for button in workspace["workspace"]["buttons"]],
-                [],
-            )
+            buttons = workspace["workspace"]["buttons"]
+            self.assertEqual([button["title"] for button in buttons], ["User Management"])
+            self.assertEqual(buttons[0]["id"], "user-management")
+            self.assertEqual(buttons[0]["routeDiscovery"]["href"], "/internal/dashboard/module-routes/user-management")
             self.assertNotIn("cards", workspace["workspace"])
             self.assertNotIn("oversight", workspace)
             self.assertNotIn("guidelineRevisions", json.dumps(workspace))
@@ -434,6 +434,28 @@ class DashboardBackendTest(unittest.TestCase):
             with DashboardServer(module_registry=registry) as base:
                 psychiatrist = create_session(base, "psy-1")
                 status, data = request_json(base, "/internal/dashboard/module-routes/logs", headers=session_headers(psychiatrist))
+                self.assertEqual(status, 404)
+                self.assertEqual(data["error"], "module_route_not_available")
+
+    def test_user_management_is_available_to_admins_only(self) -> None:
+        with MockModuleServer("user-management") as module:
+            registry = [{"moduleId": "user-management", "title": "User Management", "roles": ["ADMIN"], "contractUrl": module.contract_url}]
+            with DashboardServer(module_registry=registry) as base:
+                admin = create_session(base, "admin-1")
+                status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(admin))
+                self.assertEqual(status, 200)
+                self.assertEqual(workspace["workspace"]["buttons"][0]["status"], "available")
+                self.assertEqual(workspace["workspace"]["buttons"][0]["href"], "/modules/user-management")
+
+                psychiatrist = create_session(base, "psy-1")
+                status, workspace = request_json(base, "/internal/dashboard/workspace", headers=session_headers(psychiatrist))
+                self.assertEqual(status, 200)
+                self.assertEqual(workspace["workspace"]["buttons"], [])
+                status, data = request_json(
+                    base,
+                    "/internal/dashboard/module-routes/user-management",
+                    headers=session_headers(psychiatrist),
+                )
                 self.assertEqual(status, 404)
                 self.assertEqual(data["error"], "module_route_not_available")
 
@@ -717,7 +739,7 @@ class DashboardBackendTest(unittest.TestCase):
                 self.assertEqual(workspace["workspace"]["kind"], "ADMIN")
                 self.assertEqual(
                     [button["title"] for button in workspace["workspace"]["buttons"]],
-                    [],
+                    ["User Management"],
                 )
 
 

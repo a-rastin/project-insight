@@ -15,10 +15,14 @@ function workspaceModel(role) {
             { id: "setting", title: "Setting", status: "available", reason: "contract and readiness checks passed", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/setting" } }
           ]
         : [
-            { id: "add-new-user", title: "Add New User", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/add-new-user" } },
-            { id: "logs", title: "Logs", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/logs" } },
-            { id: "backup", title: "Backup", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/backup" } },
-            { id: "list-of-users", title: "List of Users", routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/list-of-users" } }
+            {
+              id: "user-management",
+              title: "User Management",
+              href: "/modules/user-management",
+              status: "available",
+              reason: "contract and readiness checks passed",
+              routeDiscovery: { method: "GET", href: "/internal/dashboard/module-routes/user-management" }
+            }
           ]
     },
     ...(psychiatrist ? { requiresDisclaimer: false, disclaimer: { acceptedAt: "2026-07-06T17:00:00Z" } } : {})
@@ -107,6 +111,5 @@ const adminHtml = await renderScenario("ADMIN");
 assert.match(adminHtml, /<h1>Workspace<\/h1>/);
 assert.match(adminHtml, /Ari Morgan/);
 assert.doesNotMatch(adminHtml, /Dr\. Ari Morgan/);
-for (const title of ["Add New User", "Logs", "Backup", "List of Users"]) {
-  assert.match(adminHtml, new RegExp(title));
-}
+assert.match(adminHtml, /User Management/);
+assert.match(adminHtml, /data-module="user-management"/);
