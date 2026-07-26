@@ -31,8 +31,6 @@ def session_from_payload(payload:dict[str,Any])->SessionState:
     if payload.get("schemaVersion")!="1.0.0" or payload.get("authenticated") is not True:return SessionState(active=False)
     user,session,gates=payload.get("user"),payload.get("session"),payload.get("gates")
     if not all(isinstance(value,dict) for value in (user,session,gates)):return SessionState(active=False)
-    if gates.get("disclaimerAccepted") is not True:return SessionState(active=False,blocked_reason="disclaimer_required")
-    if gates.get("passwordChangeRequired") is not False:return SessionState(active=False,blocked_reason="forced_password_change")
     subject,sid,roles=user.get("id"),session.get("id"),user.get("roles")
     if not isinstance(subject,str) or not subject or not isinstance(sid,str) or not sid or not isinstance(roles,list) or any(not isinstance(role,str) or role!=role.lower() for role in roles):return SessionState(active=False)
     expires=session.get("expiresAt")

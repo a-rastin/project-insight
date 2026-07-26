@@ -283,15 +283,13 @@ class AuthIdentityNormalizationTest(unittest.TestCase):
         self.assertIsNotNone(normalize_authenticated_session(payload))
         self.assertIsNone(normalize_psychiatrist_session(payload))
 
-    def test_normalize_rejects_blocked_sessions(self) -> None:
+    def test_normalize_rejects_missing_or_expired_sessions(self) -> None:
         from add_new_patient_backend.auth import normalize_auth_identity
 
         blocked_payloads = [
             auth_payload(session=None),
             auth_payload(authenticated=False),
             auth_payload(session={"expiresAt": "2000-01-01T00:00:00Z"}),
-            auth_payload(gates={"disclaimerAccepted": True, "passwordChangeRequired": True}),
-            auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}),
         ]
         for payload in blocked_payloads:
             with self.subTest(payload=payload):
@@ -1483,7 +1481,7 @@ class AuthBoundaryTest(unittest.TestCase):
                 self.assertEqual(status, 404)
                 self.assertEqual(data, {"message": "Patient was not found."})
 
-    def test_blocked_disclaimer_status_rejected(self) -> None:
+    def test_disclaimer_status_does_not_block_authenticated_session(self) -> None:
         with MockAuthenticationServer() as mock_auth:
             mock_auth.set_payload("auth-blocked", auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}))
             with AddNewPatientServer(auth_session_url=mock_auth.url) as base:
@@ -1492,8 +1490,8 @@ class AuthBoundaryTest(unittest.TestCase):
                     "/api/patients",
                     headers={"cookie": "insight_session=auth-blocked"},
                 )
-                self.assertEqual(status, 401)
-                self.assertEqual(data, {"error": "authentication_session_required"})
+                self.assertEqual(status, 200)
+                self.assertEqual(data, {"schemaVersion": "1.0.0", "patients": []})
 
     def test_auth_session_unavailable_returns_502(self) -> None:
         # ponytail: point at a port nobody owns -> connection refused -> AuthSessionError -> 502

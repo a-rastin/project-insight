@@ -66,8 +66,8 @@ class AuthContractTests(AuthTestCase):
             json={"username": "doc3", "password": "temp-doc3", "role": "psychiatrist"},
         )
         self.assertEqual(temp_login.status_code, 200)
-        self.assertTrue(temp_login.json()["password_change_required"])
-        self.assertEqual(temp_client.get("/api/auth/session/legacy").status_code, 401)
+        self.assertEqual(temp_login.json()["next"], "/dashboard/user")
+        self.assertEqual(temp_client.get("/api/auth/session/legacy").status_code, 200)
 
         rotated = temp_client.post(
             "/api/auth/password/change",

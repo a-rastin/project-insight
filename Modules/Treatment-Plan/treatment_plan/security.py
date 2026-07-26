@@ -31,7 +31,7 @@ class HttpAuthenticationAdapter:
         try:
             if payload.get("schemaVersion")!="1.0.0" or payload.get("authenticated") is not True:raise ValueError
             user,session,gates=payload["user"],payload["session"],payload["gates"];roles=user["roles"]
-            if not all(isinstance(value,dict) for value in (user,session,gates)) or gates["disclaimerAccepted"] is not True or gates["passwordChangeRequired"] is not False:raise ValueError
+            if not all(isinstance(value,dict) for value in (user,session,gates)):raise ValueError
             if not isinstance(user["id"],str) or not isinstance(session["id"],str) or not isinstance(roles,list) or any(not isinstance(role,str) or role!=role.lower() for role in roles):raise ValueError
             expires=datetime.fromisoformat(session["expiresAt"].replace("Z","+00:00"));cookies=SimpleCookie();cookies.load(cookie);csrf=cookies.get("csrf_token")
             return Session(user["id"],frozenset(roles),expires if expires.tzinfo else expires.replace(tzinfo=timezone.utc),csrf.value if csrf else "",True,frozenset(),session["id"])

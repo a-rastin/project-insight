@@ -27,7 +27,6 @@ def _build_session(payload:dict)->Session:
     if payload.get("schemaVersion")!="1.0.0" or payload.get("authenticated") is not True:raise HTTPException(401,"Not authenticated")
     user,session,gates=payload.get("user"),payload.get("session"),payload.get("gates")
     if not all(isinstance(value,dict) for value in (user,session,gates)):raise HTTPException(401,"Not authenticated")
-    if gates.get("disclaimerAccepted") is not True or gates.get("passwordChangeRequired") is not False:raise HTTPException(401,"Not authenticated")
     uid,sid,roles=user.get("id"),session.get("id"),user.get("roles")
     if not isinstance(uid,str) or not uid or not isinstance(sid,str) or not sid or not isinstance(roles,list) or any(not isinstance(role,str) or role!=role.lower() for role in roles):raise HTTPException(401,"Not authenticated")
     return Session(uid,frozenset(roles),sid)

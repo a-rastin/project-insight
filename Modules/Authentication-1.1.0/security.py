@@ -1242,11 +1242,6 @@ def resolve_session(
         return None
     if token_role != stored_role:
         return None
-    if require_password_change and user["must_change_password"]:
-        return None
-    if require_disclaimer and stored_role == "psychiatrist" and not user["disclaimer_signed"]:
-        return None
-
     return {
         "sub": str(user["id"]),
         "user_id": int(user["id"]),
@@ -1267,7 +1262,6 @@ def resolve_session(
 
 def username_eq(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
-
 
 
 

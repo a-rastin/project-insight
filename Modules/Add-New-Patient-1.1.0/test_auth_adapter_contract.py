@@ -40,7 +40,7 @@ class AuthAdapterContractTest(unittest.TestCase):
         self.assertEqual(identity["user"]["role"], "PSYCHIATRIST")
         self.assertEqual(identity["user"]["roles"], ["ADMIN", "PSYCHIATRIST"])
 
-    def test_structured_gate_booleans_block_without_reading_message(self) -> None:
+    def test_structured_gate_booleans_do_not_block_authenticated_session(self) -> None:
         from add_new_patient_backend.auth import normalize_authenticated_session
 
         base = {
@@ -58,8 +58,8 @@ class AuthAdapterContractTest(unittest.TestCase):
             {"disclaimerAccepted": True, "passwordChangeRequired": True},
         ]:
             with self.subTest(gates=gates):
-                blocked = {**base, "gates": gates}
-                self.assertIsNone(normalize_authenticated_session(blocked))
+                session = {**base, "gates": gates}
+                self.assertIsNotNone(normalize_authenticated_session(session))
 
     def test_legacy_identity_shape_is_rejected(self) -> None:
         from add_new_patient_backend.auth import normalize_authenticated_session

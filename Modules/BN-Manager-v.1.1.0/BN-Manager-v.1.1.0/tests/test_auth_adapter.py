@@ -223,21 +223,14 @@ class AuthenticationGuardTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["error"]["code"], "BNM_UNAUTHORIZED")
 
-    def test_disclaimer_and_forced_password_sessions_are_blocked(self) -> None:
-        blocked_payloads = (
-            ({"schemaVersion": "1.0.0", "authenticated": True, "user": {"id": "psy-1", "roles": ["psychiatrist"]}, "session": {"id": "session-4", "expiresAt": "2099-01-01T00:00:00Z"}, "gates": {"disclaimerAccepted": False, "passwordChangeRequired": False}}, "disclaimer_required"),
-            ({"schemaVersion": "1.0.0", "authenticated": True, "user": {"id": "psy-1", "roles": ["psychiatrist"]}, "session": {"id": "session-5", "expiresAt": "2099-01-01T00:00:00Z"}, "gates": {"disclaimerAccepted": True, "passwordChangeRequired": True}}, "forced_password_change"),
-        )
-        for session_payload, reason in blocked_payloads:
-            with self.subTest(reason=reason):
-                client = self._client(session_payload)
-                response = client.post(
-                    "/api/bn-manager/v1/dashboard/evaluate",
-                    json={},
-                    headers={"x-csrf-token": "csrf", "Cookie": "csrf_token=csrf"},
-                )
-                self.assertEqual(response.status_code, 403)
-                self.assertEqual(response.json()["error"]["details"]["reason"], reason)
+    def test_disclaimer_and_forced_password_flags_do_not_block_sessions(self) -> None:
+        for gates in (
+            {"disclaimerAccepted": False, "passwordChangeRequired": False},
+            {"disclaimerAccepted": True, "passwordChangeRequired": True},
+        ):
+            with self.subTest(gates=gates):
+                session = session_from_payload({"schemaVersion": "1.0.0", "authenticated": True, "user": {"id": "psy-1", "roles": ["psychiatrist"]}, "session": {"id": "session-4", "expiresAt": "2099-01-01T00:00:00Z"}, "gates": gates})
+                self.assertTrue(session.active)
 
     def test_csrf_rejection_blocks_write_route(self) -> None:
         client = self._client(

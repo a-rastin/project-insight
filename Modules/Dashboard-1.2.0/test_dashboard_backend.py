@@ -259,7 +259,7 @@ class AuthSessionNormalizationTest(unittest.TestCase):
         self.assertEqual(identity["user"]["role"], "PSYCHIATRIST")
         self.assertEqual(identity["user"]["fullName"], "Verified Clinician")
 
-    def test_auth_identity_rejects_missing_and_blocked_sessions(self) -> None:
+    def test_auth_identity_rejects_missing_or_expired_sessions(self) -> None:
         from dashboard_backend.auth import normalize_auth_identity
 
         blocked_payloads = [
@@ -267,10 +267,7 @@ class AuthSessionNormalizationTest(unittest.TestCase):
             auth_payload(authenticated=False),
             auth_payload(session={"expiresAt": "2000-01-01T00:00:00Z"}),
             auth_payload(session={"expiresAt": "2000-01-01T00:00:00Z"}),
-            auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}),
-            auth_payload(gates={"disclaimerAccepted": True, "passwordChangeRequired": True}),
             {"ok": True, "user_id": "psy-1", "session_id": "auth-1", "role": "PSYCHIATRIST"},
-            auth_payload(gates={"disclaimerAccepted": False, "passwordChangeRequired": False}),
         ]
         for payload in blocked_payloads:
             with self.subTest(payload=payload):

@@ -28,7 +28,6 @@ def normalize_authenticated_session(data:dict[str,Any])->dict[str,Any]|None:
     if data.get("schemaVersion")!="1.0.0" or data.get("authenticated") is not True:return None
     user,session,gates=data.get("user"),data.get("session"),data.get("gates")
     if not all(isinstance(value,dict) for value in (user,session,gates)):return None
-    if gates.get("disclaimerAccepted") is not True or gates.get("passwordChangeRequired") is not False:return None
     sid=session.get("id"); uid=user.get("id"); roles=user.get("roles"); expires=_expiry(session.get("expiresAt"))
     if not isinstance(sid,str) or not sid or not isinstance(uid,str) or not uid or not expires or expires<=datetime.now(UTC):return None
     if not isinstance(roles,list) or any(not isinstance(role,str) for role in roles):return None

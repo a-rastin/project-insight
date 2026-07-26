@@ -76,7 +76,7 @@ async def require_session(request: Request) -> dict[str, Any]:
 
 
 def with_dashboard_fields(user: dict[str, Any], session: dict[str, Any]) -> dict[str, Any]:
-    return {**user, "disclaimerAcceptedAt": session.get("disclaimerAcceptedAt")}
+    return user
 
 
 def display_name_for(user: dict[str, Any]) -> str:
@@ -118,13 +118,6 @@ async def workspace_for(session: dict[str, Any]) -> dict[str, Any]:
             "buttons": buttons,
         },
     }
-
-    if user["role"] == "PSYCHIATRIST":
-        model["requiresDisclaimer"] = not user.get("disclaimerAcceptedAt")
-        model["disclaimer"] = {
-            "acceptedAt": user.get("disclaimerAcceptedAt"),
-            "text": "This workspace is a research prototype. It is not a substitute for clinical judgment, emergency care, or licensed guideline review.",
-        }
 
     return model
 
@@ -243,18 +236,6 @@ async def module_route(module_id: str, request: Request, session: dict[str, Any]
     if context_id:
         response.set_cookie("insight_workflow_context", context_id, httponly=True, samesite="lax", path="/modules")
     return response
-
-
-@app.post("/internal/dashboard/disclaimer/accept")
-async def accept_disclaimer(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
-    user = session["authUser"]
-    if user["role"] != "PSYCHIATRIST":
-        raise json_error(403, "psychiatrist_only")
-    accepted_at = repo.accept_disclaimer(session["id"])
-    session["disclaimerAcceptedAt"] = accepted_at
-    session["authUser"] = with_dashboard_fields(user, session)
-    repo.record_event(session, "disclaimer_accepted")
-    return await workspace_for(session)
 
 
 @app.get("/")

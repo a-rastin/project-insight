@@ -173,8 +173,8 @@ class ReadinessResponse(BaseModel):
 
 def _current_user(
     request: Request,
-    require_disclaimer: bool = True,
-    require_password_change: bool = True,
+    require_disclaimer: bool = False,
+    require_password_change: bool = False,
 ):
     # single place every endpoint routes through to resolve the session.
     token = request.cookies.get(security.cfg("AUTH_COOKIE_NAME"))
@@ -227,11 +227,7 @@ def _map_account_management_error(exc: Exception) -> HTTPException:
 
 def _post_auth_response(user) -> LoginResponse:
     role = security.normalize_role(user["role"])
-    if role == "admin":
-        return LoginResponse(ok=True, next="/dashboard/admin")
-    if user["disclaimer_signed"]:
-        return LoginResponse(ok=True, next="/dashboard/user")
-    return LoginResponse(ok=True, next=None, disclaimer_required=True)
+    return LoginResponse(ok=True, next="/dashboard/admin" if role == "admin" else "/dashboard/user")
 
 
 def _safe_redirect(next_path: str | None) -> str | None:
@@ -381,9 +377,6 @@ def login(body: LoginRequest, request: Request, response: Response):
     kwargs["value"] = token
     response.set_cookie(**kwargs)
 
-    if user["must_change_password"]:
-        return LoginResponse(ok=True, next=None, password_change_required=True)
-    # Psychiatrists must sign the clinical disclaimer before dashboard access.
     return _post_auth_response(user)
 
 
@@ -650,8 +643,8 @@ def _canonical_session_response(payload: dict) -> SessionResponse:
         ),
         session=CanonicalSession(id=payload["session_uuid"], expiresAt=expires_at),
         gates=CanonicalGates(
-            disclaimerAccepted=bool(payload["disclaimer_signed"]),
-            passwordChangeRequired=bool(payload["must_change_password"]),
+            disclaimerAccepted=True,
+            passwordChangeRequired=False,
         ),
     )
 

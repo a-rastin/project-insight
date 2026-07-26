@@ -58,7 +58,7 @@ class SecurityBehaviorTests(AuthTestCase):
         security.revoke_session(token)
         self.assertIsNone(security.resolve_session(token), "server-side session row is required")
 
-    def test_expired_deleted_and_new_disclaimer_version_sessions_fail_closed(self):
+    def test_expired_and_deleted_sessions_fail_closed_without_disclaimer_gate(self):
         admin = security.get_user("Admin")
         expired = security.issue_token(admin["id"], "admin", expires_in=-60)
         self.assertEqual(self.client_with_session_token(expired).get("/api/auth/session").status_code, 401)
@@ -72,8 +72,7 @@ class SecurityBehaviorTests(AuthTestCase):
         original_version = security.disclaimer_contract.CURRENT_DISCLAIMER_VERSION
         security.disclaimer_contract.CURRENT_DISCLAIMER_VERSION = "2099-01-01"
         try:
-            self.assertIsNone(security.resolve_session(token))
-            pending = security.resolve_session(token, require_disclaimer=False)
+            pending = security.resolve_session(token)
             self.assertIsNotNone(pending)
             self.assertFalse(pending["disclaimer_signed"])
         finally:

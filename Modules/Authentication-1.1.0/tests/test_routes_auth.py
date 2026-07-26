@@ -119,7 +119,7 @@ class AuthRouteTests(AuthTestCase):
         self.assertEqual(login.status_code, 200)
         self.assertEqual(psychiatrist_client.get("/modules/user-management").status_code, 401)
 
-    def test_psychiatrist_disclaimer_gate(self):
+    def test_psychiatrist_disclaimer_does_not_block_access(self):
         admin_client = self.login_admin()
         created = admin_client.post(
             "/api/auth/register",
@@ -133,8 +133,8 @@ class AuthRouteTests(AuthTestCase):
             json={"username": "doc2", "password": "secret", "role": "psychiatrist"},
         )
         self.assertEqual(login.status_code, 200)
-        self.assertIs(login.json()["disclaimer_required"], True)
-        self.assertEqual(user_client.get("/api/auth/session/legacy").status_code, 401)
+        self.assertEqual(login.json()["next"], "/dashboard/user")
+        self.assertEqual(user_client.get("/api/auth/session/legacy").status_code, 200)
 
         disclaimer = user_client.get("/api/auth/disclaimer")
         self.assertEqual(disclaimer.status_code, 200)

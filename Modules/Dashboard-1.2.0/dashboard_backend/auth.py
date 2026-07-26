@@ -56,8 +56,6 @@ def normalize_auth_identity(data: dict[str, Any]) -> dict[str, Any] | None:
     user, session, gates = data.get("user"), data.get("session"), data.get("gates")
     if not isinstance(user, dict) or not isinstance(session, dict) or not isinstance(gates, dict):
         return None
-    if gates.get("disclaimerAccepted") is not True or gates.get("passwordChangeRequired") is not False:
-        return None
     session_id, expires_at, roles = session.get("id"), _parse_expiry(session.get("expiresAt")), user.get("roles")
     if not isinstance(session_id, str) or not session_id or not expires_at or expires_at <= datetime.now(UTC):
         return None

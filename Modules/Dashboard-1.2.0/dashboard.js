@@ -63,9 +63,6 @@ const api = {
   runtimeConfig() {
     return request("/internal/dashboard/config");
   },
-  acceptDisclaimer() {
-    return request("/internal/dashboard/disclaimer/accept", { method: "POST" });
-  },
   moduleRoute(discoveryUrl) {
     return request(discoveryUrl);
   },
@@ -270,7 +267,6 @@ function renderWorkspace() {
   const workspace = model.workspace;
   const role = workspace.kind;
   const meta = roleMeta(role);
-  const requiresDisclaimer = Boolean(model.requiresDisclaimer);
   const buttons = workspace.buttons || [];
 
   app.innerHTML = `
@@ -308,13 +304,11 @@ function renderWorkspace() {
           </div>
         </header>
 
-        ${requiresDisclaimer ? renderDisclaimer(model.disclaimer) : ""}
-
         <section class="metric-strip" aria-label="Workspace summary">
           ${renderMetric("Role", meta.label, "Verified identity")}
           ${renderMetric("Modules", String(buttons.length).padStart(2, "0"), "Role scoped")}
           ${renderMetric("Routes", "REST", "Discovery only")}
-          ${renderMetric("Status", requiresDisclaimer ? "Review" : "Ready", requiresDisclaimer ? "Accept notice" : "Operational")}
+          ${renderMetric("Status", "Ready", "Operational")}
         </section>
 
         <section class="work-grid">
@@ -337,7 +331,7 @@ function renderWorkspace() {
                   </tr>
                 </thead>
                 <tbody>
-                  ${buttons.map((button) => renderModuleRow(button, role, requiresDisclaimer)).join("")}
+                  ${buttons.map((button) => renderModuleRow(button, role)).join("")}
                 </tbody>
               </table>
             </div>
@@ -358,8 +352,6 @@ function renderWorkspace() {
   `;
 
   app.querySelector("#signOut").addEventListener("click", signOut);
-  const accept = app.querySelector("#acceptDisclaimer");
-  if (accept) accept.addEventListener("click", acceptDisclaimer);
   app.querySelectorAll("[data-module]").forEach((button) => {
     button.addEventListener("click", () => launchModule(button.dataset.module));
   });
@@ -376,18 +368,6 @@ function renderNavButton(button, role, active) {
   `;
 }
 
-function renderDisclaimer(disclaimer = {}) {
-  return `
-    <section class="notice-band warning" role="status">
-      <div>
-        <strong>Research prototype notice</strong>
-        <p>${escapeHtml(disclaimer.text || "Review and accept prototype notice before launching clinical modules.")}</p>
-      </div>
-      <button id="acceptDisclaimer" class="primary">Accept notice</button>
-    </section>
-  `;
-}
-
 function renderMetric(label, value, helper) {
   return `
     <div class="metric">
@@ -398,7 +378,7 @@ function renderMetric(label, value, helper) {
   `;
 }
 
-function renderModuleRow(button, role, locked) {
+function renderModuleRow(button, role) {
   const [kind, description, status] = buttonMeta(button, role);
   const unavailable = button.status && button.status !== "available";
   return `
@@ -409,28 +389,16 @@ function renderModuleRow(button, role, locked) {
         ${button.reason ? `<span class="module-desc">${escapeHtml(button.reason)}</span>` : ""}
       </th>
       <td>${escapeHtml(kind)}</td>
-      <td>${statusBadge(locked ? "Warning" : (button.status || status))}</td>
+      <td>${statusBadge(button.status || status)}</td>
       <td><code>${escapeHtml(button.routeDiscovery?.href || "Not available")}</code></td>
-      <td><button class="table-action" data-module="${escapeHtml(button.id)}" ${locked || unavailable ? "disabled" : ""}>Open</button></td>
+      <td><button class="table-action" data-module="${escapeHtml(button.id)}" ${unavailable ? "disabled" : ""}>Open</button></td>
     </tr>
   `;
 }
 
-async function acceptDisclaimer() {
-  const button = app.querySelector("#acceptDisclaimer");
-  if (button) button.disabled = true;
-  try {
-    state.model = await api.acceptDisclaimer();
-    renderWorkspace();
-  } catch (error) {
-    state.error = error;
-    renderWorkspace();
-  }
-}
-
 async function launchModule(moduleId) {
   const button = state.model.workspace.buttons.find((item) => item.id === moduleId);
-  if (!button || state.model.requiresDisclaimer || (button.status && button.status !== "available")) return;
+  if (!button || (button.status && button.status !== "available")) return;
   try {
     const route = await api.moduleRoute(button.routeDiscovery.href);
     location.assign(route.href);
