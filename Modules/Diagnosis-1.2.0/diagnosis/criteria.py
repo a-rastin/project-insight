@@ -55,19 +55,18 @@ CRITERIA: list[dict] = [
 GUARD_LABEL = {"B": "Criterion B unmet", "C": "Schizoaffective not excluded", "D": "Substance/medical not excluded"}
 RULE_VERSION = "DSM-5-TR-APA-2022"
 
-# The criteria are clinically approved for this module, but the normalized
-# diagnosis coding system has not been approved. Keep the code absent until
-# that decision exists; readiness must remain blocked in the meantime.
+# Approved against SNOMED CT International RF2 2026-05-01: active concept
+# 58214004, "Schizophrenia (disorder)".
 SUPPORTED_CRITERIA_SETS = (
     {
         "diagnosis": "schizophrenia",
         "criteriaSet": "DSM-5-TR",
         "criteriaVersion": "APA-2022",
         "normalizedCoding": {
-            "system": None,
-            "code": None,
+            "system": "http://snomed.info/sct",
+            "code": "58214004",
             "display": "Schizophrenia",
-            "resolutionStatus": "unresolved",
+            "resolutionStatus": "resolved",
         },
     },
 )

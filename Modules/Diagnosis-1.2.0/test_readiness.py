@@ -52,7 +52,7 @@ from diagnosis.store import DiagnosisStore
 # process exits clean for the next test in the same interpreter.
 
 
-def test_unresolved_coding_does_not_block_operational_readiness(tmpdb):
+def test_resolved_coding_does_not_block_operational_readiness(tmpdb):
     _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
     _swap_store(tmpdb)
     try:
@@ -66,16 +66,16 @@ def test_unresolved_coding_does_not_block_operational_readiness(tmpdb):
         assert r["checks"]["patient"]["enabled"] is False, r
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
-        assert r["checks"]["clinicalScope"]["ok"] is False, r
-        assert r["checks"]["clinicalScope"]["coding"]["resolutionStatus"] == "unresolved", r
+        assert r["checks"]["clinicalScope"]["ok"] is True, r
+        assert r["checks"]["clinicalScope"]["coding"]["resolutionStatus"] == "resolved", r
     finally:
         _restore_env()
 
 
-def test_unresolved_coding_is_a_disabled_feature(tmpdb):
+def test_resolved_coding_enables_clinical_feature(tmpdb):
     _swap_store(tmpdb)
     status = clinical_feature_status()
-    assert status == {"available": False, "reason": "clinical_scope_unresolved"}, status
+    assert status == {"available": True}, status
 
 
 def test_bypass_shim_fails_readiness(tmpdb):
@@ -133,7 +133,7 @@ def test_patient_lookup_enabled_and_configured(tmpdb):
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
         assert r["ok"] is False, r
-        assert r["checks"]["clinicalScope"]["ok"] is False, r
+        assert r["checks"]["clinicalScope"]["ok"] is True, r
     finally:
         _restore_env()
 
@@ -193,7 +193,7 @@ def test_response_never_leaks_base_urls(tmpdb):
 # Tests against the HTTP route.
 
 
-def test_unresolved_coding_is_exposed_as_disabled_feature_not_unready(port, tmpdb):
+def test_resolved_coding_is_exposed_as_available_feature(port, tmpdb):
     _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
     _swap_store(tmpdb)
     diag_auth.AUTH_BASE_URL = f"http://127.0.0.1:{port}"
@@ -383,8 +383,8 @@ def main() -> None:
     diag_deps.store = tmpdb
     try:
         cases = [
-            ("test_unresolved_coding_does_not_block_operational_readiness", lambda: test_unresolved_coding_does_not_block_operational_readiness(tmpdb)),
-            ("test_unresolved_coding_is_a_disabled_feature", lambda: test_unresolved_coding_is_a_disabled_feature(tmpdb)),
+            ("test_resolved_coding_does_not_block_operational_readiness", lambda: test_resolved_coding_does_not_block_operational_readiness(tmpdb)),
+            ("test_resolved_coding_enables_clinical_feature", lambda: test_resolved_coding_enables_clinical_feature(tmpdb)),
             ("test_bypass_shim_fails_readiness", lambda: test_bypass_shim_fails_readiness(tmpdb)),
             ("test_auth_base_url_blank_fails", lambda: test_auth_base_url_blank_fails(tmpdb)),
             ("test_auth_base_url_legacy_default_fails", lambda: test_auth_base_url_legacy_default_fails(tmpdb)),
@@ -392,7 +392,7 @@ def main() -> None:
             ("test_patient_lookup_enabled_blank_url_fails", lambda: test_patient_lookup_enabled_blank_url_fails(tmpdb)),
             ("test_db_fault_is_false_without_raising", lambda: test_db_fault_is_false_without_raising(tmpdb)),
             ("test_response_never_leaks_base_urls", lambda: test_response_never_leaks_base_urls(tmpdb)),
-            ("test_unresolved_coding_is_exposed_as_disabled_feature_not_unready", lambda: test_unresolved_coding_is_exposed_as_disabled_feature_not_unready(auth_port, tmpdb)),
+            ("test_resolved_coding_is_exposed_as_available_feature", lambda: test_resolved_coding_is_exposed_as_available_feature(auth_port, tmpdb)),
             ("test_http_ready_503_when_bypass_on", lambda: test_http_ready_503_when_bypass_on(auth_port, tmpdb)),
             ("test_http_ready_503_when_db_down", lambda: test_http_ready_503_when_db_down(auth_port, tmpdb)),
             ("test_http_ready_body_no_url_leak", lambda: test_http_ready_body_no_url_leak(auth_port, tmpdb)),

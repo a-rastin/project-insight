@@ -127,7 +127,7 @@ def _fake_request(*, cookies: dict | None = None, headers: dict | None = None):
 # Rules — pure ``evaluate()``. Mirrors ``criteria._demo()`` + extras that
 # lock the duration-vs-symptom semantics and the dedupe/order contract.
 class TestCriteriaRules(unittest.TestCase):
-    def test_supported_scope_exposes_only_schizophrenia_without_invented_code(self):
+    def test_supported_scope_exposes_approved_schizophrenia_code(self):
         scope = supported_clinical_scope()
         self.assertEqual(len(scope["criteriaSets"]), 1)
         entry = scope["criteriaSets"][0]
@@ -135,10 +135,10 @@ class TestCriteriaRules(unittest.TestCase):
         self.assertEqual(entry["criteriaSet"], "DSM-5-TR")
         self.assertEqual(entry["criteriaVersion"], "APA-2022")
         self.assertEqual(entry["normalizedCoding"], {
-            "system": None,
-            "code": None,
+            "system": "http://snomed.info/sct",
+            "code": "58214004",
             "display": "Schizophrenia",
-            "resolutionStatus": "unresolved",
+            "resolutionStatus": "resolved",
         })
 
     def test_unsupported_diagnosis_is_typed_at_the_domain_boundary(self):
