@@ -147,7 +147,8 @@ function validateSubmission(body, { requireCode = true } = {}) {
       errors.push(`drugs[${index}].doseAmount must be a finite number when provided`);
     }
   });
-  ["substantialSuicideRisk", "priorAntipsychoticTherapy", "clozapineContraindication", "recurrentNonAdherenceDeterioration"].forEach((field) => {
+  if (Object.prototype.hasOwnProperty.call(body, "substantialSuicideRisk")) errors.push("substantialSuicideRisk is deprecated; submit through Suicide Risk");
+  ["priorAntipsychoticTherapy", "clozapineContraindication", "recurrentNonAdherenceDeterioration"].forEach((field) => {
     if (typeof body[field] !== "boolean") errors.push(`${field} must be a boolean`);
   });
   if (body.priorAntipsychoticTherapy === true) {
@@ -168,7 +169,6 @@ function submissionData(body) {
   return {
     pastMedicalHistory: body.pastMedicalHistory.map(structureCondition),
     drugs: body.drugs.map(structureMedication),
-    substantialSuicideRisk: body.substantialSuicideRisk,
     priorAntipsychoticTherapy: body.priorAntipsychoticTherapy,
     priorAntipsychoticTherapySuccessful: body.priorAntipsychoticTherapy ? body.priorAntipsychoticTherapySuccessful : null,
     antipsychotic: body.priorAntipsychoticTherapy ? body.antipsychotic : null,

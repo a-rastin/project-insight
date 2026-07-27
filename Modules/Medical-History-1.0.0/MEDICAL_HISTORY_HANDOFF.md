@@ -10,7 +10,6 @@ The canonical submission boundary is `/api/internal/medical-history/submissions`
 
 - `pastMedicalHistory: Condition[]` — each entry has `originalText` plus `coding` (`system`, `code`, `display`, `resolutionStatus`). Legacy string values are accepted and normalized. Unresolved coding stays explicit (`system`/`code` null, `resolutionStatus: "unresolved"`). Approved coding is preserved only when system, code, and display are all present.
 - `drugs: Drug[]` — at most 20; each entry has `originalText` (legacy `name` accepted), `rxNorm` coding, `doseAmount`/`doseUnit` (null when unknown), optional free-text `dose`, plus `route` and `frequency`.
-- `substantialSuicideRisk: boolean` — UI default false.
 - `priorAntipsychoticTherapy: boolean` — UI default false.
 - `priorAntipsychoticTherapySuccessful: boolean | null` — required and boolean only when prior therapy is true.
 - `antipsychotic: string | null` — controlled selection required only when prior therapy is true.

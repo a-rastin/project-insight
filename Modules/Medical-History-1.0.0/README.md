@@ -15,7 +15,6 @@ Open `http://localhost:4173`, activate with a six-character alphanumeric code, c
 
 - Patient drug list: zero to 20 entries; each drug keeps original text, RxNorm resolution (explicitly unresolved until coded), dose amount/unit, route, and frequency.
 - Past medical history: multi-select list of relevant diseases, each stored with original text and coding (approved when provided, otherwise unresolved).
-- Substantial suicide risk: Yes/No, default No.
 - Prior antipsychotic therapy: Yes/No, default No. When Yes, therapy success and an antipsychotic selection are required.
 - Contraindication to clozapine: Yes/No, default No. When Yes, one or more of Severe neutropenia, Clozapine-induced myocarditis, or Unmanaged seizure disorder is required.
 - Recurrent non-adherence-related deterioration: Yes/No, default No.
@@ -59,7 +58,6 @@ Example submission:
   "code": "A1B2C3",
   "pastMedicalHistory": ["Hypertension"],
   "drugs": [{ "name": "Lithium", "dose": "300 mg", "route": "Oral", "frequency": "Daily" }],
-  "substantialSuicideRisk": false,
   "priorAntipsychoticTherapy": true,
   "priorAntipsychoticTherapySuccessful": false,
   "antipsychotic": "Risperidone",

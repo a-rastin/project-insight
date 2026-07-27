@@ -58,6 +58,18 @@ test("Medical History browser client keeps module base path and sends CSRF token
   assert.match(client, /window\.location\.assign\("\/modules\/medical-history"\)/);
   assert.doesNotMatch(client, /`\/\?code=\$\{encodeURIComponent\(activation\.code\)\}`/);
   assert.doesNotMatch(client, /window\.location\.assign\("\/"\)/);
+  assert.doesNotMatch(html, /Substantial suicide risk/);
+  assert.doesNotMatch(client, /substantialSuicideRisk/);
+});
+
+test("rejects deprecated suicide-risk field on new writes", async () => {
+  await request("/api/internal/medical-history/activate", { method: "POST", body: JSON.stringify({ code: "LEGACY" }) });
+  const result = await request("/api/internal/medical-history/submissions", {
+    method: "POST",
+    body: JSON.stringify({ code: "LEGACY", pastMedicalHistory: [], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
+  });
+  assert.equal(result.status, 422);
+  assert.ok(result.body.error.details.some((message) => message.includes("deprecated")));
 });
 
 test("publishes deep submission identity while documenting code as compatibility metadata", async () => {
@@ -69,11 +81,13 @@ test("publishes deep submission identity while documenting code as compatibility
   assert.equal(result.body.submission.patientId.type, "uuid");
   assert.equal(result.body.submission.encounterId.type, "uuid");
   assert.equal(result.body.submission.code.compatibilityAdapter, true);
+  assert.equal(result.body.datasetVersion, "3.0.0");
+  assert.equal(result.body.submission.substantialSuicideRisk, undefined);
 });
 
 test("saves complete conditional history correlated with normalized code", async () => {
   await request("/api/internal/medical-history/activate", { method: "POST", body: JSON.stringify({ code: "ab12cd" }) });
-  const payload = { code: "ab12cd", pastMedicalHistory: ["Hypertension", "Asthma"], drugs: [{ name: "Lithium", dose: "300 mg", route: "Oral", frequency: "Daily" }], substantialSuicideRisk: true, priorAntipsychoticTherapy: true, priorAntipsychoticTherapySuccessful: false, antipsychotic: "Risperidone", clozapineContraindication: true, clozapineContraindications: ["Severe neutropenia"], recurrentNonAdherenceDeterioration: true };
+  const payload = { code: "ab12cd", pastMedicalHistory: ["Hypertension", "Asthma"], drugs: [{ name: "Lithium", dose: "300 mg", route: "Oral", frequency: "Daily" }], priorAntipsychoticTherapy: true, priorAntipsychoticTherapySuccessful: false, antipsychotic: "Risperidone", clozapineContraindication: true, clozapineContraindications: ["Severe neutropenia"], recurrentNonAdherenceDeterioration: true };
   const saved = await request("/api/internal/medical-history/submissions", { method: "POST", body: JSON.stringify(payload) });
   assert.equal(saved.status, 201);
   assert.equal(saved.body.code, "AB12CD");
@@ -125,7 +139,6 @@ test("preserves approved medication and condition coding when provided", async (
       route: "Oral",
       frequency: "Daily",
     }],
-    substantialSuicideRisk: false,
     priorAntipsychoticTherapy: false,
     clozapineContraindication: false,
     clozapineContraindications: [],
@@ -143,7 +156,7 @@ test("preserves approved medication and condition coding when provided", async (
 
 test("defaults-compatible no answers persist null conditional therapy data", async () => {
   await request("/api/internal/medical-history/activate", { method: "POST", body: JSON.stringify({ code: "NO1234" }) });
-  const payload = { code: "NO1234", pastMedicalHistory: [], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, priorAntipsychoticTherapySuccessful: null, antipsychotic: null, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false };
+  const payload = { code: "NO1234", pastMedicalHistory: [], drugs: [], priorAntipsychoticTherapy: false, priorAntipsychoticTherapySuccessful: null, antipsychotic: null, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false };
   const saved = await request("/api/internal/medical-history/submissions", { method: "POST", body: JSON.stringify(payload) });
   assert.equal(saved.status, 201);
   assert.equal(saved.body.priorAntipsychoticTherapySuccessful, null);
@@ -152,7 +165,7 @@ test("defaults-compatible no answers persist null conditional therapy data", asy
 
 test("rejects over 20 drugs and invalid conditional answers", async () => {
   await request("/api/internal/medical-history/activate", { method: "POST", body: JSON.stringify({ code: "BAD123" }) });
-  const basePayload = { code: "BAD123", pastMedicalHistory: [], drugs: Array.from({ length: 21 }, (_, i) => ({ name: `Drug ${i}` })), substantialSuicideRisk: false, priorAntipsychoticTherapy: true, clozapineContraindication: true, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false };
+  const basePayload = { code: "BAD123", pastMedicalHistory: [], drugs: Array.from({ length: 21 }, (_, i) => ({ name: `Drug ${i}` })), priorAntipsychoticTherapy: true, clozapineContraindication: true, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false };
   const result = await request("/api/internal/medical-history/submissions", { method: "POST", body: JSON.stringify(basePayload) });
   assert.equal(result.status, 422);
   assert.ok(result.body.error.details.some((error) => error.includes("more than 20")));
@@ -165,7 +178,7 @@ test("supports deep UUID submission identity, latest lookup, and immutable histo
   const encounterId = crypto.randomUUID();
   const first = await request("/api/internal/medical-history/submissions", {
     method: "POST",
-    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: [], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
+    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: [], drugs: [], priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
   });
   assert.equal(first.status, 201);
   assert.equal(first.body.patientId, patientId);
@@ -177,7 +190,7 @@ test("supports deep UUID submission identity, latest lookup, and immutable histo
 
   const second = await request("/api/internal/medical-history/submissions", {
     method: "POST",
-    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: ["Asthma"], drugs: [], substantialSuicideRisk: false, priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
+    body: JSON.stringify({ patientId, encounterId, author: "clinician-1", pastMedicalHistory: ["Asthma"], drugs: [], priorAntipsychoticTherapy: false, clozapineContraindication: false, clozapineContraindications: [], recurrentNonAdherenceDeterioration: false }),
   });
   assert.equal(second.status, 201);
   assert.notEqual(second.body.id, first.body.id);

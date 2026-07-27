@@ -1,6 +1,6 @@
 {
   "module": "Medical History",
-  "datasetVersion": "2.0.0",
+  "datasetVersion": "3.0.0",
   "storage": { "type": "json", "correlationKey": ["patientId", "encounterId"], "immutableHistory": true },
   "submission": {
     "id": { "type": "uuid", "required": true },
@@ -19,7 +19,6 @@
     "code": { "type": "string", "length": 6, "required": false, "compatibilityAdapter": true },
     "pastMedicalHistory": { "type": "object_array", "required": true, "itemSchema": "condition_entry", "optionsSource": "GET /api/internal/medical-history/options", "acceptsLegacyStrings": true },
     "drugs": { "type": "object_array", "required": true, "maxItems": 20, "itemSchema": "drug_entry" },
-    "substantialSuicideRisk": { "type": "boolean", "required": true, "default": false },
     "priorAntipsychoticTherapy": { "type": "boolean", "required": true, "default": false },
     "priorAntipsychoticTherapySuccessful": { "type": ["boolean", "null"], "requiredWhen": "priorAntipsychoticTherapy=true" },
     "antipsychotic": { "type": ["string", "null"], "requiredWhen": "priorAntipsychoticTherapy=true", "optionsSource": "GET /api/internal/medical-history/options" },

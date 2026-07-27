@@ -234,7 +234,6 @@ elements.historyForm.addEventListener("submit", async (event) => {
         code: elements.activeCode.value,
         pastMedicalHistory: getSelectedPastMedicalHistory(),
         drugs: medications,
-        substantialSuicideRisk: isYes("substantial-suicide-risk"),
         priorAntipsychoticTherapy: isYes("prior-antipsychotic-therapy"),
         priorAntipsychoticTherapySuccessful: isYes("prior-antipsychotic-therapy") ? isYes("antipsychotic-successful") : null,
         antipsychotic: isYes("prior-antipsychotic-therapy") ? elements.antipsychotic.value : null,
@@ -258,5 +257,4 @@ elements.historyForm.addEventListener("submit", async (event) => {
 loadOptions()
   .then(restoreActivationFromUrl)
   .catch((error) => showError(error.message));
-
 
