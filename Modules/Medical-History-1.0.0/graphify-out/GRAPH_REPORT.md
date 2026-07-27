@@ -1,130 +1,121 @@
-# Graph Report - Medical-History-1.0.0  (2026-07-22)
+# Graph Report - .  (2026-07-27)
 
 ## Corpus Check
-- 9 files · ~3,481 words
-- Verdict: corpus is large enough that graph structure adds value.
+- Corpus is ~9,657 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 118 nodes · 133 edges · 40 communities (6 shown, 34 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.79)
+- 205 nodes · 318 edges · 14 communities (11 shown, 3 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.54)
 - Token cost: 0 input · 0 output
 
-## Graph Freshness
-- Built from commit: `b82b9358`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
-
 ## Community Hubs (Navigation)
-- Frontend app.js logic
-- Server config & modules
-- HTML UI panels
-- package.json manifest
-- Server internals docs
-- Production hardening limits
-- Activation flow
-- README integration overview
-- Activation & submission handlers
-- Routing & JSON I/O
-- Options & submission endpoints
-- Activation Status Flow: active -> submitted / expired
-- BASE_PATH Environment Variable
-- Permissive Wildcard CORS
-- Keep Schema In Sync With Code
-- Standard Error Payload Shape
-- Static File Path Traversal Guard
-- GET /api/internal/medical-history/activation/{code}
-- GET /api/internal/medical-history/health
-- Internal REST API Boundary
-- Local JSON File Persistence
-- Known Limitations List
-- launchUrl Response Field
-- GET /api/internal/medical-history/submissions
-- Medical History Handoff Document
-- Medication Notes UI Gap
-- Medication Row
-- Zero-Dependency Node.js Server
-- GET /api/internal/medical-history/options
-- PHI Production Hardening Gaps
-- Repeat Submission Limitation
-- GET /api/internal/medical-history/schema
-- Server.js Function Inventory
-- 2-Hour Activation Session Expiry
-- PowerShell Smoke Test
-- Static Frontend Serving
-- Default Port 4173
-- Module Integration Pattern
-- medical_history_entry_form
-- README (Quick Start)
+- Auth and Readiness
+- Repository Layer
+- Submission Model
+- Auth Adapter and Retention
+- Memory Repository
+- Frontend Application
+- Package Dependencies
+- Server Tests
+- Clinical Data Model
+- Activation Flow
+- Production Auth and Security
+- Conditional UI
+- Patient History Form
+- Result Panel
 
 ## God Nodes (most connected - your core abstractions)
-1. `activateMedicalHistory()` - 9 edges
-2. `submitMedicalHistory()` - 9 edges
-3. `route()` - 9 edges
-4. `getActivation()` - 8 edges
-5. `sendJson()` - 7 edges
-6. `sendError()` - 7 edges
-7. `restoreActivationFromUrl()` - 6 edges
-8. `readJson()` - 6 edges
-9. `validateSubmission()` - 6 edges
-10. `showError()` - 5 edges
+1. `clone()` - 16 edges
+2. `MemoryMedicalHistoryRepository` - 16 edges
+3. `SqliteMedicalHistoryRepository` - 16 edges
+4. `MedicalHistorySubmissionStore` - 10 edges
+5. `freeze()` - 9 edges
+6. `migrateJsonToRepository()` - 9 edges
+7. `createServer()` - 9 edges
+8. `structureCondition()` - 6 edges
+9. `restoreActivationFromUrl()` - 6 edges
+10. `createMemoryMedicalHistoryRepository()` - 6 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `History Form (HTML)` --references--> `POST /api/internal/medical-history/submissions`  [INFERRED]
+- `submissionData()` --indirect_call--> `structureCondition()`  [INFERRED]
+  server.js → medical-history-submission.js
+- `submissionData()` --indirect_call--> `structureMedication()`  [INFERRED]
+  server.js → medical-history-submission.js
+- `createServer()` --calls--> `createDefaultMedicalHistoryRepository()`  [EXTRACTED]
+  server.js → repository.js
+- `HTML Form Structure` --references--> `Conditional UI Behavior`  [INFERRED]
   public/index.html → MEDICAL_HISTORY_HANDOFF.md
-- `Three-State UI Flow` --references--> `Frontend URL ?code= Loader`  [INFERRED]
-  public/index.html → MEDICAL_HISTORY_HANDOFF.md
-- `Activation Panel (HTML)` --references--> `POST /api/internal/medical-history/activate`  [INFERRED]
-  public/index.html → MEDICAL_HISTORY_HANDOFF.md
-- `Comorbidities Multi-Select` --shares_data_with--> `Comorbidity Option List`  [INFERRED]
-  public/index.html → MEDICAL_HISTORY_HANDOFF.md
-- `Activation Code Input` --references--> `6-Character Alphanumeric Activation Code`  [INFERRED]
+- `Clinical Questions UI` --references--> `Clozapine Contraindications`  [INFERRED]
   public/index.html → MEDICAL_HISTORY_HANDOFF.md
 
 ## Import Cycles
 - None detected.
 
-## Hyperedges (group relationships)
-- **Activation Flow (activate endpoint, session, expiry, code validation, launchUrl, frontend loader)** — medical_history_handoff_activateendpoint, medical_history_handoff_activationsession, medical_history_handoff_sessionexpiry, medical_history_handoff_activationcodevalidation, medical_history_handoff_lauRL, medical_history_handoff_urlquerycodeloader, public_index_activationpanel [EXTRACTED 0.95]
-- **Submission Flow (submit endpoint, submission record, comorbidity option, medication row, history-form)** — medical_history_handoff_submitendpoint, medical_history_handoff_medicalhistorysubmission, medical_history_handoff_comorbidityoption, medical_history_handoff_medicationrow, public_index_historyform [EXTRACTED 0.95]
-- **Production Hardening Gaps (CORS wildcard, JSON persistence, PHI, repeat submissions)** — medical_history_handoff_corswildcard, medical_history_handoff_jsonpersistence, medical_history_handoff_phiproductiongaps, medical_history_handoff_repeatsubmissions, medical_history_handoff_cornotsecret [EXTRACTED 0.85]
+## Communities (14 total, 3 thin omitted)
 
-## Communities (40 total, 34 thin omitted)
+### Community 0 - "Auth and Readiness"
+Cohesion: 0.08
+Nodes (31): createHttpAuthAdapter(), createReadinessProbe(), applyCorsHeaders(), asSecret(), { createHmac, randomBytes, timingSafeEqual }, createSecurity(), jsonError(), ANTIPSYCHOTIC_OPTIONS (+23 more)
 
-### Community 0 - "Frontend app.js logic"
-Cohesion: 0.22
-Nodes (14): activateFromCode(), addMedicationRow(), api(), clearError(), elements, escapeAttribute(), isYes(), loadOptions() (+6 more)
+### Community 1 - "Repository Layer"
+Cohesion: 0.09
+Nodes (18): assertArray(), createDefaultMedicalHistoryRepository(), createMemoryMedicalHistoryRepository(), createSqliteMedicalHistoryRepository(), fs, migrateJsonToRepository(), openSqlite(), path (+10 more)
 
-### Community 1 - "Server config & modules"
-Cohesion: 0.15
-Nodes (16): ANTIPSYCHOTIC_OPTIONS, CLOZAPINE_CONTRAINDICATION_OPTIONS, COMORBIDITY_OPTIONS, crypto, ensureDataFiles(), ensureJsonFile(), fs, http (+8 more)
+### Community 2 - "Submission Model"
+Cohesion: 0.11
+Nodes (19): assertAuthor(), assertUuid(), calculateEtag(), clone(), crypto, isApprovedCoding(), isCanonicalUuid(), MedicalHistorySubmissionStore (+11 more)
 
-### Community 2 - "HTML UI panels"
+### Community 3 - "Auth Adapter and Retention"
+Cohesion: 0.11
+Nodes (17): createMemoryAuthAdapter(), parseCanonicalSession(), applyRetentionPolicy(), assertRetentionPolicy(), REQUIRED_APPROVER_ROLES, RetentionApprovalRequired, assert, canonical (+9 more)
+
+### Community 4 - "Memory Repository"
+Cohesion: 0.21
+Nodes (3): clone(), freeze(), MemoryMedicalHistoryRepository
+
+### Community 5 - "Frontend Application"
+Cohesion: 0.20
+Nodes (15): activateFromCode(), addMedicationRow(), api(), clearError(), elements, escapeAttribute(), getCsrfToken(), isYes() (+7 more)
+
+### Community 6 - "Package Dependencies"
 Cohesion: 0.13
-Nodes (15): POST /api/internal/medical-history/activate, 6-Character Alphanumeric Activation Code, Comorbidity Option List, returnUrl / Back-to-Dashboard, POST /api/internal/medical-history/submissions, Frontend URL ?code= Loader, Activation Code Input, Activation Panel (HTML) (+7 more)
+Nodes (14): better-sqlite3, dependencies, better-sqlite3, description, engines, node, main, name (+6 more)
 
-### Community 3 - "package.json manifest"
-Cohesion: 0.17
-Nodes (11): description, engines, node, main, name, private, scripts, dev (+3 more)
-
-### Community 8 - "Activation & submission handlers"
+### Community 7 - "Server Tests"
 Cohesion: 0.22
-Nodes (6): assert, fs, os, path, { spawn }, test
+Nodes (7): assert, { createMemoryMedicalHistoryRepository }, { createServer }, crypto, fs, path, test
 
-### Community 9 - "Routing & JSON I/O"
-Cohesion: 0.41
-Nodes (13): activateMedicalHistory(), getActivation(), isValidCode(), listSubmissions(), normalizeCode(), parseBody(), readJson(), route() (+5 more)
+### Community 8 - "Clinical Data Model"
+Cohesion: 0.29
+Nodes (7): Change Guidance Checklist, Clozapine Contraindications, Drug List Constraint, Submission Model v2, Clinical Questions UI, Internal REST API Routes, Collected Information Fields
+
+### Community 9 - "Activation Flow"
+Cohesion: 0.50
+Nodes (4): Activation Code, Persistence and Testing, Activation Panel UI, Module Overview
+
+### Community 10 - "Production Auth and Security"
+Cohesion: 0.67
+Nodes (3): Auth and CSRF, PHI Retention Policy, Production Requirements
 
 ## Knowledge Gaps
-- **54 isolated node(s):** `name`, `version`, `private`, `description`, `main` (+49 more)
+- **69 isolated node(s):** `crypto`, `name`, `version`, `private`, `description` (+64 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **What connects `name`, `version`, `private` to the rest of the system?**
-  _54 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Server config & modules` be split into smaller, more focused modules?**
-  _Cohesion score 0.14705882352941177 - nodes in this community are weakly interconnected._
-- **Should `HTML UI panels` be split into smaller, more focused modules?**
-  _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
+- **Why does `SqliteMedicalHistoryRepository` connect `Repository Layer` to `Memory Repository`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Why does `MemoryMedicalHistoryRepository` connect `Memory Repository` to `Repository Layer`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+- **Why does `MedicalHistorySubmissionStore` connect `Submission Model` to `Auth and Readiness`?**
+  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+- **What connects `crypto`, `name`, `version` to the rest of the system?**
+  _69 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Auth and Readiness` be split into smaller, more focused modules?**
+  _Cohesion score 0.07807807807807808 - nodes in this community are weakly interconnected._
+- **Should `Repository Layer` be split into smaller, more focused modules?**
+  _Cohesion score 0.08901515151515152 - nodes in this community are weakly interconnected._
+- **Should `Submission Model` be split into smaller, more focused modules?**
+  _Cohesion score 0.1103448275862069 - nodes in this community are weakly interconnected._
