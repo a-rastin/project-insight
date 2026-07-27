@@ -215,9 +215,8 @@ Contract the module preserves (do NOT regress):
   in JavaScript (HANDOFF §9.12).
 - The CSRF token still comes from `<meta name="csrf-token">` (stamped
   by the page seam on serve); every PUT/POST carries `X-CSRF-Token`.
-- The "Diagnosis is clear" button is `disabled` unless Criterion A is
-  met; the bypass button is **always enabled** — clinician authority over
-  the checklist (HANDOFF §6).
+- "Diagnosis is clear" is always enabled and sends `decision: "definite"`.
+  It is the psychiatrist's clinician-authority override regardless of checklist state.
 - The module NEVER mutates the host URL, NEVER bakes a host topbar,
   NEVER ships a host-navigation placeholder button (the host owns the
   return-to-dashboard link).
@@ -292,6 +291,8 @@ bare import behaves identically to the pre-adapter module.
 | `PATIENT_BASE_URL`            | `patient_url`           | `http://localhost:9000`| Patient registry base URL. |
 | `PATIENT_TIMEOUT_S`           | `patient_timeout_s`     | `2.0`                  | Registry HTTP timeout. |
 | `DIAGNOSIS_PATIENT_LOOKUP`    | `patient_lookup`        | `False` (set `1` to opt in) | Enforce canonical patient id lookup. |
+| `WORKFLOW_SERVICE_SECRET`     | `workflow_service_secret` | unset                | Required shared HMAC secret for workflow completion. |
+| `WORKFLOW_SERVICE_URL`        | `workflow_service_url`  | `PATIENT_BASE_URL` when explicitly set | Add New Patient callback URL. |
 | `DIAGNOSIS_CORS_ORIGINS`      | `cors_origins`           | `*` (comma list)       | CORS allow-origins for standalone mode. |
 | `DIAGNOSIS_AUTH_BYPASS`       | `mock_auth`             | `False` (set `1` for self-check) | Self-check / offline-test auth + CSRF bypass shim. NEVER in production. |
 | `DIAGNOSIS_CSRF_SECRET`       | `csrf_secret`           | unset -> per-process random | Pinned HMAC secret for multi-worker. |
@@ -319,9 +320,8 @@ existing `reset_*_for_tests` hooks — the singleton itself is frozen.
   snapshot is the source row (`decision` + `checked` ids), with no
   derived `evaluation` key — clinician-authority extends into the
   audit trail (HANDOFF §6.1).
-- "Diagnosis is clear" sends `decision: "confirmed"` (criteria met).
-- "Diagnosis is clear (bypass)" sends `decision: "definite"` — clinician
-  authority over the checklist per DESIGN.md §6 (clinician-confirmed bypass).
+- "Diagnosis is clear" sends `decision: "definite"` — clinician authority
+  over the checklist per DESIGN.md §6 (clinician-confirmed bypass).
 - The clinician-authority invariant (the model never auto-decides; bypass is
   always valid on an unmet checklist; `met == True` does not coerce `decision`
   to `"confirmed"`) is a tested contract, not just prose: see

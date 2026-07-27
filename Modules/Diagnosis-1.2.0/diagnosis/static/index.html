@@ -260,9 +260,8 @@
      *   - CSRF header stamped on every PUT/POST via csrfHeaders();
      *     token read from <meta name="csrf-token"> stamped by the page
      *     seam on serve (HANDOFF §9.8).
-     *   - Confirm button (decision: "confirmed") is disabled unless
-     *     Criterion A is met; Bypass (decision: "definite") is always
-     *     enabled — clinician authority over the model (HANDOFF §6).
+      *   - Diagnosis action sends the clinician override (decision:
+      *     "definite") and stays available regardless of checklist state.
      * =================================================================== */
     function createDiagnosisModule(opts) {
       const root = (opts && opts.root) || document.body;
@@ -350,8 +349,7 @@
             '</div>' +
             '<div id="' + UID + 'criteria-root"></div>' +
             '<div class="actions">' +
-              '<button class="btn btn-primary" id="' + UID + 'confirm-btn" disabled>Diagnosis is clear</button>' +
-              '<button class="btn btn-warning" id="' + UID + 'bypass-btn">Diagnosis is clear (bypass)</button>' +
+              '<button class="btn btn-warning" id="' + UID + 'decision-btn">Diagnosis is clear</button>' +
               '<span class="spacer"></span>' +
               '<button class="btn btn-primary" id="' + UID + 'next-btn" disabled>Next Step</button>' +
             '</div>' +
@@ -447,7 +445,7 @@
         if (ws) ws.classList.remove("hidden");
         const rl = $("criteria-root");
         if (rl) rl.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.disabled = true; });
-        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+        ["decision-btn", "next-btn"].forEach(id => {
           const button = $(id);
           if (button) button.disabled = true;
         });
@@ -457,7 +455,11 @@
 
       function updateNext(data) {
         const next = $("next-btn");
-        if (next) next.disabled = !workflowId || !(data.decision === "confirmed" || data.decision === "definite");
+        if (next) next.disabled = !workflowId || !(
+          data.decision === "definite" &&
+          data.workflow && data.workflow.id === workflowId &&
+          data.workflow.phase === "patient-information"
+        );
       }
 
       async function onChange() {
@@ -465,7 +467,7 @@
         if (saveTimer) clearTimeout(saveTimer);
         const ids = checkedIds();
         renderLocalEvaluation(ids);   // instant feedback, optimistic
-        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+        ["decision-btn", "next-btn"].forEach(id => {
           const button = $(id);
           if (button) button.disabled = true;
         });
@@ -477,18 +479,25 @@
             const r = await fetch(diagnosisApiBase + "/" + encodeURIComponent(code), {
               method: "PUT",
               headers: csrfHeaders({"Content-Type": "application/json"}),
-              body: JSON.stringify({ checked: ids, decision: lastDecision })
+              body: JSON.stringify({
+                checked: ids,
+                decision: lastDecision,
+                workflowId: lastDecision ? workflowId || null : null
+              })
             });
             if (!r.ok) throw new Error(r.status);
             const data = await r.json();
             renderServer(data);
-            const bypass = $("bypass-btn");
-            if (bypass) bypass.disabled = false;
+            const action = $("decision-btn");
+            if (action) action.disabled = false;
             renderLocalEvaluation((data.evaluation || {}).checked || ids);
             const s2 = $("save-state");
             if (s2) { s2.textContent = "Saved just now"; s2.className = "save-state saved"; }
           } catch (e) {
-            failClosed("Save failed. Reload this page before continuing.");
+            const action = $("decision-btn");
+            if (action) action.disabled = false;
+            const s2 = $("save-state");
+            if (s2) { s2.textContent = "Save failed. Check connection and retry."; s2.className = "save-state error"; }
           }
         }, 350);
         saveTimer = myTimer;
@@ -526,8 +535,6 @@
         const mg = $("m-guards");
         if (mg) { mg.textContent = guardsMet ? "Yes" : "No"; mg.className = "v" + (guardsMet ? " ok" : " bad"); }
 
-        const cb = $("confirm-btn");
-        if (cb) cb.disabled = !aMet;
         updateBadge(aMet, guardsMet);
       }
 
@@ -594,7 +601,7 @@
       }
 
       async function sendDecision(decision, note) {
-        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+        ["decision-btn", "next-btn"].forEach(id => {
           const button = $(id);
           if (button) button.disabled = true;
         });
@@ -604,7 +611,11 @@
             headers: csrfHeaders({"Content-Type": "application/json"}),
             body: JSON.stringify({ checked: checkedIds(), decision, workflowId: workflowId || null })
           });
-          if (!r.ok) throw new Error("Decision save failed: " + r.status);
+          if (!r.ok) {
+            let payload = {};
+            try { payload = await r.json(); } catch (_) { /* non-JSON error */ }
+            throw new Error(payload.detail || payload.error || ("Decision save failed: " + r.status));
+          }
           const data = await r.json();
           lastDecision = data.decision;
           const ds = $("decision-state");
@@ -612,11 +623,16 @@
           const dn = $("decision-note");
           if (dn) dn.textContent = note;
           renderServer(data);
-          const bypass = $("bypass-btn");
-          if (bypass) bypass.disabled = false;
+          const action = $("decision-btn");
+          if (action) action.disabled = false;
           renderLocalEvaluation((data.evaluation || {}).checked || []);
-        } catch (_) {
-          failClosed("Decision save failed. Reload this page before continuing.");
+          return true;
+        } catch (error) {
+          const action = $("decision-btn");
+          if (action) action.disabled = false;
+          const ss = $("save-state");
+          if (ss) { ss.textContent = error.message + ". Retry Diagnosis is clear."; ss.className = "save-state error"; }
+          return false;
         }
       }
 
@@ -631,6 +647,10 @@
           throw new Error("Workflow is not ready for diagnosis");
         }
         await loadSession(draft.patientCode);
+        updateNext({
+          decision: lastDecision,
+          workflow: { id: workflowId, phase: draft.phase }
+        });
       }
 
       function _historyParam(name) {
@@ -671,32 +691,38 @@
           ci.addEventListener("keydown", onKey);
           listeners.push({ node: ci, type: "keydown", fn: onKey });
         }
-        const cf = $("confirm-btn");
-        if (cf) {
-          const onConfirm = () => {
-            sendDecision("confirmed", "Diagnosis confirmed by psychiatrist — DSM-5-TR criteria met.");
-          };
-          cf.addEventListener("click", onConfirm);
-          listeners.push({ node: cf, type: "click", fn: onConfirm });
-        }
-        const bp = $("bypass-btn");
-        if (bp) {
-          const onBypass = () => {
+        const action = $("decision-btn");
+        if (action) {
+          const onDecision = async () => {
             if (confirm("Confirm clinician bypass: diagnosis is clear regardless of criteria state?")) {
-              sendDecision("definite", "Clinician-confirmed bypass — psychiatrist authority over checklist.");
+              const saved = await sendDecision(
+                "definite",
+                "Clinician-confirmed bypass — psychiatrist authority over checklist."
+              );
+              if (!saved) return;
               updateBadge(true, true);
-              const cf2 = $("confirm-btn");
-              if (cf2) cf2.disabled = true;
             }
           };
-          bp.addEventListener("click", onBypass);
-          listeners.push({ node: bp, type: "click", fn: onBypass });
+          action.addEventListener("click", onDecision);
+          listeners.push({ node: action, type: "click", fn: onDecision });
         }
         const next = $("next-btn");
         if (next) {
-          const onNext = () => {
+          const onNext = async () => {
             if (!next.disabled && workflowId) {
-              location.assign("/modules/add-new-patient/?workflow=" + encodeURIComponent(workflowId));
+              next.disabled = true;
+              try {
+                const response = await fetch("/api/add-new-patient/v1/workflow-drafts/" + encodeURIComponent(workflowId));
+                const data = await response.json();
+                if (!response.ok || data.workflowDraft?.phase !== "patient-information") {
+                  throw new Error("Workflow transition is not complete");
+                }
+                location.assign("/modules/add-new-patient/?workflow=" + encodeURIComponent(workflowId));
+              } catch (error) {
+                next.disabled = false;
+                const ss = $("save-state");
+                if (ss) { ss.textContent = error.message + ". Retry Next Step."; ss.className = "save-state error"; }
+              }
             }
           };
           next.addEventListener("click", onNext);

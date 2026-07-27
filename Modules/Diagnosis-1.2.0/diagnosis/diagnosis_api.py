@@ -154,6 +154,17 @@ def put_session(
 
     patient = resolve_patient(code.strip(), request.headers.get("cookie"))
     checked = list(dict.fromkeys(body.checked))   # de-dupe, preserve order
+    workflow = None
+    if body.decision and body.workflowId:
+        # Complete first: a failed transition must not leave a local decision
+        # claiming that the onboarding workflow progressed.
+        workflow = complete_workflow(
+            body.workflowId,
+            patient.patient_code,
+            body.decision,
+            request.headers.get("cookie"),
+        )
+
     session = store.put(
         code.strip(),
         patient_id=patient.id,
@@ -172,20 +183,13 @@ def put_session(
     # server-derived auto-diagnosis (HANDOFF §6.1).
     _dump_for_audit(code.strip())
 
-    if body.decision and body.workflowId:
-        complete_workflow(
-            body.workflowId,
-            patient.patient_code,
-            body.decision,
-            request.headers.get("cookie"),
-        )
-
     return {
         "code": session["code"],
         "patient_id": session["patient_id"],
         "evaluation": evaluate(session["checked"]).to_dict(),
         "decision": session["decision"],
         "updated_at": session["updated_at"],
+        "workflow": workflow,
     }
 
 

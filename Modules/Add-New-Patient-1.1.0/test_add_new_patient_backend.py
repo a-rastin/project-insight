@@ -448,6 +448,29 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(completed["workflowDraft"]["phase"], "patient-information")
                 self.assertEqual(completed["workflowDraft"]["diagnosisDecision"], "confirmed")
+                status, repeated = request_json(
+                    base,
+                    f"/internal/workflow-drafts/{draft['id']}/diagnosis-complete",
+                    method="POST",
+                    headers={"X-Workflow-Signature": signature},
+                    body=payload,
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(repeated["workflowDraft"], completed["workflowDraft"])
+                conflicting_payload = {"patientCode": draft["patientCode"], "decision": "definite"}
+                conflicting_signature = hmac.new(
+                    secret.encode(),
+                    f"{draft['id']}:{draft['patientCode']}:definite".encode(),
+                    sha256,
+                ).hexdigest()
+                status, _ = request_json(
+                    base,
+                    f"/internal/workflow-drafts/{draft['id']}/diagnosis-complete",
+                    method="POST",
+                    headers={"X-Workflow-Signature": conflicting_signature},
+                    body=conflicting_payload,
+                )
+                self.assertEqual(status, 409)
                 status, _ = request_json(
                     base,
                     f"/internal/workflow-drafts/{draft['id']}/diagnosis-complete",

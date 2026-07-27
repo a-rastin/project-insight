@@ -45,6 +45,9 @@ from diagnosis.app import app
 from diagnosis.readiness import check_readiness, clinical_feature_status
 from diagnosis.store import DiagnosisStore
 
+diag_patient.WORKFLOW_SERVICE_SECRET = "workflow-test-secret"
+diag_patient.WORKFLOW_SERVICE_URL = "http://127.0.0.1:8103"
+
 
 # ---------------------------------------------------------------------------
 # Tests against the pure function.
@@ -148,6 +151,34 @@ def test_patient_lookup_enabled_blank_url_fails(tmpdb):
         assert r["checks"]["patient"]["ok"] is False, r
         assert r["ok"] is False, r
     finally:
+        _restore_env()
+
+
+def test_missing_workflow_configuration_fails(tmpdb):
+    _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
+    _swap_store(tmpdb)
+    saved_secret = diag_patient.WORKFLOW_SERVICE_SECRET
+    diag_patient.WORKFLOW_SERVICE_SECRET = ""
+    try:
+        r = check_readiness()
+        assert r["checks"]["workflow"] == {"ok": False, "configured": False}, r
+        assert r["ok"] is False, r
+    finally:
+        diag_patient.WORKFLOW_SERVICE_SECRET = saved_secret
+        _restore_env()
+
+
+def test_missing_workflow_service_url_fails(tmpdb):
+    _set_env(bypass=None, lookup=None, patient_url="http://localhost:9000")
+    _swap_store(tmpdb)
+    saved_url = diag_patient.WORKFLOW_SERVICE_URL
+    diag_patient.WORKFLOW_SERVICE_URL = ""
+    try:
+        r = check_readiness()
+        assert r["checks"]["workflow"] == {"ok": False, "configured": False}, r
+        assert r["ok"] is False, r
+    finally:
+        diag_patient.WORKFLOW_SERVICE_URL = saved_url
         _restore_env()
 
 
@@ -390,6 +421,8 @@ def main() -> None:
             ("test_auth_base_url_legacy_default_fails", lambda: test_auth_base_url_legacy_default_fails(tmpdb)),
             ("test_patient_lookup_enabled_and_configured", lambda: test_patient_lookup_enabled_and_configured(tmpdb)),
             ("test_patient_lookup_enabled_blank_url_fails", lambda: test_patient_lookup_enabled_blank_url_fails(tmpdb)),
+            ("test_missing_workflow_configuration_fails", lambda: test_missing_workflow_configuration_fails(tmpdb)),
+            ("test_missing_workflow_service_url_fails", lambda: test_missing_workflow_service_url_fails(tmpdb)),
             ("test_db_fault_is_false_without_raising", lambda: test_db_fault_is_false_without_raising(tmpdb)),
             ("test_response_never_leaks_base_urls", lambda: test_response_never_leaks_base_urls(tmpdb)),
             ("test_resolved_coding_is_exposed_as_available_feature", lambda: test_resolved_coding_is_exposed_as_available_feature(auth_port, tmpdb)),

@@ -28,7 +28,8 @@ def build_process_specs(manifest: dict[str, Any]) -> dict[str, ProcessSpec]:
     specs: dict[str, ProcessSpec] = {}
     for module in manifest["modules"]:
         environment = {
-            key: str(value) for key, value in module["environment"].items()
+            key: os.environ.get(key, "") if value == "${" + key + "}" else str(value)
+            for key, value in module["environment"].items()
         }
         environment.update(
             {

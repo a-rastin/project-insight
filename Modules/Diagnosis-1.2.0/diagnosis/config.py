@@ -99,6 +99,10 @@ class Settings:
     patient_timeout_s: float
     patient_lookup: bool
 
+    # Add New Patient workflow callback.
+    workflow_service_secret: str
+    workflow_service_url: str
+
     # Standalone app CORS.
     cors_origins: tuple[str, ...]
 
@@ -152,6 +156,11 @@ def _load() -> Settings:
         patient_url=os.environ.get("PATIENT_BASE_URL") or "http://localhost:9000",
         patient_timeout_s=float(os.environ.get("PATIENT_TIMEOUT_S") or "2.0"),
         patient_lookup=_env_truthy("DIAGNOSIS_PATIENT_LOOKUP"),
+        workflow_service_secret=os.environ.get("WORKFLOW_SERVICE_SECRET", ""),
+        workflow_service_url=(
+            os.environ.get("WORKFLOW_SERVICE_URL")
+            or os.environ.get("PATIENT_BASE_URL", "")
+        ),
         cors_origins=tuple(_env_list("DIAGNOSIS_CORS_ORIGINS", ["*"])),
         mock_auth=_env_truthy("DIAGNOSIS_AUTH_BYPASS"),
         csrf_secret=secret_raw.encode("utf-8") if secret_raw else None,
@@ -194,6 +203,7 @@ def _config_selfcheck() -> None:
             "DIAGNOSIS_DB_PATH", "AUTH_BASE_URL", "AUTH_TIMEOUT_S",
             "PATIENT_BASE_URL", "PATIENT_TIMEOUT_S",
             "DIAGNOSIS_PATIENT_LOOKUP", "DIAGNOSIS_CORS_ORIGINS",
+            "WORKFLOW_SERVICE_SECRET", "WORKFLOW_SERVICE_URL",
             "DIAGNOSIS_AUTH_BYPASS", "DIAGNOSIS_CSRF_SECRET",
             "DIAGNOSIS_CSRF_SECURE", "DIAGNOSIS_MODULE_BASE_PATH",
             "DIAGNOSIS_HOST", "DIAGNOSIS_PORT",
@@ -210,6 +220,8 @@ def _config_selfcheck() -> None:
         assert s.patient_url == "http://localhost:9000", s.patient_url
         assert isclose(s.patient_timeout_s, 2.0), s.patient_timeout_s
         assert s.patient_lookup is False, s.patient_lookup
+        assert s.workflow_service_secret == "", s.workflow_service_secret
+        assert s.workflow_service_url == "", s.workflow_service_url
         assert s.cors_origins == ("*",), s.cors_origins
         assert s.mock_auth is False, s.mock_auth
         assert s.csrf_secret is None, s.csrf_secret
@@ -241,9 +253,13 @@ def _config_selfcheck() -> None:
         # 4. mock_auth + patient_lookup are truthy gates.
         _os.environ["DIAGNOSIS_AUTH_BYPASS"] = "1"
         _os.environ["DIAGNOSIS_PATIENT_LOOKUP"] = "1"
+        _os.environ["WORKFLOW_SERVICE_SECRET"] = "workflow-secret"
+        _os.environ["WORKFLOW_SERVICE_URL"] = "http://workflow:8103"
         s = _load()
         assert s.mock_auth is True, s.mock_auth
         assert s.patient_lookup is True, s.patient_lookup
+        assert s.workflow_service_secret == "workflow-secret", s.workflow_service_secret
+        assert s.workflow_service_url == "http://workflow:8103", s.workflow_service_url
 
         # 5. CSRF secret pin + secure flag.
         _os.environ["DIAGNOSIS_CSRF_SECRET"] = "shared-secret"

@@ -53,6 +53,7 @@ _ENV_VARS = (
     "DIAGNOSIS_DB_PATH", "AUTH_BASE_URL", "AUTH_TIMEOUT_S",
     "PATIENT_BASE_URL", "PATIENT_TIMEOUT_S",
     "DIAGNOSIS_PATIENT_LOOKUP", "DIAGNOSIS_CORS_ORIGINS",
+    "WORKFLOW_SERVICE_SECRET", "WORKFLOW_SERVICE_URL",
     "DIAGNOSIS_AUTH_BYPASS", "DIAGNOSIS_CSRF_SECRET",
     "DIAGNOSIS_CSRF_SECURE", "DIAGNOSIS_MODULE_BASE_PATH",
     "DIAGNOSIS_HOST", "DIAGNOSIS_PORT",
@@ -120,6 +121,8 @@ def test_defaults_match_prior_hardcoded_constants():
         assert s.patient_url == "http://localhost:9000", s.patient_url
         assert isclose(s.patient_timeout_s, 2.0), s.patient_timeout_s
         assert s.patient_lookup is False, s.patient_lookup
+        assert s.workflow_service_secret == "", s.workflow_service_secret
+        assert s.workflow_service_url == "", s.workflow_service_url
         assert s.cors_origins == ("*",), s.cors_origins
         assert s.mock_auth is False, s.mock_auth
         assert s.csrf_secret is None, s.csrf_secret
@@ -143,6 +146,8 @@ def test_custom_env_rebuilds_snapshot():
         os.environ["PATIENT_BASE_URL"] = "http://patients:7000"
         os.environ["PATIENT_TIMEOUT_S"] = "9.0"
         os.environ["DIAGNOSIS_PATIENT_LOOKUP"] = "1"
+        os.environ["WORKFLOW_SERVICE_SECRET"] = "workflow-secret"
+        os.environ["WORKFLOW_SERVICE_URL"] = "http://workflow:8103"
         os.environ["DIAGNOSIS_CORS_ORIGINS"] = "https://a.local, https://b.local"
         os.environ["DIAGNOSIS_AUTH_BYPASS"] = "1"
         os.environ["DIAGNOSIS_CSRF_SECRET"] = "k"
@@ -158,6 +163,8 @@ def test_custom_env_rebuilds_snapshot():
         assert s.patient_url == "http://patients:7000", s.patient_url
         assert isclose(s.patient_timeout_s, 9.0), s.patient_timeout_s
         assert s.patient_lookup is True, s.patient_lookup
+        assert s.workflow_service_secret == "workflow-secret", s.workflow_service_secret
+        assert s.workflow_service_url == "http://workflow:8103", s.workflow_service_url
         assert s.cors_origins == (
             "https://a.local", "https://b.local",
         ), s.cors_origins

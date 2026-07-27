@@ -89,6 +89,8 @@ _PATIENTS = {
                   "display_name": "Ada Lovelace"},
     "P-0007-B": {"id": "insight-pid-0007", "patient_code": "P-0007-B",
                   "display_name": None},
+    "P-0099-Z": {"id": "insight-pid-0099", "patient_code": "P-0099-Z",
+                   "display_name": None},
 }
 _WORKFLOW_REQUESTS: list[dict] = []
 
@@ -192,6 +194,7 @@ def _arm_with_csrf(c: TestClient) -> None:
 def _client(auth_port: int, patient_port: int) -> TestClient:
     diag_auth.AUTH_BASE_URL = f"http://127.0.0.1:{auth_port}"
     diag_patient.PATIENT_BASE_URL = f"http://127.0.0.1:{patient_port}"
+    diag_patient.WORKFLOW_SERVICE_URL = diag_patient.PATIENT_BASE_URL
     return TestClient(app, cookies={"insight_session": "test-psychiatrist"})
 
 
@@ -231,6 +234,21 @@ def test_persisted_decision_advances_signed_workflow(auth_port, patient_port):
     )
     assert r.status_code == 200, (r.status_code, r.text)
     assert _WORKFLOW_REQUESTS == [{"draftId": "draft-1", "patientCode": "P-0007-B", "decision": "confirmed"}], _WORKFLOW_REQUESTS
+
+
+def test_workflow_failure_does_not_persist_decision(auth_port, patient_port):
+    c = _client(auth_port, patient_port)
+    _arm_with_csrf(c)
+    diag_patient.WORKFLOW_SERVICE_SECRET = ""
+    try:
+        r = c.put(
+            "/diagnosis/P-0099-Z",
+            json={"checked": ["A1"], "decision": "definite", "workflowId": "draft-unavailable"},
+        )
+        assert r.status_code == 503, (r.status_code, r.text)
+        assert diag_api.store.get("P-0099-Z") is None
+    finally:
+        diag_patient.WORKFLOW_SERVICE_SECRET = "workflow-test-secret"
 
 
 def test_unknown_code_returns_422_not_404(auth_port, patient_port):
@@ -330,6 +348,8 @@ def main() -> None:
          lambda: test_put_binds_canonical_patient_id(auth_port, patient_port)),
         ("test_persisted_decision_advances_signed_workflow",
          lambda: test_persisted_decision_advances_signed_workflow(auth_port, patient_port)),
+        ("test_workflow_failure_does_not_persist_decision",
+         lambda: test_workflow_failure_does_not_persist_decision(auth_port, patient_port)),
         ("test_unknown_code_returns_422_not_404",
          lambda: test_unknown_code_returns_422_not_404(auth_port, patient_port)),
         ("test_registry_404_on_put_returns_422",

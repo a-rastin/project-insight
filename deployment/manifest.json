@@ -42,7 +42,7 @@
       "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
       "workingDirectory": "/opt/modules/add-new-patient",
       "command": ["python", "-m", "uvicorn", "add_new_patient_backend.main:app", "--host", "127.0.0.1", "--port", "8103"],
-      "environment": {"PORT": "8103", "ADD_NEW_PATIENT_DB_PATH": "/var/lib/insight/add-new-patient/add-new-patient.sqlite3", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session", "ADD_NEW_PATIENT_MOCK_AUTH": "0"},
+      "environment": {"PORT": "8103", "ADD_NEW_PATIENT_DB_PATH": "/var/lib/insight/add-new-patient/add-new-patient.sqlite3", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session", "ADD_NEW_PATIENT_MOCK_AUTH": "0", "WORKFLOW_SERVICE_SECRET": "${WORKFLOW_SERVICE_SECRET}"},
       "databasePath": "/var/lib/insight/add-new-patient/add-new-patient.sqlite3"
     },
     {
@@ -58,7 +58,7 @@
       "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
       "workingDirectory": "/opt/modules/diagnosis",
       "command": ["python", "-m", "diagnosis", "--host", "127.0.0.1", "--port", "8104"],
-      "environment": {"PORT": "8104", "DIAGNOSIS_HOST": "127.0.0.1", "DIAGNOSIS_PORT": "8104", "DIAGNOSIS_DB_PATH": "/var/lib/insight/diagnosis/diagnosis.sqlite3", "AUTH_BASE_URL": "http://127.0.0.1:8101"},
+      "environment": {"PORT": "8104", "DIAGNOSIS_HOST": "127.0.0.1", "DIAGNOSIS_PORT": "8104", "DIAGNOSIS_DB_PATH": "/var/lib/insight/diagnosis/diagnosis.sqlite3", "AUTH_BASE_URL": "http://127.0.0.1:8101", "PATIENT_BASE_URL": "http://127.0.0.1:8103", "WORKFLOW_SERVICE_SECRET": "${WORKFLOW_SERVICE_SECRET}"},
       "databasePath": "/var/lib/insight/diagnosis/diagnosis.sqlite3"
     },
     {

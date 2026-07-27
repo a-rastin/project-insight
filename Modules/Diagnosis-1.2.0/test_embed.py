@@ -214,16 +214,19 @@ def test_csrf_meta_token_still_read_via_meta_tag():
     )
 
 
-def test_workflow_ui_fails_closed_until_persisted_decision():
+def test_workflow_ui_uses_one_retryable_clinician_decision():
     html = _served_page()
     assert 'next-btn" disabled>Next Step' in html, "Next Step must start disabled"
     assert '_historyParam("workflow")' in html, "standalone page must read opaque workflow id"
     assert '/api/add-new-patient/v1/workflow-drafts/' in html, "workflow must resolve through draft API"
     assert 'workflowId: workflowId' in html, "decision writes must carry workflowId"
-    assert 'function failClosed' in html, "UI needs one shared fail-closed path"
-    assert 'data.decision === "confirmed" || data.decision === "definite"' in html, (
-        "Next Step may enable only from persisted terminal decision"
-    )
+    assert html.count('>Diagnosis is clear</button>') == 1, "single clinician decision action required"
+    assert 'Diagnosis is clear (bypass)' not in html
+    assert 'confirm-btn' not in html
+    assert 'sendDecision(\n                "definite"' in html
+    assert 'const saved = await sendDecision(' in html
+    assert 'data.decision === "definite"' in html
+    assert 'data.workflow.phase === "patient-information"' in html
     assert '/modules/add-new-patient/?workflow=' in html, "Next Step must resume reserved intake"
 
 
@@ -323,8 +326,8 @@ def main() -> None:
          test_fn_returns_mount_unmount_handle),
         ("test_csrf_meta_token_still_read_via_meta_tag",
          test_csrf_meta_token_still_read_via_meta_tag),
-        ("test_workflow_ui_fails_closed_until_persisted_decision",
-         test_workflow_ui_fails_closed_until_persisted_decision),
+        ("test_workflow_ui_uses_one_retryable_clinician_decision",
+         test_workflow_ui_uses_one_retryable_clinician_decision),
         ("test_standalone_boot_uses_canonical_gateway_api",
          test_standalone_boot_uses_canonical_gateway_api),
         ("test_read_page_back_compat_reexport",

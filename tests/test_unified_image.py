@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -50,6 +51,8 @@ class UnifiedImageTests(unittest.TestCase):
     def test_diagnosis_manifest_uses_unified_authentication_endpoint(self):
         diagnosis = next(module for module in self.manifest["modules"] if module["moduleId"] == "diagnosis")
         self.assertEqual("http://127.0.0.1:8101", diagnosis["environment"]["AUTH_BASE_URL"])
+        self.assertEqual("http://127.0.0.1:8103", diagnosis["environment"]["PATIENT_BASE_URL"])
+        self.assertEqual("${WORKFLOW_SERVICE_SECRET}", diagnosis["environment"]["WORKFLOW_SERVICE_SECRET"])
 
     def test_dashboard_manifest_uses_unified_authentication_endpoint(self):
         dashboard = next(module for module in self.manifest["modules"] if module["moduleId"] == "dashboard")
@@ -66,6 +69,7 @@ class UnifiedImageTests(unittest.TestCase):
             module["environment"]["AUTH_SESSION_URL"],
         )
         self.assertEqual("0", module["environment"]["ADD_NEW_PATIENT_MOCK_AUTH"])
+        self.assertEqual("${WORKFLOW_SERVICE_SECRET}", module["environment"]["WORKFLOW_SERVICE_SECRET"])
 
     def test_supervisor_declares_all_module_processes_and_gateway(self):
         specs = build_process_specs(self.manifest)
@@ -92,6 +96,19 @@ class UnifiedImageTests(unittest.TestCase):
             self.assertEqual(spec.env["DATABASE_PATH"], module["databasePath"])
         self.assertEqual(specs["nginx"].command[:3], ("nginx", "-g", "daemon off;"))
 
+    def test_supervisor_passes_shared_workflow_secret_to_both_services(self):
+        previous = os.environ.get("WORKFLOW_SERVICE_SECRET")
+        os.environ["WORKFLOW_SERVICE_SECRET"] = "test-shared-secret"
+        try:
+            specs = build_process_specs(self.manifest)
+            self.assertEqual("test-shared-secret", specs["diagnosis"].env["WORKFLOW_SERVICE_SECRET"])
+            self.assertEqual("test-shared-secret", specs["add-new-patient"].env["WORKFLOW_SERVICE_SECRET"])
+        finally:
+            if previous is None:
+                os.environ.pop("WORKFLOW_SERVICE_SECRET", None)
+            else:
+                os.environ["WORKFLOW_SERVICE_SECRET"] = previous
+
     def test_image_exposes_only_gateway_and_excludes_runtime_inputs(self):
         dockerfile = (DEPLOYMENT / "Dockerfile").read_text(encoding="utf-8")
         dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
@@ -106,6 +123,7 @@ class UnifiedImageTests(unittest.TestCase):
             self.assertNotIn(f'"{port}:', compose)
         self.assertIn("/run/secrets:ro", compose)
         self.assertIn("INSIGHT_UNIFIED_IMAGE", compose)
+        self.assertIn("WORKFLOW_SERVICE_SECRET", compose)
         self.assertIn("http://127.0.0.1:8080/readyz", dockerfile)
 
     def test_nginx_routes_unique_base_paths_on_gateway_only(self):

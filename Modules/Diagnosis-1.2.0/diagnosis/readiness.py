@@ -40,7 +40,8 @@ larger Insight app's readiness aggregator):
       "checks":    {
           "db":      {"ok": bool},
           "auth":    {"ok": bool, "configured": bool, "bypass": bool},
-          "patient": {"ok": bool, "enabled": bool, "configured": bool}
+           "patient": {"ok": bool, "enabled": bool, "configured": bool},
+           "workflow": {"ok": bool, "configured": bool}
       }
     }
 
@@ -122,6 +123,13 @@ def _check_patient() -> dict[str, Any]:
     return {"ok": ok, "enabled": True, "configured": configured}
 
 
+def _check_workflow() -> dict[str, Any]:
+    """Workflow completion is required for Diagnosis-first onboarding."""
+    from . import patient as _patient
+    configured = _patient.workflow_configuration_ready()
+    return {"ok": configured, "configured": configured}
+
+
 def _check_clinical_scope() -> dict[str, Any]:
     """Report whether clinical Diagnosis operations have approved coding."""
     from .criteria import supported_clinical_scope
@@ -158,8 +166,9 @@ def check_readiness() -> dict[str, Any]:
     db = _check_db()
     auth = _check_auth()
     patient = _check_patient()
+    workflow = _check_workflow()
     clinical_scope = _check_clinical_scope()
-    ok = db["ok"] and auth["ok"] and patient["ok"]
+    ok = db["ok"] and auth["ok"] and patient["ok"] and workflow["ok"]
     return {
         "ok": ok,
         "module": "diagnosis",
@@ -167,6 +176,7 @@ def check_readiness() -> dict[str, Any]:
             "db": db,
             "auth": auth,
             "patient": patient,
+            "workflow": workflow,
             "clinicalScope": clinical_scope,
         },
         "featureStatus": {"clinicalDiagnosis": clinical_feature_status()},

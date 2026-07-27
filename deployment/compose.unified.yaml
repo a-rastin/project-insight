@@ -14,6 +14,7 @@ services:
       TP_TRUSTED_INTERNAL_ORIGINS: ${TP_TRUSTED_INTERNAL_ORIGINS:?set trusted Authentication origin}
       TP_BN_MANAGER_URL: http://127.0.0.1:8108
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-local-dev-secret-change-me-in-production-min32bytes-long-padding-aaaa}
+      WORKFLOW_SERVICE_SECRET: ${WORKFLOW_SERVICE_SECRET:?set WORKFLOW_SERVICE_SECRET}
     ports:
       - "127.0.0.1:8080:8080"
     tmpfs:

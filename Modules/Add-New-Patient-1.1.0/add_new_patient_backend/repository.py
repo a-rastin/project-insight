@@ -277,7 +277,11 @@ class PatientRepository:
             if row is None:
                 return None
             row = self._expire_workflow_draft(conn, row)
-            if row["phase"] != "diagnosis" or row["patient_code"] != patient_code.upper():
+            if row["patient_code"] != patient_code.upper():
+                return None
+            if row["phase"] == "patient-information":
+                return workflow_draft_row(row) if row["diagnosis_decision"] == decision else None
+            if row["phase"] != "diagnosis":
                 return None
             now = now_iso()
             conn.execute(

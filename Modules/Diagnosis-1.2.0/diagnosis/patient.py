@@ -65,6 +65,8 @@ from .config import settings
 # fake-registry tests; readiness inspects the live value.
 PATIENT_BASE_URL = settings.patient_url
 PATIENT_TIMEOUT_S = settings.patient_timeout_s
+WORKFLOW_SERVICE_SECRET = settings.workflow_service_secret
+WORKFLOW_SERVICE_URL = settings.workflow_service_url
 
 
 @dataclass(frozen=True)
@@ -187,18 +189,22 @@ def resolve_patient(code: str, cookie_header: str | None) -> Patient:
     return _build_patient(payload, code.strip())
 
 
+def workflow_configuration_ready() -> bool:
+    parsed = urllib.parse.urlsplit(WORKFLOW_SERVICE_URL)
+    return bool(WORKFLOW_SERVICE_SECRET) and parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
 def complete_workflow(
     workflow_id: str, patient_code: str, decision: str, cookie_header: str | None
-) -> None:
-    secret = os.environ.get("WORKFLOW_SERVICE_SECRET", "")
-    if not secret:
+) -> dict:
+    if not workflow_configuration_ready():
         raise HTTPException(status_code=503, detail="Workflow service unavailable")
     signature = hmac.new(
-        secret.encode(), f"{workflow_id}:{patient_code}:{decision}".encode(), sha256
+        WORKFLOW_SERVICE_SECRET.encode(), f"{workflow_id}:{patient_code}:{decision}".encode(), sha256
     ).hexdigest()
     body = json.dumps({"patientCode": patient_code, "decision": decision}).encode("utf-8")
     req = urllib.request.Request(
-        f"{PATIENT_BASE_URL.rstrip('/')}/internal/workflow-drafts/{urllib.parse.quote(workflow_id, safe='')}/diagnosis-complete",
+        f"{WORKFLOW_SERVICE_URL.rstrip('/')}/internal/workflow-drafts/{urllib.parse.quote(workflow_id, safe='')}/diagnosis-complete",
         data=body,
         method="POST",
         headers={"Content-Type": "application/json", "X-Workflow-Signature": signature},
@@ -208,10 +214,15 @@ def complete_workflow(
     try:
         with urllib.request.urlopen(req, timeout=PATIENT_TIMEOUT_S) as response:
             payload = json.loads(response.read().decode("utf-8"))
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
+    except urllib.error.HTTPError as error:
+        status_code = error.code if error.code in {403, 409, 503} else 502
+        raise HTTPException(status_code=status_code, detail="Workflow transition unavailable") from error
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
         raise HTTPException(status_code=502, detail="Workflow transition unavailable") from error
-    if payload.get("workflowDraft", {}).get("phase") != "patient-information":
+    workflow = payload.get("workflowDraft")
+    if not isinstance(workflow, dict) or workflow.get("phase") != "patient-information":
         raise HTTPException(status_code=502, detail="Workflow transition unavailable")
+    return workflow
 
 
 def reset_patient_for_tests(base_url: str | None = None) -> None:
@@ -224,11 +235,13 @@ def reset_patient_for_tests(base_url: str | None = None) -> None:
     then restore by passing ``None`` (which falls back to the settings-
     adapter value captured at import).
     """
-    global PATIENT_BASE_URL
+    global PATIENT_BASE_URL, WORKFLOW_SERVICE_URL
     if base_url is not None:
         PATIENT_BASE_URL = base_url
+        WORKFLOW_SERVICE_URL = base_url
     else:
         PATIENT_BASE_URL = settings.patient_url
+        WORKFLOW_SERVICE_URL = settings.workflow_service_url
 
 
 __all__ = [
@@ -236,6 +249,9 @@ __all__ = [
     "resolve_patient",
     "reset_patient_for_tests",
     "PATIENT_BASE_URL",
+    "WORKFLOW_SERVICE_SECRET",
+    "WORKFLOW_SERVICE_URL",
+    "workflow_configuration_ready",
     "complete_workflow",
 ]
 
