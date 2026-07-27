@@ -53,6 +53,7 @@ COPY Modules/Medical-History-1.0.0 /opt/modules/medical-history
 COPY Modules/DDI-Checker-1.2.0 /opt/modules/ddi-checker
 COPY Modules/BN-Manager-v.1.1.0/BN-Manager-v.1.1.0 /opt/modules/bn-manager
 COPY Modules/Treatment-Plan /opt/modules/treatment-plan
+COPY Modules/Suicide-Risk-1.0.0 /opt/modules/suicide-risk
 
 COPY --from=node-dependencies /build/severity/node_modules /opt/modules/severity/node_modules
 COPY --from=node-dependencies /build/medical-history/node_modules /opt/modules/medical-history/node_modules
@@ -67,6 +68,7 @@ RUN mkdir -p /var/lib/insight/authentication \
     /var/lib/insight/ddi-checker \
     /var/lib/insight/bn-manager \
     /var/lib/insight/treatment-plan \
+    /var/lib/insight/suicide-risk \
     /var/cache/nginx \
     /var/log/nginx \
     /run/nginx

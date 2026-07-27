@@ -111,6 +111,7 @@ class TP22UnifiedVerificationTests(unittest.TestCase):
         self.assertIn("/health", MODULE_SMOKE["severity"]["standalone_health"])
         self.assertIn("/health", MODULE_SMOKE["ddi-checker"]["standalone_health"])
         self.assertIn("/health", MODULE_SMOKE["diagnosis"]["standalone_health"])
+        self.assertIn("/api/suicide-risk/v1/health", MODULE_SMOKE["suicide-risk"]["unified_health"])
 
     def test_diagnosis_unified_probes_are_canonical_and_module_specific(self):
         probes = MODULE_SMOKE["diagnosis"]

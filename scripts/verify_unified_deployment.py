@@ -100,6 +100,13 @@ MODULE_SMOKE: dict[str, dict[str, Any]] = {
             "/ready",
         ),
     },
+    "suicide-risk": {
+        "standalone_health": ("/health",),
+        "standalone_ready": ("/ready",),
+        "unified_health": ("/api/suicide-risk/v1/health",),
+        "unified_ready": ("/api/suicide-risk/v1/ready",),
+        "expected_module": "suicide-risk",
+    },
 }
 
 
@@ -378,7 +385,7 @@ def verify_topology_contracts(root: Path = ROOT) -> dict[str, bool]:
             raise RuntimeError(f"module volume must be writable: {module['moduleId']}")
         if module["migration"]["mode"] != "startup" or not module["migration"]["readinessGate"]:
             raise RuntimeError(f"startup migration gate required for {module['moduleId']}")
-    for port in range(8101, 8110):
+    for port in (*range(8101, 8110), 8111):
         if f"127.0.0.1:{port}" in unit or f":{port}:" in unit:
             raise RuntimeError(f"module port {port} must stay inside the container")
         if f'"{port}:' in compose or f"'{port}:" in compose:

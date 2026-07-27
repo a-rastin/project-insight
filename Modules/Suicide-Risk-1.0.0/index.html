@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suicide Score</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="suicide-score-root"></main>
+    <script src="./app.js"></script>
+    <script>
+      const root = document.getElementById("suicide-score-root");
+      const code = new URLSearchParams(window.location.search).get("code");
+      let csrfToken;
+      async function api(path, options = {}) {
+        const method = (options.method || "GET").toUpperCase();
+        const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+        if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+          if (!csrfToken) {
+            const csrf = await fetch("/api/suicide-risk/v1/csrf", { credentials: "same-origin" });
+            const body = await csrf.json();
+            if (!csrf.ok || !body.token) throw new Error(body?.error?.message || "CSRF token unavailable.");
+            csrfToken = body.token;
+          }
+          headers["X-CSRF-Token"] = csrfToken;
+        }
+        const response = await fetch(path, { ...options, credentials: "same-origin", headers });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error?.message || "Request failed");
+        return body;
+      }
+      if (!code) {
+        root.textContent = "A valid patient workflow context is required.";
+      } else {
+        window.SuicideScore.mount(root, {
+          patientCode: code,
+          dashboardUrl: "/dashboard/",
+          adapter: {
+            async getPatient(patientCode) {
+              const activation = await api(`/api/suicide-risk/v1/activation/${encodeURIComponent(patientCode)}`);
+              return { patientCode: activation.code };
+            },
+            async putScreen(patientCode, payload) {
+              return api(`/api/suicide-risk/v1/assessments/${encodeURIComponent(patientCode)}`, {
+                method: "PUT",
+                body: JSON.stringify(payload),
+              });
+            },
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

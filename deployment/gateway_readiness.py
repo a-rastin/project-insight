@@ -18,6 +18,7 @@ REQUIRED_MODULES = {
     "ddi-checker": "http://127.0.0.1:8107/ready",
     "bn-manager": "http://127.0.0.1:8108/api/ready",
     "treatment-plan": "http://127.0.0.1:8109/ready",
+    "suicide-risk": "http://127.0.0.1:8111/ready",
 }
 
 

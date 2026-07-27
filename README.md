@@ -4,7 +4,7 @@
 
 **Modular clinical decision support, delivered through one secure gateway**
 
-Nine independently owned services. One Docker image. Separate persistence.
+Ten independently owned services. One Docker image. Separate persistence.
 Clinician-controlled decisions.
 
 </div>
@@ -73,6 +73,7 @@ flowchart LR
         Gateway --> DDI["DDI Checker :8107"]
         Gateway --> BN["BN Manager :8108"]
         Gateway --> TP["Treatment Plan :8109"]
+        Gateway --> SuicideRisk["Suicide Risk :8111"]
 
         TP -. "versioned REST" .-> Auth
         TP -. "versioned REST" .-> Patient
@@ -92,11 +93,12 @@ flowchart LR
     DDI --> DDIDB[("DDI volume")]
     BN --> BNDB[("BN volume")]
     TP --> TPDB[("treatment-plan volume")]
+    SuicideRisk --> SuicideRiskDB[("suicide-risk volume")]
 ```
 
 `tini` is container PID 1. It starts
 [`deployment/supervisor.py`](deployment/supervisor.py), which launches nginx
-and all nine services from the commands in
+and all ten services from the commands in
 [`deployment/manifest.json`](deployment/manifest.json). Any child process exit
 causes orderly shutdown of the remaining process tree.
 
@@ -113,6 +115,7 @@ causes orderly shutdown of the remaining process tree.
 | [DDI Checker](Modules/DDI-Checker-1.2.0/README.md) | Versioned drug-interaction knowledge base, deterministic checks, review, and audit | Node.js / SQLite, `8107` | `/api/ddi-checker/v1` | `/modules/ddi-checker` |
 | [BN Manager](Modules/BN-Manager-v.1.1.0/BN-Manager-v.1.1.0/README.md) | Bayesian-network model management and evaluation | Python / SQLite, `8108` | `/api/bn-manager/v1` | `/modules/bn-manager` |
 | [Treatment Plan](Modules/Treatment-Plan/README.md) | Explainable plan generation, psychiatrist review, finalization, and provenance | Python / SQLite, `8109` | `/api/treatment-plan/v1` | `/modules/treatment-plan` |
+| [Suicide Risk](Modules/Suicide-Risk-1.0.0/README.md) | C-SSRS Screen Version - Recent assessment, isolated workflow records | Node.js / JSON, `8111` | `/api/suicide-risk/v1` | `/modules/suicide-risk` |
 
 Gateway paths are authoritative in
 [`deployment/nginx.conf`](deployment/nginx.conf). Runtime identity, commands,
@@ -283,6 +286,7 @@ data-deletion operation.
 | `ddi-checker-data` | `/var/lib/insight/ddi-checker` |
 | `bn-manager-data` | `/var/lib/insight/bn-manager` |
 | `treatment-plan-data` | `/var/lib/insight/treatment-plan` |
+| `suicide-risk-data` | `/var/lib/insight/suicide-risk` |
 
 Each module owns migration, backup, restore, retention, and graceful shutdown
 contracts in `deployment/manifest.json`. Named volumes provide persistence, not
@@ -425,7 +429,7 @@ Before any controlled deployment:
 - Replace seeded credentials and force password rotation.
 - Generate strong `AUTH_JWT_SECRET`; never use Compose development fallback.
 - Enable secure cookies behind HTTPS and terminate only TLS 1.2/1.3.
-- Keep port `8080` loopback-bound and never publish `8101-8109`.
+- Keep port `8080` loopback-bound and never publish internal module ports.
 - Keep module databases isolated; no cross-module direct SQL access.
 - Supply secrets through manager-mounted files or protected environment.
 - Run HIGH/CRITICAL image vulnerability gate before promotion.
@@ -454,6 +458,7 @@ approval.
 | Drug interaction knowledge base | [DDI Checker README](Modules/DDI-Checker-1.2.0/README.md) |
 | Bayesian network language and context | [BN Manager README](Modules/BN-Manager-v.1.1.0/BN-Manager-v.1.1.0/README.md) |
 | Treatment planning and release status | [Treatment Plan README](Modules/Treatment-Plan/README.md) |
+| Suicide-risk assessment | [Suicide Risk README](Modules/Suicide-Risk-1.0.0/README.md) |
 | Cross-module treatment context | [Treatment Plan context map](Modules/Treatment-Plan/CONTEXT-MAP.md) |
 | Deployment source of truth | [Deployment manifest](deployment/manifest.json) |
 | Demo distribution | [insight-share README](insight-share/README.md) |

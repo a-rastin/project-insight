@@ -17,7 +17,8 @@ class GatewayReadinessTests(unittest.TestCase):
         self.assertEqual(200, status)
         self.assertTrue(payload["ok"])
         self.assertEqual("unified-gateway", payload["service"])
-        self.assertEqual(9, len(payload["modules"]))
+        self.assertEqual(10, len(payload["modules"]))
+        self.assertIn("suicide-risk", payload["modules"])
 
     def test_required_module_failure_marks_gateway_unready(self):
         def probe(module_id, _url):

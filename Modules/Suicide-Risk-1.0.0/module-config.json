@@ -1,0 +1,5 @@
+{
+  "moduleId": "suicide-risk",
+  "dataDirectory": "data",
+  "databasePath": "data/suicide_risk.json"
+}

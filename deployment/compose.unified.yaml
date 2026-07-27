@@ -36,6 +36,7 @@ services:
       - ddi-checker-data:/var/lib/insight/ddi-checker
       - bn-manager-data:/var/lib/insight/bn-manager
       - treatment-plan-data:/var/lib/insight/treatment-plan
+      - suicide-risk-data:/var/lib/insight/suicide-risk
       - ${INSIGHT_SECRETS_DIR:-./secrets-empty}:/run/secrets:ro
 
 volumes:
@@ -48,3 +49,4 @@ volumes:
   ddi-checker-data:
   bn-manager-data:
   treatment-plan-data:
+  suicide-risk-data:

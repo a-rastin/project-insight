@@ -19,13 +19,20 @@ class DeploymentContractTests(unittest.TestCase):
         check_deployment(ROOT, manifest)
 
         modules = manifest["modules"]
-        self.assertEqual(len(modules), 9)
+        self.assertEqual(len(modules), 10)
         self.assertEqual(
             len({module["internalPort"] for module in modules}), len(modules)
         )
         self.assertEqual(
             len({module["proxyPrefix"] for module in modules}), len(modules)
         )
+
+    def test_suicide_risk_has_stable_isolated_deployment_identity(self):
+        module = next(module for module in load_manifest(MANIFEST)["modules"] if module["moduleId"] == "suicide-risk")
+        self.assertEqual(8111, module["internalPort"])
+        self.assertEqual("/api/suicide-risk/v1", module["basePath"])
+        self.assertEqual("/modules/suicide-risk", module["proxyPrefix"])
+        self.assertEqual("/var/lib/insight/suicide-risk", module["volume"]["mountPath"])
 
     def test_manifest_requires_startup_migration_and_recovery_contracts(self):
         manifest = load_manifest(MANIFEST)

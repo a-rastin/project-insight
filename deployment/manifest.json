@@ -156,6 +156,22 @@
       "command": ["python", "-m", "treatment_plan.deployment", "serve"],
       "environment": {"PORT": "8109", "TP_HOST": "127.0.0.1", "TP_PORT": "8109", "TP_DATABASE_PATH": "/var/lib/insight/treatment-plan/treatment-plan.sqlite3"},
       "databasePath": "/var/lib/insight/treatment-plan/treatment-plan.sqlite3"
+    },
+    {
+      "moduleId": "suicide-risk",
+      "internalPort": 8111,
+      "basePath": "/api/suicide-risk/v1",
+      "proxyPrefix": "/modules/suicide-risk",
+      "volume": {"name": "suicide-risk-data", "mountPath": "/var/lib/insight/suicide-risk", "writable": true},
+      "migration": {"mode": "startup", "readinessGate": true, "owner": "suicide-risk"},
+      "backup": {"configured": true, "owner": "suicide-risk"},
+      "restore": {"configured": true, "owner": "suicide-risk"},
+      "retention": {"configured": true, "policyReference": "operator-provided:suicide-risk", "owner": "suicide-risk"},
+      "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
+      "workingDirectory": "/opt/modules/suicide-risk",
+      "command": ["node", "server.js"],
+      "environment": {"PORT": "8111", "SUICIDE_RISK_DATA_DIR": "/var/lib/insight/suicide-risk", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session"},
+      "databasePath": "/var/lib/insight/suicide-risk/suicide_risk.json"
     }
   ]
 }

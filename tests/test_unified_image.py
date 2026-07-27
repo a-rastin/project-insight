@@ -32,6 +32,7 @@ class UnifiedImageTests(unittest.TestCase):
                 "ddi-checker": 8107,
                 "bn-manager": 8108,
                 "treatment-plan": 8109,
+                "suicide-risk": 8111,
             },
         )
         self.assertEqual(self.manifest["gateway"], {"port": 8080, "exposed": True})
@@ -85,6 +86,7 @@ class UnifiedImageTests(unittest.TestCase):
                 "ddi-checker",
                 "bn-manager",
                 "treatment-plan",
+                "suicide-risk",
                 "gateway-readiness",
                 "nginx",
             },
@@ -119,7 +121,7 @@ class UnifiedImageTests(unittest.TestCase):
         for ignored in ("graphify-out", "tests", "node_modules", "*.sqlite*", "fixtures"):
             self.assertIn(ignored, dockerignore)
         self.assertIn('"127.0.0.1:8080:8080"', compose)
-        for port in range(8101, 8110):
+        for port in (*range(8101, 8110), 8111):
             self.assertNotIn(f'"{port}:', compose)
         self.assertIn("/run/secrets:ro", compose)
         self.assertIn("INSIGHT_UNIFIED_IMAGE", compose)
@@ -226,7 +228,7 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("/run/secrets:ro", unit)
         self.assertNotIn("uvicorn", unit)
         self.assertNotIn("supervisor.py", unit)
-        for module_port in range(8101, 8110):
+        for module_port in (*range(8101, 8110), 8111):
             self.assertNotIn(f":{module_port}", unit)
             self.assertNotIn(f"127.0.0.1:{module_port}", nginx)
         self.assertIn("listen 443 ssl", nginx_lower)
