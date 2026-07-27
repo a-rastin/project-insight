@@ -13,6 +13,7 @@
       const root = document.getElementById("suicide-score-root");
       const code = new URLSearchParams(window.location.search).get("code");
       let csrfToken;
+      let activationContext;
       async function api(path, options = {}) {
         const method = (options.method || "GET").toUpperCase();
         const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
@@ -30,6 +31,26 @@
         if (!response.ok) throw new Error(body?.error?.message || "Request failed");
         return body;
       }
+      async function activateMedicalHistory() {
+        const csrf = await fetch("/api/internal/medical-history/csrf", { credentials: "same-origin" });
+        const csrfBody = await csrf.json().catch(() => ({}));
+        if (!csrf.ok || !csrfBody.token) throw new Error(csrfBody?.error?.message || "Medical History CSRF token unavailable.");
+        const response = await fetch("/api/internal/medical-history/activate", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfBody.token },
+          body: JSON.stringify({
+            code: activationContext.code,
+            patientId: activationContext.context.patientId,
+            encounterId: activationContext.context.encounterId,
+            requestedByModule: "suicide-risk",
+            returnUrl: activationContext.context.returnUrl,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error?.message || "Could not open Medical History.");
+        return body;
+      }
       if (!code) {
         root.textContent = "A valid patient workflow context is required.";
       } else {
@@ -38,14 +59,21 @@
           dashboardUrl: "/dashboard/",
           adapter: {
             async getPatient(patientCode) {
-              const activation = await api(`/api/suicide-risk/v1/activation/${encodeURIComponent(patientCode)}`);
-              return { patientCode: activation.code };
+              activationContext = await api(`/api/suicide-risk/v1/activation/${encodeURIComponent(patientCode)}`);
+              return { patientCode: activationContext.code };
             },
             async putScreen(patientCode, payload) {
-              return api(`/api/suicide-risk/v1/assessments/${encodeURIComponent(patientCode)}`, {
+              const assessment = await api(`/api/suicide-risk/v1/assessments/${encodeURIComponent(patientCode)}`, {
                 method: "PUT",
                 body: JSON.stringify(payload),
               });
+              try {
+                const medicalHistory = await activateMedicalHistory();
+                window.location.assign(`/modules/medical-history?code=${encodeURIComponent(medicalHistory.code)}`);
+              } catch (error) {
+                throw new Error(`The suicide-risk assessment was saved, but Medical History could not be opened. Retry continuing to Medical History. ${error.message}`);
+              }
+              return assessment;
             },
           },
         });

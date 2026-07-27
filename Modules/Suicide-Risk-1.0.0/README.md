@@ -18,6 +18,11 @@ readiness are available at `/api/suicide-risk/v1/health` and
 `/api/suicide-risk/v1/ready`. Production session and CSRF checks use the
 canonical Authentication session endpoint.
 
+After durable save, browser activation of Medical History preserves activation
+code plus available patient and encounter UUIDs, then redirects to its gateway
+route. If activation fails, retrying Save retries only this idempotent
+continuation; it does not create another assessment.
+
 ## Run
 
 Open `index.html` directly in a browser for upstream demo behavior. Unified

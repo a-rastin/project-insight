@@ -33,13 +33,16 @@ test("options expose diseases, antipsychotics, and exact clozapine contraindicat
 });
 
 test("activation launches through the gateway Medical History route", async () => {
+  const patientId = "11111111-1111-4111-8111-111111111111";
+  const encounterId = "22222222-2222-4222-8222-222222222222";
   const activation = await request("/api/internal/medical-history/activate", {
     method: "POST",
-    body: JSON.stringify({ code: "e98pq5" }),
+    body: JSON.stringify({ code: "e98pq5", patientId, encounterId, requestedByModule: "suicide-risk" }),
   });
   assert.equal(activation.status, 201);
   assert.equal(activation.body.code, "E98PQ5");
-  assert.equal(activation.body.launchUrl, "/modules/medical-history?code=E98PQ5");
+    assert.equal(activation.body.launchUrl, "/modules/medical-history?code=E98PQ5");
+  assert.deepEqual(activation.body.context, { patientId, encounterId, requestedByModule: "suicide-risk", returnUrl: null });
 });
 
 test("Medical History browser client keeps module base path and sends CSRF tokens", async () => {

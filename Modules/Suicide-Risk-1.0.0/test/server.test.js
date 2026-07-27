@@ -43,6 +43,9 @@ test("browser uses workflow activation API and does not offer an unassessed bypa
   const html = fs.readFileSync(path.resolve(__dirname, "../index.html"), "utf8");
   const app = fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8");
   assert.match(html, /\/api\/suicide-risk\/v1\/activation/);
+  assert.match(html, /\/api\/internal\/medical-history\/activate/);
+  assert.match(html, /The suicide-risk assessment was saved, but Medical History could not be opened/);
+  assert.match(html, /window\.location\.assign\(`\/modules\/medical-history\?code=/);
   assert.match(html, /credentials: "same-origin"/);
   assert.doesNotMatch(app, /data-pass/);
 });
