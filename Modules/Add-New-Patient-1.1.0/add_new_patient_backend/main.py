@@ -16,7 +16,14 @@ from .auth import AuthSessionError, fetch_auth_identity
 from .config import ROOT, settings
 from .csrf import CSRF_COOKIE_NAME, CSRF_WRITE_METHODS, csrf_error, generate_csrf_token, request_has_valid_csrf, sign_csrf_token
 from .db import SQLiteAdapter
-from .models import CanonicalEncounterCreate, CanonicalPatientCreate, PatientIntake, SCHEMA_VERSION, generate_patient_code
+from .models import (
+    CanonicalEncounterCreate,
+    CanonicalPatientCreate,
+    PatientIntake,
+    SCHEMA_VERSION,
+    WorkflowPatientDetailsFinalize,
+    generate_patient_code,
+)
 from .repository import (
     IdempotencyConflict,
     PatientAliasCollision,
@@ -310,7 +317,7 @@ async def complete_workflow_diagnosis(draft_id: str, request: Request) -> JSONRe
 @app.post("/api/add-new-patient/v1/workflow-drafts/{draft_id}/finalize")
 async def finalize_workflow_draft(
     draft_id: str,
-    payload: PatientIntake,
+    payload: WorkflowPatientDetailsFinalize,
     identity: dict[str, Any] = Depends(require_psychiatrist_session),
 ) -> JSONResponse:
     owner_user_id, owner_session_id = workflow_owner(identity)

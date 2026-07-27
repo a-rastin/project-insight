@@ -4,7 +4,7 @@ import re
 from datetime import UTC, date, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 TEXT_LIMIT = 2000
@@ -162,6 +162,22 @@ class PatientIntake(BaseModel):
 
     def to_patient_record(self) -> dict[str, Any]:
         return {**self.demographics.model_dump(mode="json"), **self.clinical.model_dump(mode="json")}
+
+
+class WorkflowPatientDetailsFinalize(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    demographics: PatientDemographics
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_client_patient_code(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "patientCode" in (value.get("demographics") or {}):
+            raise ValueError("Patient code is assigned by the workflow.")
+        return value
+
+    def to_patient_record(self) -> dict[str, Any]:
+        return self.demographics.model_dump(mode="json", exclude={"patientCode"})
 
 
 class CanonicalPatientCreate(BaseModel):

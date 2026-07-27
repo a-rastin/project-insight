@@ -315,24 +315,18 @@ class PatientRepository:
                 return None
             draft = self._expire_workflow_draft(conn, draft)
             if draft["phase"] == "completed":
-                row = conn.execute(
-                    """
-                    SELECT p.*, i.id AS intake_id, i.encounter_date, i.presenting_complaint,
-                           i.provisional_diagnosis, i.treatment_history, i.allergies_snapshot,
-                           i.current_medications_snapshot, i.suicidality, i.substance_use
-                    FROM patients p JOIN patient_intake_records i ON i.patient_id = p.id
-                    WHERE p.id = ? ORDER BY i.created_at LIMIT 1
-                    """,
-                    (draft["patient_id"],),
-                ).fetchone()
+                row = conn.execute("SELECT * FROM patients WHERE id = ?", (draft["patient_id"],)).fetchone()
                 if row is None:
                     raise WorkflowDraftNotReady
                 return 200, {
                     "schemaVersion": SCHEMA_VERSION,
                     "patient": patient_row(row),
                     "patientId": draft["patient_id"],
-                    "encounterId": row["intake_id"],
                     "workflowDraft": workflow_draft_row(draft),
+                    "next": {
+                        "moduleId": "severity",
+                        "href": f"/modules/severity?patient_code={draft['patient_code']}",
+                    },
                 }
             if draft["phase"] != "patient-information":
                 raise WorkflowDraftNotReady
@@ -355,27 +349,7 @@ class PatientRepository:
                 (
                     patient_id, patient_code, patient["firstName"], patient["lastName"],
                     patient["sex"], patient["dob"], patient.get("phoneNumber") or None,
-                    patient.get("status") or "active", owner_user_id, now, now,
-                ),
-            )
-            encounter_id = str(uuid4())
-            conn.execute(
-                """
-                INSERT INTO patient_intake_records
-                  (id, patient_id, encounter_date, presenting_complaint, provisional_diagnosis,
-                   treatment_history, allergies_snapshot, current_medications_snapshot,
-                   suicidality, substance_use, created_by_user_id, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    encounter_id, patient_id, patient.get("encounterDate") or now,
-                    patient["presentingComplaint"], patient["provisionalDiagnosis"],
-                    json.dumps(patient.get("treatmentHistory") or []),
-                    json.dumps(patient.get("allergies") or []),
-                    json.dumps(patient.get("currentMedications") or []),
-                    canonical_suicidality((patient.get("riskFlags") or {}).get("suicidality")),
-                    1 if (patient.get("riskFlags") or {}).get("substanceUse", False) else 0,
-                    owner_user_id, now, now,
+                    "active", owner_user_id, now, now,
                 ),
             )
             conn.execute(
@@ -386,23 +360,17 @@ class PatientRepository:
                 """,
                 (now, now, draft_id),
             )
-            row = conn.execute(
-                """
-                SELECT p.*, i.id AS intake_id, i.encounter_date, i.presenting_complaint,
-                       i.provisional_diagnosis, i.treatment_history, i.allergies_snapshot,
-                       i.current_medications_snapshot, i.suicidality, i.substance_use
-                FROM patients p JOIN patient_intake_records i ON i.patient_id = p.id
-                WHERE p.id = ? AND i.id = ?
-                """,
-                (patient_id, encounter_id),
-            ).fetchone()
+            row = conn.execute("SELECT * FROM patients WHERE id = ?", (patient_id,)).fetchone()
             draft = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
             return 201, {
                 "schemaVersion": SCHEMA_VERSION,
                 "patient": patient_row(row),
                 "patientId": patient_id,
-                "encounterId": encounter_id,
                 "workflowDraft": workflow_draft_row(draft),
+                "next": {
+                    "moduleId": "severity",
+                    "href": f"/modules/severity?patient_code={patient_code}",
+                },
             }
 
     def resolve_workflow_patient(

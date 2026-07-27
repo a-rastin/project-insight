@@ -1,6 +1,6 @@
 # Add New Patient API Contract
 
-Last updated: 2026-07-07
+Last updated: 2026-07-27
 
 Canonical contract for Add New Patient module boundaries and internal REST
 handoffs. Runtime validation source: `add_new_patient_backend/models.py`.
@@ -193,6 +193,7 @@ GET  /internal/dashboard/module-routes/add-new-patient
 GET  /api/health
 GET  /api/auth/session            standalone mock auth only
 GET  /api/add-new-patient/csrf
+POST /api/add-new-patient/v1/workflow-drafts/{draftId}/finalize
 GET  /api/patients
 POST /api/patients
 GET  /api/patients/{idOrCode}
@@ -210,6 +211,53 @@ token/cookie pair, so adding a `PATCH` endpoint later inherits the contract
 without middleware changes.
 
 No Treatment Plan endpoints belong in this module.
+
+## POST /api/add-new-patient/v1/workflow-drafts/{draftId}/finalize
+
+Completes a diagnosis-first workflow in `patient-information` phase. Requires a
+verified psychiatrist session and valid CSRF token. The workflow owns reserved
+patient ID and patient code; client payloads cannot supply either identifier.
+
+Request body accepts demographics only. Unknown fields, including `clinical`,
+are rejected with HTTP 422.
+
+```json
+{
+  "demographics": {
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "sex": "Female",
+    "dob": "1986-07-07",
+    "phoneNumber": "5551234567"
+  }
+}
+```
+
+The transaction creates one canonical `patients` row, completes workflow, and
+does not create `patient_intake_records`. Repeating a successful request returns
+same patient and next-module handoff without duplicate creation.
+
+Success response, HTTP 201 (`200` on repeat):
+
+```json
+{
+  "patient": {
+    "id": "uuid",
+    "patientCode": "ABC123"
+  },
+  "patientId": "uuid",
+  "workflowDraft": {
+    "id": "uuid",
+    "phase": "completed"
+  },
+  "next": {
+    "moduleId": "severity",
+    "href": "/modules/severity?patient_code=ABC123"
+  }
+}
+```
+
+No `encounterId` is returned because this transition creates no encounter.
 
 ## Dashboard Launch Contract
 

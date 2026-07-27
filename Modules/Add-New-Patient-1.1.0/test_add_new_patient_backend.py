@@ -224,6 +224,22 @@ def canonical_patient_payload(**overrides: object) -> dict:
     return payload
 
 
+def workflow_finalize_payload(**overrides: object) -> dict:
+    payload = {
+        "demographics": {
+            key: value
+            for key, value in valid_payload()["demographics"].items()
+            if key != "patientCode"
+        }
+    }
+    for key, value in overrides.items():
+        if key in payload["demographics"]:
+            payload["demographics"][key] = value
+        else:
+            payload[key] = value
+    return payload
+
+
 def canonical_encounter_payload(patient_id: str, **overrides: object) -> dict:
     payload = {"patientId": patient_id, **valid_payload()["clinical"]}
     payload.update(overrides)
@@ -496,7 +512,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 headers=headers,
             )
             draft = created["workflowDraft"]
-            payload = valid_payload(patient_code="WRONG1")
+            payload = workflow_finalize_payload()
             path = f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}/finalize"
             blocked_status, _ = request_json(base, path, method="POST", headers=headers, body=payload)
             self.assertEqual(blocked_status, 409)
@@ -510,14 +526,21 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertEqual(status, 201)
             self.assertEqual(finalized["patientId"], draft["patientId"])
             self.assertEqual(finalized["patient"]["patientCode"], draft["patientCode"])
-            self.assertIsNotNone(UUID(finalized["encounterId"]))
+            self.assertNotIn("encounterId", finalized)
+            self.assertEqual(
+                finalized["next"],
+                {
+                    "moduleId": "severity",
+                    "href": f"/modules/severity?patient_code={draft['patientCode']}",
+                },
+            )
 
             retry_status, retry = request_json(base, path, method="POST", headers=headers, body=payload)
             self.assertEqual(retry_status, 200)
             self.assertEqual(retry, finalized)
             with sqlite3.connect(server.db_path) as conn:
                 self.assertEqual(conn.execute("SELECT COUNT(*) FROM patients").fetchone()[0], 1)
-                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patient_intake_records").fetchone()[0], 1)
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patient_intake_records").fetchone()[0], 0)
                 row = conn.execute(
                     "SELECT phase, completed_at FROM workflow_drafts WHERE id = ?", (draft["id"],)
                 ).fetchone()
@@ -531,6 +554,30 @@ class AddNewPatientBackendTest(unittest.TestCase):
                 )
             denied_status, _ = request_json(base, path, method="POST", headers=headers, body=payload)
             self.assertEqual(denied_status, 404)
+
+    def test_workflow_finalization_rejects_clinical_and_client_identifiers(self) -> None:
+        with AddNewPatientServer() as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/workflow-drafts",
+                method="POST",
+                headers=headers,
+            )
+            path = f"/api/add-new-patient/v1/workflow-drafts/{created['workflowDraft']['id']}/finalize"
+            invalid_payloads = [
+                workflow_finalize_payload(lastName=""),
+                workflow_finalize_payload(sex="Other"),
+                workflow_finalize_payload(dob=future_dob()),
+                workflow_finalize_payload(clinical={"presentingComplaint": "Not accepted"}),
+                workflow_finalize_payload(patientId="client-selected-id"),
+                {"demographics": {**workflow_finalize_payload()["demographics"], "patientCode": "CLIENT"}},
+            ]
+            for payload in invalid_payloads:
+                with self.subTest(payload=payload):
+                    status, data = request_json(base, path, method="POST", headers=headers, body=payload)
+                    self.assertEqual(status, 422)
+                    self.assertEqual(data["message"], "Patient data failed validation.")
 
     def test_authenticated_diagnosis_first_workflow_links_one_patient_uuid(self) -> None:
         secret = "workflow-integration-secret"
@@ -601,12 +648,12 @@ class AddNewPatientBackendTest(unittest.TestCase):
                     self.assertEqual(resumed["workflowDraft"]["phase"], "patient-information")
                     finalize_path = f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}/finalize"
                     status, finalized = request_json(
-                        base, finalize_path, method="POST", headers=owner, body=valid_payload()
+                        base, finalize_path, method="POST", headers=owner, body=workflow_finalize_payload()
                     )
                     self.assertEqual(status, 201)
                     self.assertEqual(finalized["patientId"], draft["patientId"])
                     retry_status, retry = request_json(
-                        base, finalize_path, method="POST", headers=owner, body=valid_payload()
+                        base, finalize_path, method="POST", headers=owner, body=workflow_finalize_payload()
                     )
                     self.assertEqual(retry_status, 200)
                     self.assertEqual(retry, finalized)
