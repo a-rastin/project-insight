@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
 import json
+import hmac
+from hashlib import sha256
 import os
 import socket
 import sqlite3
@@ -415,6 +417,50 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(cancelled["workflowDraft"]["phase"], "cancelled")
             self.assertIsNotNone(cancelled["workflowDraft"]["retentionUntil"])
+
+    def test_signed_diagnosis_completion_advances_only_matching_draft(self) -> None:
+        secret = "workflow-test-secret"
+        previous = os.environ.get("WORKFLOW_SERVICE_SECRET")
+        os.environ["WORKFLOW_SERVICE_SECRET"] = secret
+        try:
+            with AddNewPatientServer() as base:
+                headers = csrf_headers(base, PSY_HEADER)
+                _, created = request_json(
+                    base,
+                    "/api/add-new-patient/v1/workflow-drafts",
+                    method="POST",
+                    headers=headers,
+                )
+                draft = created["workflowDraft"]
+                payload = {"patientCode": draft["patientCode"], "decision": "confirmed"}
+                signature = hmac.new(
+                    secret.encode(),
+                    f"{draft['id']}:{draft['patientCode']}:confirmed".encode(),
+                    sha256,
+                ).hexdigest()
+                status, completed = request_json(
+                    base,
+                    f"/internal/workflow-drafts/{draft['id']}/diagnosis-complete",
+                    method="POST",
+                    headers={"X-Workflow-Signature": signature},
+                    body=payload,
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(completed["workflowDraft"]["phase"], "patient-information")
+                self.assertEqual(completed["workflowDraft"]["diagnosisDecision"], "confirmed")
+                status, _ = request_json(
+                    base,
+                    f"/internal/workflow-drafts/{draft['id']}/diagnosis-complete",
+                    method="POST",
+                    headers={"X-Workflow-Signature": "bad"},
+                    body=payload,
+                )
+                self.assertEqual(status, 403)
+        finally:
+            if previous is None:
+                os.environ.pop("WORKFLOW_SERVICE_SECRET", None)
+            else:
+                os.environ["WORKFLOW_SERVICE_SECRET"] = previous
 
     def test_versioned_intake_api_creates_lists_and_resolves_patients(self) -> None:
         with AddNewPatientServer() as base:

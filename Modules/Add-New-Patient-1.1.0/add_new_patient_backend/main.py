@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import re
 from pathlib import Path
@@ -77,7 +78,8 @@ def validation_error_key(loc: tuple[Any, ...]) -> str:
 
 @app.middleware("http")
 async def csrf_middleware(request: Request, call_next: Any) -> JSONResponse:
-    if request.method in CSRF_WRITE_METHODS and not request_has_valid_csrf(request):
+    internal_workflow_callback = request.url.path.startswith("/internal/workflow-drafts/")
+    if request.method in CSRF_WRITE_METHODS and not internal_workflow_callback and not request_has_valid_csrf(request):
         return csrf_error()
     return await call_next(request)
 
@@ -220,6 +222,14 @@ def workflow_owner(identity: dict[str, Any]) -> tuple[str, str]:
     return identity["user"]["id"], identity["authSessionId"]
 
 
+def workflow_signature(draft_id: str, patient_code: str, decision: str) -> str:
+    return hmac.new(
+        settings.workflow_service_secret.encode(),
+        f"{draft_id}:{patient_code}:{decision}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
 @app.post("/api/add-new-patient/v1/workflow-drafts")
 async def create_workflow_draft(
     identity: dict[str, Any] = Depends(require_psychiatrist_session),
@@ -276,6 +286,24 @@ async def lookup_patient_for_diagnosis(
         "patient_code": patient["patientCode"],
         "display_name": None,
     })
+
+
+@app.post("/internal/workflow-drafts/{draft_id}/diagnosis-complete")
+async def complete_workflow_diagnosis(draft_id: str, request: Request) -> JSONResponse:
+    if not settings.workflow_service_secret:
+        return JSONResponse(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content={"error": "workflow_service_unavailable"})
+    body = await request.json()
+    patient_code = str(body.get("patientCode") or "").strip().upper()
+    decision = str(body.get("decision") or "")
+    signature = request.headers.get("X-Workflow-Signature", "")
+    if decision not in {"confirmed", "definite"} or not hmac.compare_digest(
+        signature, workflow_signature(draft_id, patient_code, decision)
+    ):
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"error": "workflow_signature_invalid"})
+    draft = repo.complete_workflow_diagnosis(draft_id, patient_code, decision)
+    if not draft:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "workflow_draft_not_ready"})
+    return JSONResponse(content=canonical_response(workflowDraft=draft))
 
 
 @app.post("/api/add-new-patient/v1/patients")

@@ -265,6 +265,28 @@ class PatientRepository:
                 row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
         return workflow_draft_row(row)
 
+    def complete_workflow_diagnosis(
+        self, draft_id: str, patient_code: str, decision: str
+    ) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
+            if row is None:
+                return None
+            row = self._expire_workflow_draft(conn, row)
+            if row["phase"] != "diagnosis" or row["patient_code"] != patient_code.upper():
+                return None
+            now = now_iso()
+            conn.execute(
+                """
+                UPDATE workflow_drafts
+                SET phase = 'patient-information', diagnosis_decision = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (decision, now, draft_id),
+            )
+            row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
+        return workflow_draft_row(row)
+
     def resolve_workflow_patient(
         self, patient_code: str, owner_user_id: str, owner_session_id: str
     ) -> dict[str, Any] | None:
