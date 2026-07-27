@@ -170,6 +170,21 @@ class UnifiedImageTests(unittest.TestCase):
         self.assertIn("proxy_pass http://127.0.0.1:8104/diagnosis/;", nginx)
         self.assertNotIn("location /diagnosis", nginx)
 
+    def test_nginx_strips_medical_history_module_prefix_for_ui_and_assets(self):
+        nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn(
+            "location = /modules/medical-history {\n"
+            "            proxy_pass http://127.0.0.1:8106/;\n"
+            "        }",
+            nginx,
+        )
+        self.assertIn(
+            "location /modules/medical-history/ {\n"
+            "            proxy_pass http://127.0.0.1:8106/;\n"
+            "        }",
+            nginx,
+        )
+
     def test_nginx_serves_authentication_root_and_dashboard_static_shell(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
         self.assertIn("include /etc/nginx/mime.types;", nginx)

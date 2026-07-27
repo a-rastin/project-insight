@@ -1,36 +1,28 @@
 ﻿const test = require("node:test");
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const os = require("node:os");
 const crypto = require("node:crypto");
+const { createServer } = require("../server.js");
+const { createMemoryMedicalHistoryRepository } = require("../repository.js");
 
-const port = 4300 + Math.floor(Math.random() * 500);
-const base = `http://127.0.0.1:${port}`;
-let child;
-let dataDir;
+let base;
+let server;
 
 async function request(url, options) {
   const response = await fetch(base + url, { headers: { "Content-Type": "application/json" }, ...options });
   return { status: response.status, etag: response.headers.get("etag"), body: await response.json() };
 }
 
-async function waitForServer() {
-  for (let i = 0; i < 50; i++) {
-    try { const response = await fetch(base + "/api/internal/medical-history/health"); if (response.ok) return; } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error("server did not start");
-}
-
 test.before(async () => {
-  dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "medical-history-test-"));
-  child = spawn(process.execPath, ["server.js"], { cwd: path.resolve(__dirname, ".."), env: { ...process.env, PORT: String(port), MEDICAL_HISTORY_DATA_DIR: dataDir }, stdio: "ignore" });
-  await waitForServer();
+  server = createServer({ repository: createMemoryMedicalHistoryRepository() });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  base = `http://127.0.0.1:${server.address().port}`;
 });
 
-test.after(async () => { child.kill(); await fs.rm(dataDir, { recursive: true, force: true }); });
+test.after(async () => {
+  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+});
 
 test("options expose diseases, antipsychotics, and exact clozapine contraindications", async () => {
   const result = await request("/api/internal/medical-history/options");
@@ -38,6 +30,31 @@ test("options expose diseases, antipsychotics, and exact clozapine contraindicat
   assert.ok(result.body.pastMedicalHistory.includes("Hypertension"));
   assert.ok(result.body.antipsychotics.includes("Clozapine"));
   assert.deepEqual(result.body.clozapineContraindications, ["Severe neutropenia", "Clozapine-induced myocarditis", "Unmanaged seizure disorder"]);
+});
+
+test("activation launches through the gateway Medical History route", async () => {
+  const activation = await request("/api/internal/medical-history/activate", {
+    method: "POST",
+    body: JSON.stringify({ code: "e98pq5" }),
+  });
+  assert.equal(activation.status, 201);
+  assert.equal(activation.body.code, "E98PQ5");
+  assert.equal(activation.body.launchUrl, "/modules/medical-history?code=E98PQ5");
+});
+
+test("Medical History browser client keeps module base path and sends CSRF tokens", async () => {
+  const [html, client] = await Promise.all([
+    fs.readFile(path.resolve(__dirname, "../public/index.html"), "utf8"),
+    fs.readFile(path.resolve(__dirname, "../public/app.js"), "utf8"),
+  ]);
+  assert.match(html, /href="\/modules\/medical-history\/styles\.css"/);
+  assert.match(html, /src="\/modules\/medical-history\/app\.js"/);
+  assert.match(client, /"\/api\/internal\/medical-history\/csrf"/);
+  assert.match(client, /"X-CSRF-Token"/);
+  assert.match(client, /`\/modules\/medical-history\?code=\$\{encodeURIComponent\(activation\.code\)\}`/);
+  assert.match(client, /window\.location\.assign\("\/modules\/medical-history"\)/);
+  assert.doesNotMatch(client, /`\/\?code=\$\{encodeURIComponent\(activation\.code\)\}`/);
+  assert.doesNotMatch(client, /window\.location\.assign\("\/"\)/);
 });
 
 test("publishes deep submission identity while documenting code as compatibility metadata", async () => {

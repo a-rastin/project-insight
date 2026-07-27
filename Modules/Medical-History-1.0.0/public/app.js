@@ -2,6 +2,7 @@
   activation: null,
   returnUrl: "/dashboard"
 };
+let csrfToken;
 
 const elements = {
   status: document.querySelector("#status-pill"),
@@ -24,15 +25,34 @@ const elements = {
 };
 
 async function api(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    headers["X-CSRF-Token"] = await getCsrfToken();
+  }
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
+    ...options,
+    credentials: "same-origin",
+    headers
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(data?.error?.message || "Request failed");
   }
   return data;
+}
+
+async function getCsrfToken() {
+  if (csrfToken) return csrfToken;
+  const response = await fetch("/api/internal/medical-history/csrf", {
+    credentials: "same-origin"
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.token) {
+    throw new Error(data?.error?.message || "CSRF token unavailable.");
+  }
+  csrfToken = data.token;
+  return csrfToken;
 }
 
 function setStatus(label, mode = "") {
@@ -153,7 +173,7 @@ async function activateFromCode(code) {
       returnUrl: "/dashboard"
     })
   });
-  window.history.replaceState(null, "", `/?code=${encodeURIComponent(activation.code)}`);
+  window.history.replaceState(null, "", `/modules/medical-history?code=${encodeURIComponent(activation.code)}`);
   showForm(activation);
 }
 
@@ -193,7 +213,7 @@ document.querySelectorAll('input[name="prior-antipsychotic-therapy"], input[name
 elements.backDashboard.addEventListener("click", goToDashboard);
 elements.resultDashboard.addEventListener("click", goToDashboard);
 elements.newEntry.addEventListener("click", () => {
-  window.location.assign("/");
+  window.location.assign("/modules/medical-history");
 });
 
 elements.historyForm.addEventListener("submit", async (event) => {
@@ -238,6 +258,5 @@ elements.historyForm.addEventListener("submit", async (event) => {
 loadOptions()
   .then(restoreActivationFromUrl)
   .catch((error) => showError(error.message));
-
 
 

@@ -259,7 +259,7 @@ function createServer(options = {}) {
     }
     sendJson(res, req, 201, {
       ...activation,
-      launchUrl: `/?code=${encodeURIComponent(code)}`
+      launchUrl: `/modules/medical-history?code=${encodeURIComponent(code)}`
     });
   }
 
@@ -400,8 +400,7 @@ function createServer(options = {}) {
       res.end(body);
     } catch (error) {
       if (error.code === "ENOENT") {
-        res.writeHead(302, { Location: "/" });
-        res.end();
+        sendError(res, req, 404, "Static file was not found.");
         return;
       }
       throw error;
