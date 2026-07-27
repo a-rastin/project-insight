@@ -196,7 +196,7 @@
 
     Standalone case (python -m diagnosis -> GET /):
       The page is its own host. The script tag below bootstraps
-      createDiagnosisModule({root: document.body, apiBaseUrl: ""}) on
+      createDiagnosisModule({root: document.body, apiBaseUrl: "/api/diagnosis/v1"}) on
       DOMContentLoaded, after rendering the standalone shell chrome
       (the .dm-topbar header) inline. Same byte-clean CSRF meta injection
       path the page seam already owns.
@@ -269,6 +269,7 @@
       const apiBaseUrl = (opts && typeof opts.apiBaseUrl === "string")
         ? opts.apiBaseUrl.replace(/\/+$/, "")
         : "";
+      const diagnosisApiBase = apiBaseUrl || "/diagnosis";
       const embedded = !!(opts && opts.embedded);
       const initialCode = (opts && opts.initialCode) || "";
       const initialWorkflowId = (opts && opts.workflowId) || "";
@@ -396,7 +397,7 @@
       }
 
       async function loadMeta() {
-        const r = await fetch(apiBaseUrl + "/diagnosis/_meta");
+        const r = await fetch(diagnosisApiBase + "/_meta");
         if (!r.ok) throw new Error("Metadata request failed: " + r.status);
         const data = await r.json();
         criteria = data.criteria;
@@ -473,7 +474,7 @@
         const myTimer = setTimeout(async () => {
           if (destroyed) return;
           try {
-            const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code), {
+            const r = await fetch(diagnosisApiBase + "/" + encodeURIComponent(code), {
               method: "PUT",
               headers: csrfHeaders({"Content-Type": "application/json"}),
               body: JSON.stringify({ checked: ids, decision: lastDecision })
@@ -574,12 +575,12 @@
         const entry = $("entry");
         const ws = $("workspace");
         const disp = $("patient-code-display");
-        const init = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(requestedCode) + "/init", {
+        const init = await fetch(diagnosisApiBase + "/" + encodeURIComponent(requestedCode) + "/init", {
           method: "POST",
           headers: csrfHeaders()
         });
         if (!init.ok) throw new Error("Session initialization failed: " + init.status);
-        const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(requestedCode));
+        const r = await fetch(diagnosisApiBase + "/" + encodeURIComponent(requestedCode));
         if (!r.ok) throw new Error("Session request failed: " + r.status);
         const data = await r.json();
         code = requestedCode;
@@ -598,7 +599,7 @@
           if (button) button.disabled = true;
         });
         try {
-          const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code), {
+          const r = await fetch(diagnosisApiBase + "/" + encodeURIComponent(code), {
             method: "PUT",
             headers: csrfHeaders({"Content-Type": "application/json"}),
             body: JSON.stringify({ checked: checkedIds(), decision, workflowId: workflowId || null })
@@ -765,7 +766,7 @@
       const root = document.getElementById("diagnosis-root") || document.body;
       const instance = createDiagnosisModule({
         root: root,
-        apiBaseUrl: "",
+        apiBaseUrl: "/api/diagnosis/v1",
         embedded: false,
       });
       instance.mount();
