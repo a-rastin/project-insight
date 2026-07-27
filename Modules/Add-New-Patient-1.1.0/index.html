@@ -13,12 +13,13 @@
           <div>
             <p class="eyebrow">Patient intake</p>
             <h1 id="dashboardTitle">Add New Patient</h1>
-            <p class="summary">Create a patient record through the module REST API.</p>
+            <p class="summary">Begin with diagnosis, then complete patient information using one reserved identity.</p>
           </div>
           <button class="primary-action" id="activateModuleButton" type="button">
             Add New Patient
           </button>
           <button class="secondary-action" id="listPatientsButton" type="button">View Patients</button>
+          <p class="status-message" id="workflowStatus" role="status" aria-live="polite"></p>
         </div>
       </section>
 
@@ -156,7 +157,6 @@
 
           <div class="form-actions">
             <button class="primary-action" type="submit">Submit Patient</button>
-            <button class="tertiary-action" id="regenerateCodeButton" type="button">Generate New Code</button>
           </div>
 
           <p class="status-message" id="statusMessage" role="status" aria-live="polite"></p>

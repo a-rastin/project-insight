@@ -1353,6 +1353,19 @@ class AddNewPatientBackendTest(unittest.TestCase):
             self.assertEqual(request_json(base, "/modules/add-new-patient/app.js")[0], 200)
             self.assertEqual(request_json(base, "/modules/add-new-patient/styles.css")[0], 200)
 
+    def test_browser_uses_diagnosis_first_workflow(self) -> None:
+        with AddNewPatientServer() as base:
+            _, script = request_json(base, "/app.js")
+            _, page = request_json(base, "/")
+        source = script["_raw"]
+        self.assertIn('/api/add-new-patient/v1/workflow-drafts', source)
+        self.assertIn('/modules/diagnosis?workflow=', source)
+        self.assertIn('draft.phase !== "patient-information"', source)
+        self.assertIn('/finalize', source)
+        self.assertIn('window.location.assign("/dashboard/")', source)
+        self.assertNotIn("generateBrowserPatientCode", source)
+        self.assertNotIn("regenerateCodeButton", page["_raw"])
+
     def test_private_paths_not_served(self) -> None:
         with AddNewPatientServer() as base:
             for path in [

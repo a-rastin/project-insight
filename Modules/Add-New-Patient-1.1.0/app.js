@@ -12,7 +12,6 @@ const CLIENT_VALIDATION_MESSAGES = {
   provisionalDiagnosisMaxLength: "Provisional diagnosis must be 240 characters or fewer."
 };
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const FIELD_INPUT_NAMES = {
   "demographics.patientCode": "patientCode",
   "demographics.firstName": "firstName",
@@ -28,14 +27,6 @@ const FIELD_INPUT_NAMES = {
   "clinical.riskFlags.suicidality": "suicidality",
   "clinical.riskFlags.substanceUse": "substanceUse"
 };
-
-function generateBrowserPatientCode() {
-  let code = "";
-  for (let i = 0; i < 6; i += 1) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return code;
-}
 
 function getRequiredElement(root, selector) {
   const element = root.querySelector(selector);
@@ -158,8 +149,9 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
   const backButton = getRequiredElement(root, "#backButton");
   const patientForm = getRequiredElement(root, "#patientForm");
   const patientCode = getRequiredElement(root, "#patientCode");
-  const regenerateCodeButton = getRequiredElement(root, "#regenerateCodeButton");
   const statusMessage = getRequiredElement(root, "#statusMessage");
+  const workflowStatus = getRequiredElement(root, "#workflowStatus");
+  let workflowId = "";
 
   function setStatus(message, tone = "") {
     statusMessage.textContent = message;
@@ -219,19 +211,29 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
     });
   }
 
-  function setPatientCode(code = generateBrowserPatientCode()) {
+  function setPatientCode(code) {
     patientCode.value = code;
     patientCode.textContent = code;
   }
 
-  function activateModule() {
-    patientForm.reset();
-    setPatientCode();
-    clearErrors();
-    setStatus("");
-    dashboardView.hidden = true;
-    patientView.hidden = false;
-    patientForm.elements.firstName.focus();
+  async function activateModule() {
+    activateModuleButton.disabled = true;
+    workflowStatus.textContent = "Reserving patient identity...";
+    try {
+      const csrfToken = await getCsrfToken();
+      const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/workflow-drafts`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-CSRF-Token": csrfToken }
+      });
+      const result = await readJsonResponse(response);
+      if (!response.ok || !result.workflowDraft) throw new Error("Workflow could not be started");
+      window.location.assign(`/modules/diagnosis?workflow=${encodeURIComponent(result.workflowDraft.id)}`);
+    } catch {
+      activateModuleButton.disabled = false;
+      workflowStatus.textContent = "Patient workflow could not be started. Try again.";
+      workflowStatus.dataset.tone = "error";
+    }
   }
 
   function returnToDashboard() {
@@ -302,8 +304,9 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
   }
 
   async function savePatient(payload) {
+    if (!workflowId) throw new Error("Workflow is required");
     const csrfToken = await getCsrfToken();
-    const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/intakes`, {
+    const response = await fetch(`${normalizedApiBaseUrl}/api/add-new-patient/v1/workflow-drafts/${encodeURIComponent(workflowId)}/finalize`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -354,9 +357,7 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
       }
 
       setStatus(`Patient ${result.patient.patientCode} saved.`, "success");
-      patientForm.reset();
-      setPatientCode();
-      patientForm.elements.firstName.focus();
+      window.location.assign("/dashboard/");
     } catch {
       setStatus("Patient could not be saved. Check your connection and try again.", "error");
     }
@@ -381,29 +382,54 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
     event.target.value = parts.join("-");
   }
 
-  function regenerateCode() {
-    setPatientCode();
-    setStatus("New patient code generated.");
+  async function resumeWorkflow() {
+    const requestedWorkflow = new URLSearchParams(window.location.search).get("workflow");
+    if (!requestedWorkflow) return;
+    const response = await fetch(
+      `${normalizedApiBaseUrl}/api/add-new-patient/v1/workflow-drafts/${encodeURIComponent(requestedWorkflow)}`,
+      { credentials: "include" }
+    );
+    const result = await readJsonResponse(response);
+    if (!response.ok || !result.workflowDraft) throw new Error("Workflow unavailable");
+    const draft = result.workflowDraft;
+    if (draft.phase === "diagnosis") {
+      window.location.assign(`/modules/diagnosis?workflow=${encodeURIComponent(draft.id)}`);
+      return;
+    }
+    if (draft.phase === "completed") {
+      window.location.assign("/dashboard/");
+      return;
+    }
+    if (draft.phase !== "patient-information") throw new Error("Workflow is not ready for intake");
+    workflowId = draft.id;
+    patientForm.reset();
+    setPatientCode(draft.patientCode);
+    clearErrors();
+    setStatus("");
+    dashboardView.hidden = true;
+    patientView.hidden = false;
+    patientForm.elements.firstName.focus();
   }
 
   activateModuleButton.addEventListener("click", activateModule);
   listPatientsButton.addEventListener("click", showPatients);
   backButton.addEventListener("click", returnToDashboard);
   patientsBackButton.addEventListener("click", returnToDashboard);
-  regenerateCodeButton.addEventListener("click", regenerateCode);
   patientForm.addEventListener("submit", submitPatient);
   patientForm.elements.phoneNumber.addEventListener("input", formatPhoneInput);
+  resumeWorkflow().catch(() => {
+    workflowStatus.textContent = "Patient workflow is unavailable or no longer active.";
+    workflowStatus.dataset.tone = "error";
+  });
 
   return {
     activate: activateModule,
     back: returnToDashboard,
-    generateCode: generateBrowserPatientCode,
     destroy() {
       activateModuleButton.removeEventListener("click", activateModule);
       listPatientsButton.removeEventListener("click", showPatients);
       backButton.removeEventListener("click", returnToDashboard);
       patientsBackButton.removeEventListener("click", returnToDashboard);
-      regenerateCodeButton.removeEventListener("click", regenerateCode);
       patientForm.removeEventListener("submit", submitPatient);
       patientForm.elements.phoneNumber.removeEventListener("input", formatPhoneInput);
     }
