@@ -291,10 +291,11 @@
               Pass
             </button>
             <button 
-              onclick="backToDashboard()" 
+              id="btn-continue"
+              onclick="startMedicalHistoryTransition(currentPatientCode)"
               class="w-full bg-white hover:bg-surface-2 text-ink-muted border border-border py-2 rounded-md font-semibold text-xs tracking-wide uppercase focus:outline-none transition-colors"
             >
-              Dashboard
+              Continue to Medical History
             </button>
           </div>
         </div>
@@ -357,6 +358,7 @@
     let currentPatientCode = null;
     let currentTab = "P";
     let answers = {}; // { P1: 4, P2: 2, etc }
+    let workflowInProgress = false;
 
     // Init
     window.addEventListener("DOMContentLoaded", () => {
@@ -632,7 +634,7 @@
 
       // Enable/disable completed submit button
       const btnSubmit = document.getElementById("btn-submit");
-      if (totalRatedCount === 30) {
+      if (totalRatedCount === 30 && !workflowInProgress) {
         btnSubmit.removeAttribute("disabled");
       } else {
         btnSubmit.setAttribute("disabled", "true");
@@ -711,7 +713,10 @@
 
     // PUT api: Submit Assessment (Completed or Passed)
     async function submitAssessment(statusType) {
-      if (!currentPatientCode) return;
+      if (!currentPatientCode || workflowInProgress) return;
+      const patientCode = currentPatientCode;
+      workflowInProgress = true;
+      setFinishingActionsDisabled(true);
       
       let payload = {
         status: statusType
@@ -735,7 +740,7 @@
       }
 
       try {
-        const res = await fetch(`/api/severity/${currentPatientCode}`, {
+        const res = await fetch(`/api/severity/${patientCode}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -752,24 +757,102 @@
         if (result.success) {
           showNotification(
             statusType === "completed" ? "Evaluation Saved" : "Evaluation Passed", 
-            `Successfully updated record for patient ${currentPatientCode}.`, 
+            `Successfully updated record for patient ${patientCode}.`,
             "normal"
           );
-          
-          // Small delay and redirect to dashboard/reset
-          setTimeout(() => {
-            backToDashboard();
-          }, 1500);
+          workflowInProgress = false;
+          await startMedicalHistoryTransition(patientCode, true);
         } else {
           throw new Error("API returned failure status");
         }
       } catch (err) {
         showNotification("Submission Failed", err.message, "urgent");
+        workflowInProgress = false;
+        setFinishingActionsDisabled(false);
+        updateRealtimeCalculations();
       }
     }
 
-    // Reset back to dashboard landing screen
-    function backToDashboard() {
+    function setFinishingActionsDisabled(disabled) {
+      ["btn-submit", "btn-pass", "btn-continue"].forEach(id => {
+        document.getElementById(id).disabled = disabled;
+      });
+    }
+
+    async function getMedicalHistoryCsrfToken() {
+      const response = await fetch("/api/internal/medical-history/csrf", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.token) {
+        throw medicalHistoryRequestError(response, data, "Could not initialize the Medical History session.");
+      }
+      return data.token;
+    }
+
+    function medicalHistoryRequestError(response, data, fallback) {
+      if (response.status === 401) return new Error("Your session has expired. Please sign in again.");
+      if (response.status === 403) return new Error("You are not authorized to open Medical History.");
+      return new Error(data?.error?.message || data?.message || fallback);
+    }
+
+    async function createMedicalHistoryActivation(patientCode) {
+      const csrfToken = await getMedicalHistoryCsrfToken();
+      const response = await fetch("/api/internal/medical-history/activate", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({
+          code: patientCode,
+          requestedByModule: "severity",
+          returnUrl: "/dashboard/"
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw medicalHistoryRequestError(response, data, "Could not open the Medical History module.");
+      }
+      return data;
+    }
+
+    async function continueToMedicalHistory(patientCode) {
+      if (!patientCode) throw new Error("No active patient is available.");
+      const activation = await createMedicalHistoryActivation(patientCode);
+      const code = activation.code || patientCode.toUpperCase();
+      window.location.assign(`/modules/medical-history?code=${encodeURIComponent(code)}`);
+    }
+
+    async function startMedicalHistoryTransition(patientCode, assessmentSaved = false) {
+      if (!patientCode) {
+        showNotification("Cannot Continue", "No active patient is available.", "urgent");
+        return;
+      }
+      if (workflowInProgress) return;
+      workflowInProgress = true;
+      setFinishingActionsDisabled(true);
+      try {
+        await continueToMedicalHistory(patientCode);
+      } catch (err) {
+        workflowInProgress = false;
+        setFinishingActionsDisabled(false);
+        updateRealtimeCalculations();
+        showNotification(
+          assessmentSaved ? "PANSS Saved" : "Could Not Open Medical History",
+          assessmentSaved
+            ? `The PANSS evaluation was saved, but Medical History could not be opened. Please retry the transition. ${err.message}`
+            : err.message,
+          "urgent"
+        );
+      }
+    }
+
+    // Reset Severity workspace only when starting another assessment here.
+    function resetSeverityWorkspace() {
       currentPatientCode = null;
       answers = {};
       
