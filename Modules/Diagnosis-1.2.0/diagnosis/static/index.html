@@ -271,6 +271,7 @@
         : "";
       const embedded = !!(opts && opts.embedded);
       const initialCode = (opts && opts.initialCode) || "";
+      const initialWorkflowId = (opts && opts.workflowId) || "";
 
       // Module-local state. The closure holds it so a second mount of
       // this same script against a different root cannot leak state
@@ -285,6 +286,7 @@
       let rules = { symptom_ids: [], core_ids: [], duration_id: "", guard_ids: [],
                     symptom_threshold: 2, core_threshold: 1 };
       let lastDecision = null;
+      let workflowId = "";
       let csrfToken = "";
       let saveTimer = null;
       let destroyed = false;
@@ -349,6 +351,8 @@
             '<div class="actions">' +
               '<button class="btn btn-primary" id="' + UID + 'confirm-btn" disabled>Diagnosis is clear</button>' +
               '<button class="btn btn-warning" id="' + UID + 'bypass-btn">Diagnosis is clear (bypass)</button>' +
+              '<span class="spacer"></span>' +
+              '<button class="btn btn-primary" id="' + UID + 'next-btn" disabled>Next Step</button>' +
             '</div>' +
             '<div class="save-state" id="' + UID + 'save-state"></div>' +
           '</div>' +
@@ -393,6 +397,7 @@
 
       async function loadMeta() {
         const r = await fetch(apiBaseUrl + "/diagnosis/_meta");
+        if (!r.ok) throw new Error("Metadata request failed: " + r.status);
         const data = await r.json();
         criteria = data.criteria;
         rules = data.rules || rules;
@@ -434,11 +439,35 @@
           .map(cb => cb.dataset.id);
       }
 
+      function failClosed(message) {
+        const entry = $("entry");
+        const ws = $("workspace");
+        if (entry) entry.classList.add("hidden");
+        if (ws) ws.classList.remove("hidden");
+        const rl = $("criteria-root");
+        if (rl) rl.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.disabled = true; });
+        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+          const button = $(id);
+          if (button) button.disabled = true;
+        });
+        const ss = $("save-state");
+        if (ss) { ss.textContent = message; ss.className = "save-state error"; }
+      }
+
+      function updateNext(data) {
+        const next = $("next-btn");
+        if (next) next.disabled = !workflowId || !(data.decision === "confirmed" || data.decision === "definite");
+      }
+
       async function onChange() {
         if (destroyed) return;
         if (saveTimer) clearTimeout(saveTimer);
         const ids = checkedIds();
         renderLocalEvaluation(ids);   // instant feedback, optimistic
+        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+          const button = $(id);
+          if (button) button.disabled = true;
+        });
         const ss = $("save-state");
         if (ss) { ss.textContent = "Saving..."; ss.className = "save-state saving"; }
         const myTimer = setTimeout(async () => {
@@ -452,11 +481,13 @@
             if (!r.ok) throw new Error(r.status);
             const data = await r.json();
             renderServer(data);
+            const bypass = $("bypass-btn");
+            if (bypass) bypass.disabled = false;
+            renderLocalEvaluation((data.evaluation || {}).checked || ids);
             const s2 = $("save-state");
             if (s2) { s2.textContent = "Saved just now"; s2.className = "save-state saved"; }
           } catch (e) {
-            const s2 = $("save-state");
-            if (s2) { s2.textContent = "Save failed - retrying on next change"; s2.className = "save-state error"; }
+            failClosed("Save failed. Reload this page before continuing.");
           }
         }, 350);
         saveTimer = myTimer;
@@ -526,6 +557,7 @@
           });
         }
         lastDecision = data.decision;
+        updateNext(data);
       }
 
       function updateBadge(aMet, guardsMet) {
@@ -537,22 +569,23 @@
       }
 
       async function loadSession(c) {
-        code = String(c || "").trim();
-        if (!code) return;
+        const requestedCode = String(c || "").trim();
+        if (!requestedCode) throw new Error("Patient code is required");
         const entry = $("entry");
         const ws = $("workspace");
         const disp = $("patient-code-display");
+        const init = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(requestedCode) + "/init", {
+          method: "POST",
+          headers: csrfHeaders()
+        });
+        if (!init.ok) throw new Error("Session initialization failed: " + init.status);
+        const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(requestedCode));
+        if (!r.ok) throw new Error("Session request failed: " + r.status);
+        const data = await r.json();
+        code = requestedCode;
         if (entry) entry.classList.add("hidden");
         if (ws) ws.classList.remove("hidden");
         if (disp) disp.textContent = "Patient · " + code;
-        try {
-          await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code) + "/init", {
-            method: "POST",
-            headers: csrfHeaders()
-          });
-        } catch (_) { /* session may already exist */ }
-        const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code));
-        const data = r.ok ? await r.json() : { checked: [], decision: null, evaluation: { checked: [] } };
         renderLocalEvaluation(data.checked || []);
         data.evaluation = data.evaluation || { failures: [], reason: "No criteria evaluated yet.", checked: [] };
         renderServer(data);
@@ -560,19 +593,43 @@
       }
 
       async function sendDecision(decision, note) {
-        const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code), {
-          method: "PUT",
-          headers: csrfHeaders({"Content-Type": "application/json"}),
-          body: JSON.stringify({ checked: checkedIds(), decision })
+        ["confirm-btn", "bypass-btn", "next-btn"].forEach(id => {
+          const button = $(id);
+          if (button) button.disabled = true;
         });
-        if (!r.ok) { alert("Decision save failed."); return; }
+        try {
+          const r = await fetch(apiBaseUrl + "/diagnosis/" + encodeURIComponent(code), {
+            method: "PUT",
+            headers: csrfHeaders({"Content-Type": "application/json"}),
+            body: JSON.stringify({ checked: checkedIds(), decision, workflowId: workflowId || null })
+          });
+          if (!r.ok) throw new Error("Decision save failed: " + r.status);
+          const data = await r.json();
+          lastDecision = data.decision;
+          const ds = $("decision-state");
+          if (ds) ds.textContent = data.decision || "None";
+          const dn = $("decision-note");
+          if (dn) dn.textContent = note;
+          renderServer(data);
+          const bypass = $("bypass-btn");
+          if (bypass) bypass.disabled = false;
+          renderLocalEvaluation((data.evaluation || {}).checked || []);
+        } catch (_) {
+          failClosed("Decision save failed. Reload this page before continuing.");
+        }
+      }
+
+      async function loadWorkflow(id) {
+        workflowId = String(id || "").trim();
+        if (!workflowId) throw new Error("Workflow is required");
+        const r = await fetch("/api/add-new-patient/v1/workflow-drafts/" + encodeURIComponent(workflowId));
+        if (!r.ok) throw new Error("Workflow request failed: " + r.status);
         const data = await r.json();
-        lastDecision = data.decision;
-        const ds = $("decision-state");
-        if (ds) ds.textContent = data.decision || "None";
-        const dn = $("decision-note");
-        if (dn) dn.textContent = note;
-        renderServer(data);
+        const draft = data.workflowDraft || {};
+        if (!draft.patientCode || !["diagnosis", "patient-information"].includes(draft.phase)) {
+          throw new Error("Workflow is not ready for diagnosis");
+        }
+        await loadSession(draft.patientCode);
       }
 
       function _historyParam(name) {
@@ -592,7 +649,7 @@
             history.replaceState(null, "", u);
           } catch (_) { /* sandboxed origin — never non-fatal */ }
         }
-        loadSession(c);
+        loadSession(c).catch(() => failClosed("Diagnosis initialization failed. Reload this page before continuing."));
       }
 
       function bindHandlers() {
@@ -634,6 +691,16 @@
           bp.addEventListener("click", onBypass);
           listeners.push({ node: bp, type: "click", fn: onBypass });
         }
+        const next = $("next-btn");
+        if (next) {
+          const onNext = () => {
+            if (!next.disabled && workflowId) {
+              location.assign("/modules/add-new-patient/?workflow=" + encodeURIComponent(workflowId));
+            }
+          };
+          next.addEventListener("click", onNext);
+          listeners.push({ node: next, type: "click", fn: onNext });
+        }
       }
 
       function mount() {
@@ -648,15 +715,16 @@
         readCsrfToken();
         // No top-level await — kick off the meta fetch and code preload.
         loadMeta().then(() => {
+          const workflow = initialWorkflowId || _historyParam("workflow");
+          if (workflow) return loadWorkflow(workflow);
           const pre = initialCode || _historyParam("code");
           if (pre) {
             const ci = $("code-input");
             if (ci) ci.value = pre;
-            loadSession(pre);
+            return loadSession(pre);
           }
         }).catch(err => {
-          // fetch errors are non-fatal for the shell: the workspace tiles
-          // show the default pending state. Don't crash the host page.
+          failClosed("Diagnosis initialization failed. Reload this page before continuing.");
           if (typeof console !== "undefined" && console.warn) console.warn("diagnosis: _meta fetch failed", err);
         });
       }

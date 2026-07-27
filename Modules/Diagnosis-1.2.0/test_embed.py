@@ -214,6 +214,19 @@ def test_csrf_meta_token_still_read_via_meta_tag():
     )
 
 
+def test_workflow_ui_fails_closed_until_persisted_decision():
+    html = _served_page()
+    assert 'next-btn" disabled>Next Step' in html, "Next Step must start disabled"
+    assert '_historyParam("workflow")' in html, "standalone page must read opaque workflow id"
+    assert '/api/add-new-patient/v1/workflow-drafts/' in html, "workflow must resolve through draft API"
+    assert 'workflowId: workflowId' in html, "decision writes must carry workflowId"
+    assert 'function failClosed' in html, "UI needs one shared fail-closed path"
+    assert 'data.decision === "confirmed" || data.decision === "definite"' in html, (
+        "Next Step may enable only from persisted terminal decision"
+    )
+    assert '/modules/add-new-patient/?workflow=' in html, "Next Step must resume reserved intake"
+
+
 def test_read_page_back_compat_reexport():
     """The page seam + ``diagnosis.api`` keep ``_read_page`` re-exported
     for tests + Insight callers (HANDOFF §9.10). The embeddable refactor
@@ -304,6 +317,8 @@ def main() -> None:
          test_fn_returns_mount_unmount_handle),
         ("test_csrf_meta_token_still_read_via_meta_tag",
          test_csrf_meta_token_still_read_via_meta_tag),
+        ("test_workflow_ui_fails_closed_until_persisted_decision",
+         test_workflow_ui_fails_closed_until_persisted_decision),
         ("test_read_page_back_compat_reexport",
          test_read_page_back_compat_reexport),
         ("test_route_layer_unchanged",
