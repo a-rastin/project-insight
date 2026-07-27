@@ -509,6 +509,109 @@ class AddNewPatientBackendTest(unittest.TestCase):
             denied_status, _ = request_json(base, path, method="POST", headers=headers, body=payload)
             self.assertEqual(denied_status, 404)
 
+    def test_authenticated_diagnosis_first_workflow_links_one_patient_uuid(self) -> None:
+        secret = "workflow-integration-secret"
+        previous_secret = os.environ.get("WORKFLOW_SERVICE_SECRET")
+        previous_diagnosis_db = os.environ.get("DIAGNOSIS_DB_PATH")
+        previous_patient_lookup = os.environ.get("DIAGNOSIS_PATIENT_LOOKUP")
+        os.environ["WORKFLOW_SERVICE_SECRET"] = secret
+        diagnosis_path = os.path.join(os.path.dirname(__file__), "..", "Diagnosis-1.2.0")
+        sys.path.insert(0, diagnosis_path)
+        try:
+            with MockAuthenticationServer() as auth:
+                auth.set_payload("session-a", auth_payload(session={"id": "auth-a"}))
+                auth.set_payload("session-b", auth_payload(session={"id": "auth-b"}))
+                server = AddNewPatientServer(auth.url)
+                with server as base:
+                    owner = csrf_headers(base, {"cookie": "insight_session=session-a"})
+                    status, created = request_json(
+                        base,
+                        "/api/add-new-patient/v1/workflow-drafts",
+                        method="POST",
+                        headers=owner,
+                    )
+                    self.assertEqual(status, 201)
+                    draft = created["workflowDraft"]
+                    denied, _ = request_json(
+                        base,
+                        f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}",
+                        headers={"cookie": "insight_session=session-b"},
+                    )
+                    self.assertEqual(denied, 404)
+
+                    diagnosis_db = os.path.join(server.tempdir.name, "diagnosis.sqlite3")
+                    os.environ["DIAGNOSIS_DB_PATH"] = diagnosis_db
+                    os.environ["DIAGNOSIS_PATIENT_LOOKUP"] = "1"
+                    from fastapi.testclient import TestClient
+                    from diagnosis import auth as diagnosis_auth
+                    from diagnosis import diagnosis_api, patient as diagnosis_patient
+                    from diagnosis.app import app as diagnosis_app
+
+                    diagnosis_auth.reset_auth_for_tests(auth.url.rsplit("/api/auth/session", 1)[0])
+                    diagnosis_patient.reset_patient_for_tests(base)
+                    diagnosis_api.clinical_feature_status = lambda: {"available": True}
+                    diagnosis = TestClient(
+                        diagnosis_app, cookies={"insight_session": "session-a"}
+                    )
+                    csrf = diagnosis.get("/diagnosis/_csrf")
+                    self.assertEqual(csrf.status_code, 200)
+                    diagnosis.headers["X-CSRF-Token"] = csrf.json()["token"]
+                    initialized = diagnosis.post(f"/diagnosis/{draft['patientCode']}/init")
+                    self.assertEqual(initialized.status_code, 200, initialized.text)
+                    decision = diagnosis.put(
+                        f"/diagnosis/{draft['patientCode']}",
+                        json={
+                            "checked": ["A1", "A5", "A6", "B1", "C1", "D1"],
+                            "decision": "confirmed",
+                            "workflowId": draft["id"],
+                        },
+                    )
+                    self.assertEqual(decision.status_code, 200, decision.text)
+                    self.assertEqual(decision.json()["patient_id"], draft["patientId"])
+
+                    status, resumed = request_json(
+                        base,
+                        f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}",
+                        headers={"cookie": "insight_session=session-a"},
+                    )
+                    self.assertEqual(status, 200)
+                    self.assertEqual(resumed["workflowDraft"]["phase"], "patient-information")
+                    finalize_path = f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}/finalize"
+                    status, finalized = request_json(
+                        base, finalize_path, method="POST", headers=owner, body=valid_payload()
+                    )
+                    self.assertEqual(status, 201)
+                    self.assertEqual(finalized["patientId"], draft["patientId"])
+                    retry_status, retry = request_json(
+                        base, finalize_path, method="POST", headers=owner, body=valid_payload()
+                    )
+                    self.assertEqual(retry_status, 200)
+                    self.assertEqual(retry, finalized)
+                    with sqlite3.connect(diagnosis_db) as conn:
+                        linked_id = conn.execute(
+                            "SELECT patient_id FROM sessions WHERE code = ?", (draft["patientCode"],)
+                        ).fetchone()[0]
+                    self.assertEqual(linked_id, finalized["patientId"])
+                    diagnosis.close()
+        finally:
+            for name in list(sys.modules):
+                if name == "diagnosis" or name.startswith("diagnosis."):
+                    del sys.modules[name]
+            if diagnosis_path in sys.path:
+                sys.path.remove(diagnosis_path)
+            if previous_secret is None:
+                os.environ.pop("WORKFLOW_SERVICE_SECRET", None)
+            else:
+                os.environ["WORKFLOW_SERVICE_SECRET"] = previous_secret
+            for name, value in (
+                ("DIAGNOSIS_DB_PATH", previous_diagnosis_db),
+                ("DIAGNOSIS_PATIENT_LOOKUP", previous_patient_lookup),
+            ):
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+
     def test_versioned_intake_api_creates_lists_and_resolves_patients(self) -> None:
         with AddNewPatientServer() as base:
             headers = csrf_headers(base, PSY_HEADER)
