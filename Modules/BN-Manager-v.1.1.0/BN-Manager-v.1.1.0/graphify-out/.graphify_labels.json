@@ -1,15 +1,1 @@
-{
-  "0": "Evaluation and Graph Model",
-  "1": "XML Compiler and Schema",
-  "2": "FastAPI Model Operations",
-  "3": "Authentication and CSRF",
-  "4": "Semantic Validation Tests",
-  "5": "Contract and Response Envelope",
-  "6": "Registry and API Tests",
-  "7": "XML Migration Architecture",
-  "8": "Authentication Integration Tests",
-  "9": "Configuration and Server",
-  "10": "Package Metadata",
-  "11": "Clozapine Suicide Risk Network",
-  "12": "Pharmacotherapy Network"
-}
+{"0": "Authentication and CSRF", "1": "Model Governance and Approvals", "2": "Evaluation Store and Records", "3": "Graph Evaluation Core", "4": "Model Registry and Schema", "5": "Contract and Response Envelope", "6": "README Domain Concepts", "7": "Backend Integration Tests", "8": "Semantic Validation Tests", "9": "XML Migration Architecture", "10": "Evidence Schema and Validation", "11": "Ubiquitous Language", "12": "Package Metadata", "13": "Protocol"}
