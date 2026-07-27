@@ -1,0 +1,47 @@
+{
+  "gateway_readiness.py": {
+    "mtime": 1784963992.9072995,
+    "ast_hash": "c3e0715fc2d913177a8959646a04137f",
+    "semantic_hash": "c3e0715fc2d913177a8959646a04137f"
+  },
+  "manifest.json": {
+    "mtime": 1785132429.336956,
+    "ast_hash": "9593fbf3030616d23168c25ef0951a9b",
+    "semantic_hash": "9593fbf3030616d23168c25ef0951a9b"
+  },
+  "manifest.schema.json": {
+    "mtime": 1784875160.4188786,
+    "ast_hash": "4f1cf0e7a25b35daa9cd4193be00feb8",
+    "semantic_hash": "4f1cf0e7a25b35daa9cd4193be00feb8"
+  },
+  "supervisor.py": {
+    "mtime": 1785132429.3839562,
+    "ast_hash": "573185460bc4e0f2c579bb94f8f8b4ae",
+    "semantic_hash": "573185460bc4e0f2c579bb94f8f8b4ae"
+  },
+  "test.ps1": {
+    "mtime": 1784875160.4198785,
+    "ast_hash": "9c7dd43335e821e3a98519f4414e4412",
+    "semantic_hash": "9c7dd43335e821e3a98519f4414e4412"
+  },
+  "verify.ps1": {
+    "mtime": 1784875160.4198785,
+    "ast_hash": "65365c43765e72db1067f61b057aa0cd",
+    "semantic_hash": "65365c43765e72db1067f61b057aa0cd"
+  },
+  "HOST_RECOVERY.md": {
+    "mtime": 1784875160.4188786,
+    "ast_hash": "d9b9b52183b1f5fb58b3b512bc5ad708",
+    "semantic_hash": "d9b9b52183b1f5fb58b3b512bc5ad708"
+  },
+  "WINDOWS_DOCKER_DESKTOP.md": {
+    "mtime": 1784875160.4188786,
+    "ast_hash": "07b04a15ccf1d63af5c334f5304759e2",
+    "semantic_hash": "07b04a15ccf1d63af5c334f5304759e2"
+  },
+  "compose.unified.yaml": {
+    "mtime": 1785132429.334956,
+    "ast_hash": "f99f072e8ed89640e8a394bd723d6975",
+    "semantic_hash": "f99f072e8ed89640e8a394bd723d6975"
+  }
+}
