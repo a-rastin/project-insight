@@ -98,65 +98,8 @@
             </div>
           </section>
 
-          <section class="form-section" aria-labelledby="clinicalSectionTitle">
-            <h3 id="clinicalSectionTitle">Clinical</h3>
-            <div class="section-errors" data-error-section="clinical" role="alert" hidden>
-              <p>Clinical</p>
-              <ul data-section-error-list></ul>
-            </div>
-
-            <div class="field-grid">
-              <label class="field wide-field">
-                <span>Presenting Complaint *</span>
-                <textarea id="presentingComplaint" name="presentingComplaint" maxlength="2000" rows="4" required></textarea>
-                <small class="field-error" data-error-for="clinical.presentingComplaint"></small>
-              </label>
-
-              <label class="field wide-field">
-                <span>Provisional Diagnosis *</span>
-                <input id="provisionalDiagnosis" name="provisionalDiagnosis" maxlength="240" required>
-                <small class="field-error" data-error-for="clinical.provisionalDiagnosis"></small>
-              </label>
-
-              <label class="field wide-field">
-                <span>Treatment History</span>
-                <textarea id="treatmentHistory" name="treatmentHistory" rows="3"></textarea>
-                <small class="field-error" data-error-for="clinical.treatmentHistory"></small>
-              </label>
-
-              <label class="field">
-                <span>Allergies</span>
-                <textarea id="allergies" name="allergies" rows="3"></textarea>
-                <small class="field-error" data-error-for="clinical.allergies"></small>
-              </label>
-
-              <label class="field">
-                <span>Current Medications</span>
-                <textarea id="currentMedications" name="currentMedications" rows="3"></textarea>
-                <small class="field-error" data-error-for="clinical.currentMedications"></small>
-              </label>
-
-              <label class="field">
-                <span>Suicidality</span>
-                <select id="suicidality" name="suicidality">
-                  <option value="suicidality_none">None</option>
-                  <option value="ideation">Ideation</option>
-                  <option value="plan">Plan</option>
-                  <option value="attempt">Attempt</option>
-                </select>
-                <small class="field-error" data-error-for="clinical.riskFlags.suicidality"></small>
-              </label>
-
-              <label class="checkbox-field">
-                <input id="substanceUse" name="substanceUse" type="checkbox">
-                <span>Substance use risk</span>
-                <small class="field-error" data-error-for="clinical.riskFlags.substanceUse"></small>
-              </label>
-            </div>
-          </section>
-
           <div class="form-actions">
-            <button class="primary-action" type="submit">Submit Patient</button>
+            <button class="primary-action" type="submit">Save and Continue to Severity</button>
           </div>
 
           <p class="status-message" id="statusMessage" role="status" aria-live="polite"></p>

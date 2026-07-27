@@ -5,27 +5,15 @@ const CLIENT_VALIDATION_MESSAGES = {
   lastNameMaxLength: "Last name must be 80 characters or fewer.",
   sex: "Select Male or Female.",
   dob: "Enter a date of birth at least 1 year ago and not in the future.",
-  phoneNumber: "Enter exactly 10 digits, or leave it blank.",
-  presentingComplaint: "Presenting complaint is required.",
-  presentingComplaintMaxLength: "Presenting complaint must be 2000 characters or fewer.",
-  provisionalDiagnosis: "Provisional diagnosis is required.",
-  provisionalDiagnosisMaxLength: "Provisional diagnosis must be 240 characters or fewer."
+  phoneNumber: "Enter exactly 10 digits, or leave it blank."
 };
 
 const FIELD_INPUT_NAMES = {
-  "demographics.patientCode": "patientCode",
   "demographics.firstName": "firstName",
   "demographics.lastName": "lastName",
   "demographics.sex": "sex",
   "demographics.dob": "dob",
-  "demographics.phoneNumber": "phoneNumber",
-  "clinical.presentingComplaint": "presentingComplaint",
-  "clinical.provisionalDiagnosis": "provisionalDiagnosis",
-  "clinical.treatmentHistory": "treatmentHistory",
-  "clinical.allergies": "allergies",
-  "clinical.currentMedications": "currentMedications",
-  "clinical.riskFlags.suicidality": "suicidality",
-  "clinical.riskFlags.substanceUse": "substanceUse"
+  "demographics.phoneNumber": "phoneNumber"
 };
 
 function getRequiredElement(root, selector) {
@@ -50,7 +38,6 @@ async function readJsonResponse(response) {
 function validatePatientPayload(patient) {
   const errors = {};
   const demographics = patient.demographics || {};
-  const clinical = patient.clinical || {};
 
   if (!demographics.firstName) {
     errors["demographics.firstName"] = CLIENT_VALIDATION_MESSAGES.firstNameRequired;
@@ -76,26 +63,7 @@ function validatePatientPayload(patient) {
     errors["demographics.phoneNumber"] = CLIENT_VALIDATION_MESSAGES.phoneNumber;
   }
 
-  if (!clinical.presentingComplaint) {
-    errors["clinical.presentingComplaint"] = CLIENT_VALIDATION_MESSAGES.presentingComplaint;
-  } else if (clinical.presentingComplaint.length > 2000) {
-    errors["clinical.presentingComplaint"] = CLIENT_VALIDATION_MESSAGES.presentingComplaintMaxLength;
-  }
-
-  if (!clinical.provisionalDiagnosis) {
-    errors["clinical.provisionalDiagnosis"] = CLIENT_VALIDATION_MESSAGES.provisionalDiagnosis;
-  } else if (clinical.provisionalDiagnosis.length > 240) {
-    errors["clinical.provisionalDiagnosis"] = CLIENT_VALIDATION_MESSAGES.provisionalDiagnosisMaxLength;
-  }
-
   return errors;
-}
-
-function parseListInput(value) {
-  return String(value || "")
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function isValidDob(value) {
@@ -116,23 +84,11 @@ function isValidDob(value) {
 function normalizePatientInput(input) {
   return {
     demographics: {
-      patientCode: String(input.patientCode || "").trim().toUpperCase(),
       firstName: String(input.firstName || "").trim(),
       lastName: String(input.lastName || "").trim(),
       sex: String(input.sex || "").trim(),
       dob: String(input.dob || "").trim(),
       phoneNumber: String(input.phoneNumber || "").replace(/\D/g, "")
-    },
-    clinical: {
-      presentingComplaint: String(input.presentingComplaint || "").trim(),
-      provisionalDiagnosis: String(input.provisionalDiagnosis || "").trim(),
-      treatmentHistory: parseListInput(input.treatmentHistory),
-      allergies: parseListInput(input.allergies),
-      currentMedications: parseListInput(input.currentMedications),
-      riskFlags: {
-        suicidality: String(input.suicidality || "suicidality_none").trim(),
-        substanceUse: Boolean(input.substanceUse)
-      }
     }
   };
 }
@@ -274,19 +230,11 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
     const formData = new FormData(patientForm);
 
     return normalizePatientInput({
-      patientCode: patientCode.value,
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
       sex: formData.get("sex"),
       dob: formData.get("dob"),
-      phoneNumber: formData.get("phoneNumber"),
-      presentingComplaint: formData.get("presentingComplaint"),
-      provisionalDiagnosis: formData.get("provisionalDiagnosis"),
-      treatmentHistory: formData.get("treatmentHistory"),
-      allergies: formData.get("allergies"),
-      currentMedications: formData.get("currentMedications"),
-      suicidality: formData.get("suicidality"),
-      substanceUse: formData.get("substanceUse") === "on"
+      phoneNumber: formData.get("phoneNumber")
     });
   }
 
@@ -356,8 +304,10 @@ function createAddNewPatientModule({ root = document, apiBaseUrl = window.ADD_NE
         return;
       }
 
-      setStatus(`Patient ${result.patient.patientCode} saved.`, "success");
-      window.location.assign("/dashboard/");
+      const patientCode = result?.patient?.patientCode;
+      if (!patientCode) throw new Error("The server did not return the created patient code.");
+      setStatus(`Patient ${patientCode} saved.`, "success");
+      window.location.assign(`/modules/severity?patient_code=${encodeURIComponent(patientCode)}`);
     } catch {
       setStatus("Patient could not be saved. Check your connection and try again.", "error");
     }

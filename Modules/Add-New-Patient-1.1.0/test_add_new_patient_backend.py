@@ -1535,7 +1535,7 @@ class AddNewPatientBackendTest(unittest.TestCase):
         self.assertIn('/modules/diagnosis?workflow=', source)
         self.assertIn('draft.phase !== "patient-information"', source)
         self.assertIn('/finalize', source)
-        self.assertIn('window.location.assign("/dashboard/")', source)
+        self.assertIn('/modules/severity?patient_code=', source)
         self.assertNotIn("generateBrowserPatientCode", source)
         self.assertNotIn("regenerateCodeButton", page["_raw"])
 
