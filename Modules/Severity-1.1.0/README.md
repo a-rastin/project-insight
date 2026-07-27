@@ -47,7 +47,10 @@ severity/
 
 ## API contract
 
-All routes are prefixed `/api/severity/:patient_code`. JSON in/out. CORS open for parent-app integration.
+Unified deployment exposes Severity at `/modules/severity` and canonical APIs at `/api/v1`.
+`/api/severity/:patient_code` remains a temporary gateway compatibility route for current browser clients and returns deprecation headers. It will be removed after a versioned patient-context resolver exists.
+
+Legacy compatibility routes use `/api/severity/:patient_code`. JSON in/out. CORS open for parent-app integration.
 
 ### GET `/api/severity/:patient_code`
 
@@ -126,7 +129,7 @@ Open `http://localhost:3000`. Enter a patient code or deep-link: `http://localho
 
 ### As a sub-module
 
-Parent app calls `GET /api/severity/<code>` to load, `PUT /api/severity/<code>` to save. No other surface area. CORS is open so the parent app can hit it from a different origin/port.
+Current parent clients call `GET /api/severity/<code>` to load and `PUT /api/severity/<code>` to save through temporary compatibility routing. New browser integrations must use versioned `/api/v1` endpoints after patient-context resolution is available.
 
 ### Run the self-check
 

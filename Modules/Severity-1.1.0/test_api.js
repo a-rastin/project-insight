@@ -40,10 +40,10 @@ async function runTests() {
     assert.strictEqual(putRes1.status, 200);
     const putJson1 = await putRes1.json();
     assert.strictEqual(putJson1.success, true);
-    assert.strictEqual(putJson1.data.status, "in_progress");
+    assert.strictEqual(putJson1.data.status, "passed");
 
     const getJson2 = await (await fetch(`${baseUrl}/api/severity/${testPatientCode}`)).json();
-    assert.strictEqual(getJson2.status, "in_progress");
+    assert.strictEqual(getJson2.status, "passed");
 
     const testScores = { total: 30, positive: 7, negative: 7, general: 16 };
     const putRes2 = await fetch(`${baseUrl}/api/severity/${testPatientCode}`, {
@@ -73,4 +73,3 @@ async function runTests() {
 }
 
 runTests();
-

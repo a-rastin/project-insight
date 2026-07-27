@@ -107,6 +107,8 @@ export function createApp({
 
   // Legacy GET api/severity/:patient_code adapter.
   app.get("/api/severity/:patient_code", security.requireRole("psychiatrist", "admin"), (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Link", "</api/v1>; rel=\"successor-version\"");
     const { patient_code } = req.params;
     if (!patient_code || patient_code.trim() === "") {
       return res.status(400).json({ error: "Patient code is required" });
@@ -134,6 +136,8 @@ export function createApp({
 
   // Legacy PUT api/severity/:patient_code adapter.
   app.put("/api/severity/:patient_code", security.requireRole("psychiatrist"), security.requireCsrf, (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Link", "</api/v1>; rel=\"successor-version\"");
     const { patient_code } = req.params;
     const { status, scores, items } = req.body;
 
@@ -150,7 +154,7 @@ export function createApp({
     if (status === "passed") {
       assessments[patient_code] = {
         patient_code,
-        status: "in_progress",
+        status: "passed",
         updated_at: new Date().toISOString()
       };
     } else {

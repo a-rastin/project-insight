@@ -154,6 +154,13 @@ class UnifiedImageTests(unittest.TestCase):
             nginx,
         )
 
+    def test_nginx_proxies_severity_legacy_api_to_severity_service(self):
+        nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn(
+            "location /api/severity/ {\n            proxy_pass http://127.0.0.1:8105;\n        }",
+            nginx,
+        )
+
     def test_nginx_serves_diagnosis_page_root_and_canonical_api(self):
         nginx = (DEPLOYMENT / "nginx.conf").read_text(encoding="utf-8")
         self.assertIn("location = /modules/diagnosis {", nginx)
