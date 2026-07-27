@@ -740,16 +740,24 @@
       }
 
       try {
+        const csrfToken = await getSeverityCsrfToken();
         const res = await fetch(`/api/severity/${patientCode}`, {
           method: "PUT",
+          credentials: "same-origin",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
           },
           body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
-          throw new Error("Failed to save evaluation to the sever endpoint");
+          const data = await res.json().catch(() => ({}));
+          throw new Error(
+            res.status === 401
+              ? "Your session has expired. Please sign in again."
+              : data?.error || "Failed to save evaluation to the severity endpoint"
+          );
         }
 
         const result = await res.json();
@@ -777,6 +785,22 @@
       ["btn-submit", "btn-pass", "btn-continue"].forEach(id => {
         document.getElementById(id).disabled = disabled;
       });
+    }
+
+    async function getSeverityCsrfToken() {
+      const response = await fetch("/api/v1/csrf", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.token) {
+        throw new Error(
+          response.status === 401
+            ? "Your session has expired. Please sign in again."
+            : data?.error || "CSRF token unavailable."
+        );
+      }
+      return data.token;
     }
 
     async function getMedicalHistoryCsrfToken() {
