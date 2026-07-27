@@ -14,6 +14,7 @@ Part of the **Insight** clinical decision support platform. Communicates with ot
 - **Two submit paths**
   - `Save Completed Evaluation` — enabled only when all 30 items are rated → PUT `{status:"completed", scores, items}`.
   - `Pass` — skips the assessment → PUT `{status:"passed"}`.
+- **Workflow handoff** — either saved outcome activates Suicide Risk through its REST API, then opens `/modules/suicide-risk?code=...`.
 - **Dashboard button** — resets the workspace, clears URL params, returns to patient lookup.
 - **Patient lookup** — via form or deep-link `?patient_code=<code>` query param (so the parent app can route in directly).
 - **CORS open** for inter-module calls; serves `index.html` at `/` for standalone use.

@@ -292,10 +292,10 @@
             </button>
             <button 
               id="btn-continue"
-              onclick="startMedicalHistoryTransition(currentPatientCode)"
+                onclick="startSuicideRiskTransition(currentPatientCode)"
               class="w-full bg-white hover:bg-surface-2 text-ink-muted border border-border py-2 rounded-md font-semibold text-xs tracking-wide uppercase focus:outline-none transition-colors"
             >
-              Continue to Medical History
+                Continue to Suicide Risk
             </button>
           </div>
         </div>
@@ -769,7 +769,7 @@
             "normal"
           );
           workflowInProgress = false;
-          await startMedicalHistoryTransition(patientCode, true);
+          await startSuicideRiskTransition(patientCode, true);
         } else {
           throw new Error("API returned failure status");
         }
@@ -803,27 +803,27 @@
       return data.token;
     }
 
-    async function getMedicalHistoryCsrfToken() {
-      const response = await fetch("/api/internal/medical-history/csrf", {
+    async function getSuicideRiskCsrfToken() {
+      const response = await fetch("/api/suicide-risk/v1/csrf", {
         credentials: "same-origin",
         headers: { Accept: "application/json" }
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.token) {
-        throw medicalHistoryRequestError(response, data, "Could not initialize the Medical History session.");
+        throw suicideRiskRequestError(response, data, "Could not initialize the Suicide Risk session.");
       }
       return data.token;
     }
 
-    function medicalHistoryRequestError(response, data, fallback) {
+    function suicideRiskRequestError(response, data, fallback) {
       if (response.status === 401) return new Error("Your session has expired. Please sign in again.");
-      if (response.status === 403) return new Error("You are not authorized to open Medical History.");
+      if (response.status === 403) return new Error("You are not authorized to open Suicide Risk.");
       return new Error(data?.error?.message || data?.message || fallback);
     }
 
-    async function createMedicalHistoryActivation(patientCode) {
-      const csrfToken = await getMedicalHistoryCsrfToken();
-      const response = await fetch("/api/internal/medical-history/activate", {
+    async function createSuicideRiskActivation(patientCode) {
+      const csrfToken = await getSuicideRiskCsrfToken();
+      const response = await fetch("/api/suicide-risk/v1/activate", {
         method: "POST",
         credentials: "same-origin",
         headers: {
@@ -839,19 +839,19 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw medicalHistoryRequestError(response, data, "Could not open the Medical History module.");
+        throw suicideRiskRequestError(response, data, "Could not open the Suicide Risk module.");
       }
       return data;
     }
 
-    async function continueToMedicalHistory(patientCode) {
+    async function continueToSuicideRisk(patientCode) {
       if (!patientCode) throw new Error("No active patient is available.");
-      const activation = await createMedicalHistoryActivation(patientCode);
+      const activation = await createSuicideRiskActivation(patientCode);
       const code = activation.code || patientCode.toUpperCase();
-      window.location.assign(`/modules/medical-history?code=${encodeURIComponent(code)}`);
+      window.location.assign(`/modules/suicide-risk?code=${encodeURIComponent(code)}`);
     }
 
-    async function startMedicalHistoryTransition(patientCode, assessmentSaved = false) {
+    async function startSuicideRiskTransition(patientCode, assessmentSaved = false) {
       if (!patientCode) {
         showNotification("Cannot Continue", "No active patient is available.", "urgent");
         return;
@@ -860,15 +860,15 @@
       workflowInProgress = true;
       setFinishingActionsDisabled(true);
       try {
-        await continueToMedicalHistory(patientCode);
+        await continueToSuicideRisk(patientCode);
       } catch (err) {
         workflowInProgress = false;
         setFinishingActionsDisabled(false);
         updateRealtimeCalculations();
         showNotification(
-          assessmentSaved ? "PANSS Saved" : "Could Not Open Medical History",
+          assessmentSaved ? "PANSS Saved" : "Could Not Open Suicide Risk",
           assessmentSaved
-            ? `The PANSS evaluation was saved, but Medical History could not be opened. Please retry the transition. ${err.message}`
+            ? `The PANSS evaluation was saved, but the Suicide Risk module could not be opened. Retry opening Suicide Risk. ${err.message}`
             : err.message,
           "urgent"
         );
