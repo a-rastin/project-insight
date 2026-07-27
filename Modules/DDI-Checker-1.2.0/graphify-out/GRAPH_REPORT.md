@@ -1,177 +1,175 @@
-# Graph Report - DDI-Checker-1.2.0  (2026-07-22)
+# Graph Report - /root/projects/insight/Modules/DDI-Checker-1.2.0  (2026-07-27)
 
 ## Corpus Check
-- 50 files · ~5,556,032 words
+- 38 files · ~2,859,154 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 251 nodes · 382 edges · 37 communities (17 shown, 20 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 20 edges (avg confidence: 0.7)
+- 403 nodes · 664 edges · 24 communities (20 shown, 4 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 25 edges (avg confidence: 0.58)
 - Token cost: 0 input · 0 output
 
-## Graph Freshness
-- Built from commit: `e60a821a`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
-
 ## Community Hubs (Navigation)
-- UI & Audit Actions
-- Ingestion Pipeline
-- DDI Engine
-- Shared Report Parser
-- Package Metadata
-- Architecture & Safety
-- Browser Interface
-- KB Persistence
-- KB Validation
-- Clinical Safety Docs
-- DDI Engine Tests
-- UI Source Tests
-- Revision Identity
-- Compact Report Fixture
-- Long-form Report Fixture
-- Malformed Report Fixture
-- Architecture Analysis Tool
-- Tour Analysis Tool
-- Active Knowledge Base
-- Canonical Active KB JSON
-- Audit Override Rationale Invariant
-- Browser Application
-- DDI Engine
-- Environment-Neutral Report Parser
-- Fail-Closed Identity Resolution
-- Ingestion CLI
-- Version-Aware KB Persistence
-- Validation CLI
-- Clinical Alert Safety
-- DailyMed
-- Local KB Revision Rebase
-- openFDA Drug Labeling API
-- Reproducible KB Identity
-- NLM RxNorm API
-- Shared Report Parser
-- ddi-engine.test.mjs
+- KB Ingestion & RxNorm Map
+- App Frontend Core
+- SQLite Persistence Layer
+- KB Validation Pipeline
+- DDI Engine Core
+- Browser Storage & Revisions
+- Package Dependencies
+- REST API Adapter
+- Auth & Server Module
+- Architecture Analyzer
+- System Architecture Concepts
+- KB Repair Tooling
+- REST Contract Tests
+- Authoritative Engine Tests
+- SQLite Store Tests
+- REST Endpoint Tests
+- CNS Depressants KB Data
+- Serotonin Drug Interactions
+- Malformed Drug Test Fixtures
+- Architecture Analysis Script
+- Tour Analysis Script
+- Architecture Documentation
+- README Overview
 
 ## God Nodes (most connected - your core abstractions)
-1. `validateKnowledgeBase()` - 12 edges
-2. `buildIndex()` - 10 edges
-3. `parseReport()` - 10 edges
-4. `persistKb()` - 9 edges
-5. `checkInteractions()` - 9 edges
-6. `scripts` - 8 edges
-7. `readJson()` - 8 edges
-8. `checkNow()` - 8 edges
-9. `renderReviewList()` - 8 edges
-10. `uploadReports()` - 8 edges
+1. `validateKnowledgeBase()` - 22 edges
+2. `SqliteKbStore` - 14 edges
+3. `MemoryKbStore` - 12 edges
+4. `createDdiServer()` - 11 edges
+5. `clone()` - 11 edges
+6. `loadBundledKbFromServer()` - 10 edges
+7. `buildIndex()` - 10 edges
+8. `parseReport()` - 10 edges
+9. `scripts` - 9 edges
+10. `renderReviewList()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `buildIndex()` --indirect_call--> `label()`  [INFERRED]
-  src/ddi-engine.js → scripts/validate-kb.mjs
-- `assignMedicationInstanceIds()` --indirect_call--> `fingerprint()`  [INFERRED]
-  src/ddi-engine.js → scripts/validate-kb.mjs
-- `checkInteractions()` --indirect_call--> `record()`  [INFERRED]
-  src/ddi-engine.js → test/kb-persistence.test.mjs
-- `checkNow()` --indirect_call--> `kb()`  [INFERRED]
-  src/app.js → test/kb-persistence.test.mjs
-- `saveReview()` --indirect_call--> `kb()`  [INFERRED]
-  src/app.js → test/kb-persistence.test.mjs
+- `validateDrugIdentities()` --indirect_call--> `label()`  [INFERRED]
+  scripts/ingest.mjs → src/kb-validator.cjs
+- `validateDrugIdentities()` --indirect_call--> `normalizeDrugName()`  [INFERRED]
+  scripts/ingest.mjs → src/report-parser.js
+- `buildKnowledgeBase()` --calls--> `validateKnowledgeBase()`  [EXTRACTED]
+  scripts/ingest.mjs → src/kb-validator.cjs
+- `runCli()` --calls--> `validateKnowledgeBase()`  [EXTRACTED]
+  scripts/validate-kb.mjs → src/kb-validator.cjs
+- `startServer()` --calls--> `createDdiServer()`  [EXTRACTED]
+  test/ddi-rest-contract.test.mjs → src/ddi-rest-adapter.cjs
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Three Domain Logic Entry Points** — graphs_architecture_browser_app, graphs_architecture_ingestion_cli, graphs_architecture_validation_cli [EXTRACTED 1.00]
-- **Primary Module Views** — index_checker_view, index_admin_review_workspace, index_audit_log_view [EXTRACTED 1.00]
+- **Browser Loader Dependency Chain** — index, src_styles, src_report_parser, src_ddi_engine, src_kb_persistence, src_storage_adapter, src_app, data_active_kb_js, browser_local_storage [EXTRACTED 1.00]
+- **Ingestion Pipeline** — scripts_ingest, src_report_parser, rxnorm_seed_map, medscape_report_format, data_active_kb_json, data_active_kb_js [EXTRACTED 1.00]
+- **Test Suite** — test_ddi_engine_test, test_ingest_test, test_ui_source_test, test_kb_persistence_test [EXTRACTED 1.00]
+- **Design Rationales** — kb_version_identity, medication_identity_resolution, fail_closed_identity_resolution, medication_instance_invariant, clinical_alert_safety_gate, one_way_write_cli_to_browser, versioned_local_revision_envelope, storage_adapter_seam, kb_validation_gate, override_rationale_mechanism, local_kb_upgrade_conflict [INFERRED 0.95]
+- **Runtime Checker Flow** — src_app, src_ddi_engine, function_resolvedrug, function_checkinteractions, function_buildindex, function_createauditentry, knowledge_base, browser_local_storage [INFERRED 0.95]
+- **Admin Workflow** — admin_review_workflow, upload_report_workflow, src_report_parser, src_kb_persistence, browser_local_storage, knowledge_base [INFERRED 0.95]
 
-## Communities (37 total, 20 thin omitted)
+## Communities (24 total, 4 thin omitted)
 
-### Community 0 - "UI & Audit Actions"
+### Community 0 - "KB Ingestion & RxNorm Map"
+Cohesion: 0.09
+Nodes (42): Active KB JS (data/active-kb.js), Medscape Text/MD Report Format, One-Way Write CLI to Browser KB, RxNorm Terminology System, RxNorm Seed Map, addDoseSuggestions(), buildKnowledgeBase(), compareRelativePaths() (+34 more)
+
+### Community 1 - "App Frontend Core"
 Cohesion: 0.12
 Nodes (38): activateRevision(), addDrugToKb(), addInteraction(), checkNow(), clearStorageFailure(), currentResultsExport(), escapeHtml(), exportAudit() (+30 more)
 
-### Community 1 - "Ingestion Pipeline"
+### Community 2 - "SQLite Persistence Layer"
 Cohesion: 0.11
-Nodes (25): addDoseSuggestions(), buildKnowledgeBase(), cleanLine(), compareRelativePaths(), createInteraction(), createRevisionId(), __dirname, drugIdFor() (+17 more)
+Nodes (15): ADMIN_ACTIONS, applyReviewEdits(), clinicalActivationErrors(), clone(), ensureReviewer(), findInteraction(), fs, MemoryKbStore (+7 more)
 
-### Community 2 - "DDI Engine"
-Cohesion: 0.18
-Nodes (21): addDoseSuggestions(), addIdentityCandidate(), assignMedicationInstanceIds(), buildIndex(), checkInteractions(), cleanReportLine(), createEmptyIndex(), createParsedInteraction() (+13 more)
+### Community 3 - "KB Validation Pipeline"
+Cohesion: 0.09
+Nodes (26): Active KB JSON (data/active-kb.json), KB Validation Gates, here, require, runCli(), { validateKnowledgeBase }, CONFIDENCE, fingerprint() (+18 more)
 
-### Community 3 - "Shared Report Parser"
-Cohesion: 0.19
-Nodes (14): CONFIDENCE, fingerprint(), here, label(), object(), pair(), REQUIRED, runCli() (+6 more)
+### Community 4 - "DDI Engine Core"
+Cohesion: 0.15
+Nodes (24): addDoseSuggestions(), addIdentityCandidate(), assignMedicationInstanceIds(), buildIndex(), checkInteractions(), cleanReportLine(), createEmptyIndex(), createParsedInteraction() (+16 more)
 
-### Community 4 - "Package Metadata"
-Cohesion: 0.10
-Nodes (19): description, keywords, license, name, private, scripts, ingest, test (+11 more)
+### Community 5 - "Browser Storage & Revisions"
+Cohesion: 0.09
+Nodes (18): index.html Browser Entry Point, Local KB Upgrade and Conflict Resolution, createRevision(), rebase(), reviewChanges(), revisionFromLegacy(), browserStorageAdapter(), memoryStorageAdapter() (+10 more)
 
-### Community 6 - "Browser Interface"
-Cohesion: 0.20
-Nodes (10): Active KB Script, Admin Review Workspace, Application Controller Script, Audit Log View, Checker View, DDI Engine Script, Drug-Drug Interaction Checker UI, KB Persistence Script (+2 more)
+### Community 6 - "Package Dependencies"
+Cohesion: 0.08
+Nodes (23): better-sqlite3, dependencies, better-sqlite3, description, keywords, license, name, private (+15 more)
 
-### Community 7 - "KB Persistence"
-Cohesion: 0.31
-Nodes (16): cleanLine(), collectSections(), extractDoseSuggestions(), extractListDrugs(), inferMechanism(), inferMonitoring(), inferRecommendation(), isNoiseLine() (+8 more)
+### Community 7 - "REST API Adapter"
+Cohesion: 0.11
+Nodes (14): buildCandidate(), buildCoverage(), buildOutcome(), buildPersistenceResponse(), { createRequire }, crypto, engine, fs (+6 more)
 
-### Community 8 - "KB Validation"
+### Community 8 - "Auth & Server Module"
+Cohesion: 0.11
+Nodes (17): createHttpAuthAdapter(), createMemoryAuthAdapter(), bundledKb, createAuth(), { createDdiServer }, { createHttpAuthAdapter, createMemoryAuthAdapter }, { createKbSqliteStore, createMemoryKbStore, migrateKbIntoStore }, __dirname (+9 more)
+
+### Community 9 - "Architecture Analyzer"
 Cohesion: 0.11
 Nodes (16): assigned, fileTypes, finalGraph, fs, graph, inter, issues, layers (+8 more)
 
-### Community 9 - "Clinical Safety Docs"
+### Community 10 - "System Architecture Concepts"
+Cohesion: 0.12
+Nodes (17): Admin Review Workflow, Audit Capture System, Browser Local Storage, Clinical Alert Safety Gate, DDI-Checker Module, Fail-Closed Identity Resolution, buildIndex, checkInteractions (+9 more)
+
+### Community 11 - "KB Repair Tooling"
+Cohesion: 0.13
+Nodes (14): before, canonicalById, canonicals, __dirname, engine, __filename, kb, kbPath (+6 more)
+
+### Community 12 - "REST Contract Tests"
+Cohesion: 0.19
+Nodes (11): buildOpenapiDocument(), createDdiServer(), ddiContractPayload(), pivotalProblem(), adminAuth(), { createDdiServer, ddiContractPayload }, engine, fixtureKb (+3 more)
+
+### Community 13 - "Authoritative Engine Tests"
+Cohesion: 0.18
+Nodes (8): engine, ENGINE_FUNCTIONS, ENGINE_VALUES, fixtureDir, here, reportParser, repoScripts, require
+
+### Community 14 - "SQLite Store Tests"
 Cohesion: 0.20
-Nodes (9): 1. Module dependency & layering, 2. Runtime data-flow (the four layers described in the README), DDI-Checker 1.1.0 — Architecture & Data Flow, KB validation gate, Key relationships the diagrams capture, Knowledge-base revision identity, Potential follow-ups worth a look, Storage boundary (+1 more)
+Nodes (8): adminPrincipal, { createKbSqliteStore, createMemoryKbStore, migrateKbIntoStore }, __dirname, draftKb(), engine, __filename, require, rxnormSeeded()
 
-### Community 10 - "DDI Engine Tests"
-Cohesion: 0.36
-Nodes (7): createRevision(), rebase(), reviewChanges(), revisionFromLegacy(), persistence, record(), require
+### Community 15 - "REST Endpoint Tests"
+Cohesion: 0.22
+Nodes (6): { createDdiServer }, engine, fixtureKb, memoryStorage(), require, startServer()
 
-### Community 11 - "UI Source Tests"
-Cohesion: 0.32
-Nodes (4): browserStorageAdapter(), memoryStorageAdapter(), { browserStorageAdapter, memoryStorageAdapter }, require
-
-### Community 13 - "Compact Report Fixture"
+### Community 16 - "CNS Depressants KB Data"
 Cohesion: 0.67
 Nodes (3): Sedative CNS Depressants, Lefamulin, Quetiapine
 
-### Community 14 - "Long-form Report Fixture"
+### Community 17 - "Serotonin Drug Interactions"
 Cohesion: 0.67
 Nodes (3): Amitriptyline, Fluoxetine, Pimozide
 
-### Community 15 - "Malformed Report Fixture"
+### Community 18 - "Malformed Drug Test Fixtures"
 Cohesion: 0.67
 Nodes (3): Invalid Drug Heading Candidate, Mysterydrug, Validdrug
-
-### Community 16 - "Architecture Analysis Tool"
-Cohesion: 0.50
-Nodes (3): __dirname, __filename, projectRoot
-
-### Community 36 - "ddi-engine.test.mjs"
-Cohesion: 0.50
-Nodes (3): engine, fixtureKb, require
 
 ## Ambiguous Edges - Review These
 - `Mysterydrug` → `Invalid Drug Heading Candidate`  [AMBIGUOUS]
   test/fixtures/reports/malformed.txt · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **98 isolated node(s):** `fs`, `fs`, `path`, `inter`, `graph` (+93 more)
+- **140 isolated node(s):** `fs`, `fs`, `path`, `require`, `persistence` (+135 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `Mysterydrug` and `Invalid Drug Heading Candidate`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `checkInteractions()` connect `DDI Engine` to `DDI Engine Tests`?**
-  _High betweenness centrality (0.155) - this node is a cross-community bridge._
-- **Why does `record()` connect `DDI Engine Tests` to `DDI Engine`?**
-  _High betweenness centrality (0.153) - this node is a cross-community bridge._
-- **Why does `kb()` connect `UI & Audit Actions` to `DDI Engine Tests`?**
-  _High betweenness centrality (0.137) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `checkInteractions()` (e.g. with `toMedication()` and `record()`) actually correct?**
-  _`checkInteractions()` has 2 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `validateKnowledgeBase()` connect `KB Validation Pipeline` to `KB Ingestion & RxNorm Map`, `SQLite Persistence Layer`, `KB Repair Tooling`?**
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
+- **Why does `index.html Browser Entry Point` connect `Browser Storage & Revisions` to `KB Ingestion & RxNorm Map`, `App Frontend Core`, `DDI Engine Core`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `DDI-Checker Module` connect `System Architecture Concepts` to `KB Ingestion & RxNorm Map`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **What connects `fs`, `fs`, `path` to the rest of the system?**
-  _98 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `UI & Audit Actions` be split into smaller, more focused modules?**
-  _Cohesion score 0.11846689895470383 - nodes in this community are weakly interconnected._
+  _140 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `KB Ingestion & RxNorm Map` be split into smaller, more focused modules?**
+  _Cohesion score 0.08888888888888889 - nodes in this community are weakly interconnected._
+- **Should `App Frontend Core` be split into smaller, more focused modules?**
+  _Cohesion score 0.12195121951219512 - nodes in this community are weakly interconnected._
