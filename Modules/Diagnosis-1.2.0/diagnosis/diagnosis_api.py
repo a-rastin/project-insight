@@ -36,7 +36,7 @@ from .auth import Session
 from .criteria import AssertionState, DiagnosisAssertion, evaluate
 from .dashboard import _dump_for_audit
 from .deps import require_psychiatrist, require_psychiatrist_or_admin, require_csrf, store
-from .patient import resolve_patient
+from .patient import complete_workflow, resolve_patient
 from .readiness import clinical_feature_status
 
 
@@ -47,6 +47,7 @@ class Submission(BaseModel):
     checked: list[str] = Field(default_factory=list)
     # "confirmed" = criteria met & clinician confirms; "definite" = bypass
     decision: Literal["confirmed", "definite"] | None = None
+    workflowId: str | None = None
 
 
 def legacy_decision_to_assertion(
@@ -170,6 +171,14 @@ def put_session(
     # (decision + checked ids), so it can never be mistaken for a
     # server-derived auto-diagnosis (HANDOFF §6.1).
     _dump_for_audit(code.strip())
+
+    if body.decision and body.workflowId:
+        complete_workflow(
+            body.workflowId,
+            patient.patient_code,
+            body.decision,
+            request.headers.get("cookie"),
+        )
 
     return {
         "code": session["code"],

@@ -48,6 +48,8 @@ routes never construct the url or touch the registry themselves.
 from __future__ import annotations
 
 import os
+import hmac
+from hashlib import sha256
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -185,6 +187,33 @@ def resolve_patient(code: str, cookie_header: str | None) -> Patient:
     return _build_patient(payload, code.strip())
 
 
+def complete_workflow(
+    workflow_id: str, patient_code: str, decision: str, cookie_header: str | None
+) -> None:
+    secret = os.environ.get("WORKFLOW_SERVICE_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="Workflow service unavailable")
+    signature = hmac.new(
+        secret.encode(), f"{workflow_id}:{patient_code}:{decision}".encode(), sha256
+    ).hexdigest()
+    body = json.dumps({"patientCode": patient_code, "decision": decision}).encode("utf-8")
+    req = urllib.request.Request(
+        f"{PATIENT_BASE_URL.rstrip('/')}/internal/workflow-drafts/{urllib.parse.quote(workflow_id, safe='')}/diagnosis-complete",
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json", "X-Workflow-Signature": signature},
+    )
+    if cookie_header:
+        req.add_header("Cookie", cookie_header)
+    try:
+        with urllib.request.urlopen(req, timeout=PATIENT_TIMEOUT_S) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
+        raise HTTPException(status_code=502, detail="Workflow transition unavailable") from error
+    if payload.get("workflowDraft", {}).get("phase") != "patient-information":
+        raise HTTPException(status_code=502, detail="Workflow transition unavailable")
+
+
 def reset_patient_for_tests(base_url: str | None = None) -> None:
     """Test-only hook: rebind the patient-registry base URL for the
     lifetime of the current process. Production code never needs this —
@@ -207,6 +236,7 @@ __all__ = [
     "resolve_patient",
     "reset_patient_for_tests",
     "PATIENT_BASE_URL",
+    "complete_workflow",
 ]
 
 

@@ -20,6 +20,8 @@ Run: ``python -m test_patient`` — no test framework, ponytail style.
 from __future__ import annotations
 
 import json
+import hmac
+from hashlib import sha256
 import os
 import socket
 import sys
@@ -37,6 +39,7 @@ os.environ.pop("DIAGNOSIS_AUTH_BYPASS", None)
 from test_support import TEST_DB_PATH
 os.environ["DIAGNOSIS_DB_PATH"] = TEST_DB_PATH
 os.environ["DIAGNOSIS_PATIENT_LOOKUP"] = "1"
+os.environ["WORKFLOW_SERVICE_SECRET"] = "workflow-test-secret"
 
 from fastapi.testclient import TestClient
 
@@ -87,6 +90,7 @@ _PATIENTS = {
     "P-0007-B": {"id": "insight-pid-0007", "patient_code": "P-0007-B",
                   "display_name": None},
 }
+_WORKFLOW_REQUESTS: list[dict] = []
 
 
 class _PatientHandler(BaseHTTPRequestHandler):
@@ -126,6 +130,30 @@ class _PatientHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         body = json.dumps(rec).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):  # noqa: N802
+        if not self.path.startswith("/internal/workflow-drafts/"):
+            self.send_response(404)
+            self.end_headers()
+            return
+        draft_id = self.path.split("/")[3]
+        payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8"))
+        expected = hmac.new(
+            b"workflow-test-secret",
+            f"{draft_id}:{payload['patientCode']}:{payload['decision']}".encode(),
+            sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(self.headers.get("X-Workflow-Signature", ""), expected):
+            self.send_response(403)
+            self.end_headers()
+            return
+        _WORKFLOW_REQUESTS.append({"draftId": draft_id, **payload})
+        body = json.dumps({"workflowDraft": {"phase": "patient-information"}}).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -191,6 +219,18 @@ def test_put_binds_canonical_patient_id(auth_port, patient_port):
     assert r.json()["patient_id"] == "insight-pid-0007", r.text
     # display_name=None must round-trip without breaking the lookup.
     assert r.json()["evaluation"]["met"] is True, r.text
+
+
+def test_persisted_decision_advances_signed_workflow(auth_port, patient_port):
+    _WORKFLOW_REQUESTS.clear()
+    c = _client(auth_port, patient_port)
+    _arm_with_csrf(c)
+    r = c.put(
+        "/diagnosis/P-0007-B",
+        json={"checked": ["A1", "A5", "A6", "B1", "C1", "D1"], "decision": "confirmed", "workflowId": "draft-1"},
+    )
+    assert r.status_code == 200, (r.status_code, r.text)
+    assert _WORKFLOW_REQUESTS == [{"draftId": "draft-1", "patientCode": "P-0007-B", "decision": "confirmed"}], _WORKFLOW_REQUESTS
 
 
 def test_unknown_code_returns_422_not_404(auth_port, patient_port):
@@ -288,6 +328,8 @@ def main() -> None:
          lambda: test_init_binds_canonical_patient_id(auth_port, patient_port)),
         ("test_put_binds_canonical_patient_id",
          lambda: test_put_binds_canonical_patient_id(auth_port, patient_port)),
+        ("test_persisted_decision_advances_signed_workflow",
+         lambda: test_persisted_decision_advances_signed_workflow(auth_port, patient_port)),
         ("test_unknown_code_returns_422_not_404",
          lambda: test_unknown_code_returns_422_not_404(auth_port, patient_port)),
         ("test_registry_404_on_put_returns_422",
