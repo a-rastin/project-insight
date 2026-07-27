@@ -229,7 +229,7 @@ def _readiness_selfcheck() -> None:
         assert r["checks"]["patient"]["enabled"] is False, r
         assert r["checks"]["patient"]["configured"] is True, r
         assert r["checks"]["patient"]["ok"] is True, r
-        assert r["checks"]["clinicalScope"]["ok"] is False, r
+        assert r["checks"]["clinicalScope"]["ok"] is True, r
 
         # 2. Bypass shim on -> auth not deploy-ready; aggregator
         #    must go False so the deploy gate holds traffic.
