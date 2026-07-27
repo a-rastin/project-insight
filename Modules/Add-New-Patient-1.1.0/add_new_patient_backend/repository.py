@@ -157,6 +157,10 @@ class PatientCodeAlreadyExists(Exception):
     pass
 
 
+class WorkflowDraftNotReady(Exception):
+    pass
+
+
 class PatientRepository:
     def __init__(self, adapter: DatabaseAdapter) -> None:
         self.adapter = adapter
@@ -286,6 +290,116 @@ class PatientRepository:
             )
             row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
         return workflow_draft_row(row)
+
+    def finalize_workflow_draft(
+        self,
+        draft_id: str,
+        owner_user_id: str,
+        owner_session_id: str,
+        patient: dict[str, Any],
+    ) -> tuple[int, dict[str, Any]] | None:
+        now = now_iso()
+        with self.adapter.connect() as conn:
+            draft = conn.execute(
+                """
+                SELECT * FROM workflow_drafts
+                WHERE id = ? AND owner_user_id = ? AND owner_session_id = ?
+                """,
+                (draft_id, owner_user_id, owner_session_id),
+            ).fetchone()
+            if draft is None:
+                return None
+            draft = self._expire_workflow_draft(conn, draft)
+            if draft["phase"] == "completed":
+                row = conn.execute(
+                    """
+                    SELECT p.*, i.id AS intake_id, i.encounter_date, i.presenting_complaint,
+                           i.provisional_diagnosis, i.treatment_history, i.allergies_snapshot,
+                           i.current_medications_snapshot, i.suicidality, i.substance_use
+                    FROM patients p JOIN patient_intake_records i ON i.patient_id = p.id
+                    WHERE p.id = ? ORDER BY i.created_at LIMIT 1
+                    """,
+                    (draft["patient_id"],),
+                ).fetchone()
+                if row is None:
+                    raise WorkflowDraftNotReady
+                return 200, {
+                    "schemaVersion": SCHEMA_VERSION,
+                    "patient": patient_row(row),
+                    "patientId": draft["patient_id"],
+                    "encounterId": row["intake_id"],
+                    "workflowDraft": workflow_draft_row(draft),
+                }
+            if draft["phase"] != "patient-information":
+                raise WorkflowDraftNotReady
+            reservation = conn.execute(
+                "SELECT patient_id FROM patient_code_reservations WHERE patient_code = ?",
+                (draft["patient_code"],),
+            ).fetchone()
+            if reservation is None or reservation["patient_id"] != draft["patient_id"]:
+                raise WorkflowDraftNotReady
+
+            patient_id = draft["patient_id"]
+            patient_code = draft["patient_code"]
+            conn.execute(
+                """
+                INSERT INTO patients
+                  (id, patient_code, first_name, last_name, sex, dob, phone_number, status,
+                   created_by_user_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    patient_id, patient_code, patient["firstName"], patient["lastName"],
+                    patient["sex"], patient["dob"], patient.get("phoneNumber") or None,
+                    patient.get("status") or "active", owner_user_id, now, now,
+                ),
+            )
+            encounter_id = str(uuid4())
+            conn.execute(
+                """
+                INSERT INTO patient_intake_records
+                  (id, patient_id, encounter_date, presenting_complaint, provisional_diagnosis,
+                   treatment_history, allergies_snapshot, current_medications_snapshot,
+                   suicidality, substance_use, created_by_user_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    encounter_id, patient_id, patient.get("encounterDate") or now,
+                    patient["presentingComplaint"], patient["provisionalDiagnosis"],
+                    json.dumps(patient.get("treatmentHistory") or []),
+                    json.dumps(patient.get("allergies") or []),
+                    json.dumps(patient.get("currentMedications") or []),
+                    canonical_suicidality((patient.get("riskFlags") or {}).get("suicidality")),
+                    1 if (patient.get("riskFlags") or {}).get("substanceUse", False) else 0,
+                    owner_user_id, now, now,
+                ),
+            )
+            conn.execute(
+                """
+                UPDATE workflow_drafts
+                SET phase = 'completed', completed_at = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (now, now, draft_id),
+            )
+            row = conn.execute(
+                """
+                SELECT p.*, i.id AS intake_id, i.encounter_date, i.presenting_complaint,
+                       i.provisional_diagnosis, i.treatment_history, i.allergies_snapshot,
+                       i.current_medications_snapshot, i.suicidality, i.substance_use
+                FROM patients p JOIN patient_intake_records i ON i.patient_id = p.id
+                WHERE p.id = ? AND i.id = ?
+                """,
+                (patient_id, encounter_id),
+            ).fetchone()
+            draft = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
+            return 201, {
+                "schemaVersion": SCHEMA_VERSION,
+                "patient": patient_row(row),
+                "patientId": patient_id,
+                "encounterId": encounter_id,
+                "workflowDraft": workflow_draft_row(draft),
+            }
 
     def resolve_workflow_patient(
         self, patient_code: str, owner_user_id: str, owner_session_id: str

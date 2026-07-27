@@ -22,6 +22,7 @@ from .repository import (
     PatientAliasCollision,
     PatientCodeAlreadyExists,
     PatientRepository,
+    WorkflowDraftNotReady,
 )
 
 repo = PatientRepository(SQLiteAdapter(settings.db_path))
@@ -304,6 +305,25 @@ async def complete_workflow_diagnosis(draft_id: str, request: Request) -> JSONRe
     if not draft:
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "workflow_draft_not_ready"})
     return JSONResponse(content=canonical_response(workflowDraft=draft))
+
+
+@app.post("/api/add-new-patient/v1/workflow-drafts/{draft_id}/finalize")
+async def finalize_workflow_draft(
+    draft_id: str,
+    payload: PatientIntake,
+    identity: dict[str, Any] = Depends(require_psychiatrist_session),
+) -> JSONResponse:
+    owner_user_id, owner_session_id = workflow_owner(identity)
+    try:
+        result = repo.finalize_workflow_draft(
+            draft_id, owner_user_id, owner_session_id, payload.to_patient_record()
+        )
+    except WorkflowDraftNotReady:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "workflow_draft_not_ready"})
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "workflow_draft_not_found"})
+    response_status, response = result
+    return JSONResponse(status_code=response_status, content=response)
 
 
 @app.post("/api/add-new-patient/v1/patients")

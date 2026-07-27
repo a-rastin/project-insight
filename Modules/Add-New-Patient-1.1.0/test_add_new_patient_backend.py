@@ -462,6 +462,53 @@ class AddNewPatientBackendTest(unittest.TestCase):
             else:
                 os.environ["WORKFLOW_SERVICE_SECRET"] = previous
 
+    def test_workflow_finalization_is_atomic_owned_and_idempotent(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/workflow-drafts",
+                method="POST",
+                headers=headers,
+            )
+            draft = created["workflowDraft"]
+            payload = valid_payload(patient_code="WRONG1")
+            path = f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}/finalize"
+            blocked_status, _ = request_json(base, path, method="POST", headers=headers, body=payload)
+            self.assertEqual(blocked_status, 409)
+            with sqlite3.connect(server.db_path) as conn:
+                conn.execute(
+                    "UPDATE workflow_drafts SET phase = 'patient-information' WHERE id = ?",
+                    (draft["id"],),
+                )
+
+            status, finalized = request_json(base, path, method="POST", headers=headers, body=payload)
+            self.assertEqual(status, 201)
+            self.assertEqual(finalized["patientId"], draft["patientId"])
+            self.assertEqual(finalized["patient"]["patientCode"], draft["patientCode"])
+            self.assertIsNotNone(UUID(finalized["encounterId"]))
+
+            retry_status, retry = request_json(base, path, method="POST", headers=headers, body=payload)
+            self.assertEqual(retry_status, 200)
+            self.assertEqual(retry, finalized)
+            with sqlite3.connect(server.db_path) as conn:
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patients").fetchone()[0], 1)
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM patient_intake_records").fetchone()[0], 1)
+                row = conn.execute(
+                    "SELECT phase, completed_at FROM workflow_drafts WHERE id = ?", (draft["id"],)
+                ).fetchone()
+                self.assertEqual(row[0], "completed")
+                self.assertIsNotNone(row[1])
+
+            with sqlite3.connect(server.db_path) as conn:
+                conn.execute(
+                    "UPDATE workflow_drafts SET owner_session_id = 'different-session' WHERE id = ?",
+                    (draft["id"],),
+                )
+            denied_status, _ = request_json(base, path, method="POST", headers=headers, body=payload)
+            self.assertEqual(denied_status, 404)
+
     def test_versioned_intake_api_creates_lists_and_resolves_patients(self) -> None:
         with AddNewPatientServer() as base:
             headers = csrf_headers(base, PSY_HEADER)
