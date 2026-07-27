@@ -1,0 +1,7 @@
+/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md
+/root/projects/insight/Modules/Treatment-Plan/compose.release.yaml
+/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md
+/root/projects/insight/Modules/Treatment-Plan/deployment/compose.unified.yaml
+/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md
+/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md
+/root/projects/insight/Modules/Treatment-Plan/requirements.txt

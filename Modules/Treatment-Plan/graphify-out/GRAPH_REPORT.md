@@ -1,521 +1,498 @@
-# Graph Report - Treatment-Plan  (2026-07-22)
+# Graph Report - .  (2026-07-27)
 
 ## Corpus Check
-- 129 files · ~69,154 words
+- 51 files · ~74,852 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1705 nodes · 3980 edges · 110 communities (88 shown, 22 thin omitted)
-- Extraction: 81% EXTRACTED · 19% INFERRED · 0% AMBIGUOUS · INFERRED: 742 edges (avg confidence: 0.54)
+- 1816 nodes · 4231 edges · 106 communities (84 shown, 22 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 698 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
-## Graph Freshness
-- Built from commit: `b82b9358`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
-
 ## Community Hubs (Navigation)
-- Safety Policy Tests
-- Repository Adapter Contracts
-- Clinical Context Tests
-- Plan Edit Ledger
-- Supersession Tests
-- Governance Scope Matrix v1
-- Bayesian Net Eval Tests
-- BN Evaluation Bundle
-- Frontend Config
-- Safety Policy Tests v2
-- Schema: Plan Arrays
-- Schema: Plan Content
-- Observability Tests
-- Schema: Clinical Input Snapshot
-- Handoff Migration
-- Schema: Final/Primary Plan defs
-- Scaffold Tests
-- Frontend tsconfig
-- Schema: Safety Finding
-- Finalization Versioning Tests
-- Contract Checker Scripts
-- Schema: Root & defs
-- Schema: Plan Edit
-- Schema: Instrument/Interpretation
-- Frontend Review Workspace
-- Governance Scope Matrix Schema
-- Prototype Lifecycle
-- FastAPI App Boot
-- Safety Policy Module
-- Schema: Problem Details
-- Governance Schema Required
-- Schema: Audit Provenance
-- Governance Schema Types
-- Security Tests
-- Schema: Allergies/Conditions
-- Schema: Follow-up Delta
-- Schema: Required fields
-- Schema: Source Reference
-- Schema: Status enum
-- Edit Ledger Route Tests
-- Context Map Modules
-- Schema: Code field
-- Schema: Final Plan required
-- Schema: PlanEdit/PrimaryPlan required
-- Governance: Approvals/Decision Gates
-- Governance: Items & Status
-- Audit Event: action/id
-- Audit Event: required/actor
-- Identifier Contract Tests
-- Audit Event: agent
-- Governance: Owners & Role
-- Migration TP19 Provenance
-- Schema: Diagnosis required
-- Audit Event: entity
-- Schema: SafetyFindings/Sources
-- Schema: module enum
-- Audit Event: what
-- Governance: status enum
-- Identifiers contract
-- Audit Event: identifier
-- Schema: SafetyFinding required
-- Context Ownership Tests
-- BN Eval Store/Orchestrator
-- Frontend Public Assets
-- Audit Event: root
-- Audit Event: outcome
-- Release Gate Tests
-- Security Authentication Port
-- Context Map ownership
-- Audit Provenance Schema
-- ClinicalInputSnapshot Schema
-- Final Plan Schema
-- Follow-up Delta Schema
-- Plan Edit Schema
-- Primary Plan Schema
-- Problem Details Schema
-- Recommendation Run Schema
-- Safety Finding Schema
-- Governance: decision field
-- Context Ownership Checker
-- Identifier Contract Checker
-- Release Gate Checker
-- Audit Event: correlationId
-- ADR TP04
-- Governance: signedAt
-- Governance TP01
-- Governance TP10
-- BN Evaluation Bundle hash
-- Frontend index/main
-- Graphify query memory
-- Plan Recommendation
-- Treatment Plan init
-- Migrations init
-- Policies init
-- docker-compose
-- DDI check result
-- Handoff release gate
-- Plan Edit
-- README BN Evaluation
-- README DDI check
-- README edit ledger
-- README eligibility
-- README primary plan
-- README safety policy
-- Migration 0001 down
-- Migration 0002 down
-- Migration 0003 down
+- Community 0
+- Community 1
+- Community 2
+- Community 3
+- Community 4
+- Community 5
+- Community 6
+- Community 7
+- Community 8
+- Community 9
+- Community 10
+- Community 11
+- Community 12
+- Community 13
+- Community 14
+- Community 15
+- Community 16
+- Community 17
+- Community 18
+- Community 19
+- Community 20
+- Community 21
+- Community 22
+- Community 23
+- Community 24
+- Community 25
+- Community 26
+- Community 27
+- Community 28
+- Community 29
+- Community 30
+- Community 31
+- Community 32
+- Community 33
+- Community 34
+- Community 35
+- Community 36
+- Community 37
+- Community 38
+- Community 39
+- Community 40
+- Community 41
+- Community 42
+- Community 43
+- Community 44
+- Community 45
+- Community 46
+- Community 47
+- Community 48
+- Community 49
+- Community 50
+- Community 51
+- Community 52
+- Community 53
+- Community 54
+- Community 55
+- Community 56
+- Community 57
+- Community 58
+- Community 59
+- Community 60
+- Community 61
+- Community 62
+- Community 63
+- Community 64
+- Community 65
+- Community 66
+- Community 67
+- Community 68
+- Community 69
+- Community 70
+- Community 71
+- Community 72
+- Community 73
+- Community 74
+- Community 75
+- Community 76
+- Community 77
+- Community 78
+- Community 79
+- Community 80
+- Community 81
+- Community 82
+- Community 83
+- Community 84
+- Community 85
+- Community 86
+- Community 87
+- Community 88
+- Community 89
+- Community 90
+- Community 91
+- Community 92
+- Community 93
+- Community 94
+- Community 95
+- Community 97
+- Community 98
+- Community 99
+- Community 100
+- Community 101
+- Community 102
+- Community 103
 
 ## God Nodes (most connected - your core abstractions)
 1. `DdiMedicationChecker` - 69 edges
 2. `PlanEditLedger` - 60 edges
-3. `PlanFinalizer` - 56 edges
-4. `SQLiteRepository` - 53 edges
-5. `Medication` - 42 edges
-6. `InMemoryRepository` - 41 edges
+3. `SQLiteRepository` - 52 edges
+4. `PlanFinalizer` - 50 edges
+5. `Settings` - 44 edges
+6. `Medication` - 42 edges
 7. `InMemoryPlanEditStore` - 40 edges
 8. `SQLitePlanEditStore` - 40 edges
-9. `ProbabilisticRecommendation` - 39 edges
-10. `SafetyFacts` - 39 edges
+9. `BnModel` - 39 edges
+10. `create_app()` - 35 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `verify_container()` --indirect_call--> `command()`  [INFERRED]
-  scripts/verify_deployment.py → tests/test_tp16_finalization.py
-- `ScaffoldTests` --uses--> `InMemoryRepository`  [INFERRED]
-  tests/test_tp06_scaffold.py → treatment_plan/repository.py
-- `ScaffoldTests` --uses--> `RuntimeRecord`  [INFERRED]
-  tests/test_tp06_scaffold.py → treatment_plan/repository.py
-- `ScaffoldTests` --uses--> `SQLiteRepository`  [INFERRED]
-  tests/test_tp06_scaffold.py → treatment_plan/sqlite_repository.py
-- `SecurityTests` --uses--> `ConfigurationError`  [INFERRED]
-  tests/test_tp07_security.py → treatment_plan/config.py
+- `PrimaryTreatmentPlan (treatment_plan/primary_plan.py)` --semantically_similar_to--> `PrimaryPlanSynthesizer (TP-12 seam)`  [INFERRED] [semantically similar]
+  graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md → HANDOFF.md
+- `DdiCheckResult (treatment_plan/ddi_check.py)` --semantically_similar_to--> `DdiMedicationChecker (TP-13 seam)`  [INFERRED] [semantically similar]
+  graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md → HANDOFF.md
+- `PlanEdit (treatment-plan schema)` --semantically_similar_to--> `PlanEditLedger (TP-15 seam)`  [INFERRED] [semantically similar]
+  graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md → HANDOFF.md
+- `deployment/compose.unified.yaml (unified-image topology fragment)` --semantically_similar_to--> `compose.release.yaml (hardened release compose)`  [INFERRED] [semantically similar]
+  deployment/compose.unified.yaml → compose.release.yaml
+- `ScaffoldTests` --uses--> `Settings`  [INFERRED]
+  tests/test_tp06_scaffold.py → treatment_plan/config.py
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **TP-19 Persistence Seams** — handoff_migratedrunner, handoff_retentionpolicy, handoff_persistence_fraud_controls [EXTRACTED 0.95]
+- **TP clinical safety gate chain (finalization immutability + image-only rollback)** — _handoff_concept_immutable_finalized_plans, _deployment_rollback_rationale_image_only_rollback, _handoff_concept_plan_finalizer [INFERRED 0.85]
+- **TP-10 BN evidence mapping model set** — governance_tp_10_bn_mapping_coverage_model_treatment_setting, governance_tp_10_bn_mapping_coverage_model_pharmacotherapy, governance_tp_10_bn_mapping_coverage_model_involuntary_treatment, governance_tp_10_bn_mapping_coverage_model_clozapine_suicide_risk [EXTRACTED 1.00]
+- **TP-14 review workspace minimal implementation surface (primary plan + recommendation + DDI + edit) consumed by React UI** — graphify_out_memory_query_20260714_163112_tp_14_concept_primary_treatment_plan, graphify_out_memory_query_20260714_163112_tp_14_concept_plan_recommendation, graphify_out_memory_query_20260714_163112_tp_14_concept_ddi_check_result, graphify_out_memory_query_20260714_163112_tp_14_concept_plan_edit, _handoff_concept_review_workspace [INFERRED 0.85]
 - **Repository Protocol implementees** — readme_repository_protocol, readme_sqliterepository, readme_postgresqlrepository [EXTRACTED 0.95]
 - **INSIGHT entity ownership model** — context_map_patient, context_map_encounter, context_map_assessment, context_map_medication_knowledge, context_map_recommendation, context_map_final_plan [EXTRACTED 1.00]
 
-## Communities (110 total, 22 thin omitted)
+## Communities (106 total, 22 thin omitted)
 
-### Community 0 - "Safety Policy Tests"
+### Community 0 - "Community 0"
+Cohesion: 0.06
+Nodes (62): FailingDdiPort, TP13CheckerFailureTests, BlockingPort, command(), context(), primary_plan(), RecordingPort, TP16FinalizationTests (+54 more)
+
+### Community 1 - "Community 1"
+Cohesion: 0.06
+Nodes (61): AssessedRecommendation, SafetyPolicy, SafetyPolicyDecision, FakeEvaluator, TP10BnEvaluationTests, bundle(), evaluation(), facts() (+53 more)
+
+### Community 2 - "Community 2"
+Cohesion: 0.06
+Nodes (30): Collection, Dialect, PermissionError, RepositoryContractTests, RetentionPolicyTests, TP19BackupTests, TP19MigrationTests, Migration (+22 more)
+
+### Community 3 - "Community 3"
 Cohesion: 0.07
-Nodes (53): TP11SafetyPolicyTests, BlockingPort, command(), context(), TP16FinalizationTests, content_hash(), DdiCheckResult, The exact reconstructed pharmacotherapy submitted for a final DDI check. (+45 more)
+Nodes (39): HTTPX, requirements.txt, TP11SafetyPolicyTests, primary_plan(), RecordingDdiPort, TP13DdiCheckTests, no_interaction_response(), TP13MedicationSetBindingTests (+31 more)
 
-### Community 1 - "Repository Adapter Contracts"
-Cohesion: 0.06
-Nodes (34): Collection, Dialect, PermissionError, RepositoryContractTests, RetentionPolicyTests, TP19BackupTests, TP19MigrationTests, Migration (+26 more)
-
-### Community 2 - "Clinical Context Tests"
-Cohesion: 0.06
-Nodes (45): Exception, payloads(), TP08ContractTests, context(), TP09EligibilityPolicyTests, _BnAdapter, _Circuit, ClinicalContext (+37 more)
-
-### Community 3 - "Plan Edit Ledger"
+### Community 4 - "Community 4"
 Cohesion: 0.09
-Nodes (31): _apply_pointer(), _canonical_json(), _editable_tokens(), EditCategory, EditLedgerError, _encode_token(), _etag(), _finding_for_pointer() (+23 more)
+Nodes (29): _apply_pointer(), _canonical_json(), _editable_tokens(), EditLedgerError, _encode_token(), _etag(), _finding_for_pointer(), _has_active_urgent_recommendation() (+21 more)
 
-### Community 4 - "Supersession Tests"
+### Community 5 - "Community 5"
+Cohesion: 0.04
+Nodes (61): minLength, type, $ref, additionalProperties, properties, type, $ref, $ref (+53 more)
+
+### Community 6 - "Community 6"
 Cohesion: 0.12
-Nodes (32): ConcurrentSnapshotProvider, final_plan(), finalized_ledger(), follow_up_delta(), Generator, hash_json(), prior_primary_plan(), snapshot() (+24 more)
+Nodes (33): ConcurrentSnapshotProvider, final_plan(), finalized_ledger(), follow_up_delta(), Generator, hash_json(), prior_primary_plan(), snapshot() (+25 more)
 
-### Community 5 - "Governance Scope Matrix v1"
+### Community 7 - "Community 7"
+Cohesion: 0.09
+Nodes (39): CompletedProcess, RuntimeError, build(), clinical_release_gates(), image_digest(), immutable_image_reference(), main(), Path (+31 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.12
+Nodes (33): evaluate_payloads(), _evidence_tests(), _items(), main(), Any, Fail-closed TP-21 clinical validation and safety-case gate., StrEnum, cases() (+25 more)
+
+### Community 9 - "Community 9"
 Cohesion: 0.04
 Nodes (47): approvals, clinicalScope, appointmentPolicy, emergencyBehavior, planBreadth, supportedDiagnoses, supportedPopulation, clinicalValidation (+39 more)
 
-### Community 6 - "Bayesian Net Eval Tests"
+### Community 10 - "Community 10"
 Cohesion: 0.06
-Nodes (66): HTTPX, requirements.txt, FakeEvaluator, TP10BnEvaluationTests, bundle(), evaluation(), facts(), TP12PrimaryPlanTests (+58 more)
+Nodes (47): required, required, required, enum, required, required, required, required (+39 more)
 
-### Community 7 - "BN Evaluation Bundle"
+### Community 11 - "Community 11"
+Cohesion: 0.09
+Nodes (19): Logger, LogRecord, TP20ObservabilityTests, configure_logging(), JsonFormatter, Any, _safe_fields(), AuditEvent (+11 more)
+
+### Community 12 - "Community 12"
 Cohesion: 0.14
-Nodes (24): evaluate_payloads(), main(), Any, Fail-closed TP-21 clinical validation and safety-case gate., StrEnum, cases(), hazards(), observations() (+16 more)
+Nodes (23): _observation(), MH-04: separate source/time-stamped suicide-risk observations and an approved re, SuicideRiskObservationTests, SuicideRiskResolutionPolicyTests, Dependency, Blocker, Eligibility, Enum (+15 more)
 
-### Community 8 - "Frontend Config"
+### Community 13 - "Community 13"
+Cohesion: 0.09
+Nodes (22): Exception, _BnAdapter, _Circuit, ClinicalContextAssembler, _DdiAdapter, DependencyResult, _DiagnosisAdapter, _is_string() (+14 more)
+
+### Community 14 - "Community 14"
 Cohesion: 0.06
 Nodes (33): dependencies, react, react-dom, typescript, vite, @vitejs/plugin-react, vitest, devDependencies (+25 more)
 
-### Community 9 - "Safety Policy Tests v2"
-Cohesion: 0.09
-Nodes (29): primary_plan(), RecordingDdiPort, TP13DdiCheckTests, FailingDdiPort, TP13CheckerFailureTests, no_interaction_response(), TP13MedicationSetBindingTests, TP13HttpAdapterTests (+21 more)
+### Community 15 - "Community 15"
+Cohesion: 0.06
+Nodes (33): minLength, type, $ref, additionalProperties, properties, type, $ref, AuditProvenance (+25 more)
 
-### Community 10 - "Schema: Plan Arrays"
+### Community 16 - "Community 16"
 Cohesion: 0.10
 Nodes (28): items, items, type, items, type, additionalProperties, minLength, properties (+20 more)
 
-### Community 11 - "Schema: Plan Content"
+### Community 17 - "Community 17"
 Cohesion: 0.07
 Nodes (28): PlanContent, pattern, type, additionalProperties, properties, required, type, additionalProperties (+20 more)
 
-### Community 12 - "Observability Tests"
-Cohesion: 0.10
-Nodes (12): Logger, TP20ObservabilityTests, AuditEvent, MetricPoint, Observability, opaque_id(), Any, Record operational signals and security audit events through one deep interface. (+4 more)
+### Community 18 - "Community 18"
+Cohesion: 0.17
+Nodes (15): context(), TP09EligibilityPolicyTests, ClinicalContext, ContextError, ContextErrorCode, Enum, str, EligibilityDecision (+7 more)
 
-### Community 13 - "Schema: Clinical Input Snapshot"
+### Community 19 - "Community 19"
 Cohesion: 0.15
-Nodes (13): $ref, additionalProperties, properties, type, ClinicalInputSnapshot, additionalProperties, type, $ref (+5 more)
+Nodes (14): FastAPI, Repository, bn_manager_client_factory(), CallerAdapterContractTests, BN-05 — Treatment Plan caller policy.  Asserts the caller-aware BN Manager adapt, RegistryEvidenceSchemaMappingTests, create_app(), BnManagerTreatmentPlanEvaluator (+6 more)
 
-### Community 14 - "Handoff Migration"
-Cohesion: 0.06
-Nodes (35): Completed Work, Current State and Critical Constraint, INSIGHT Treatment Plan Handoff, MigrationRunner seam, Objective, TP-19 Persistence Fraud Controls, PlanSuperseder seam, Module README (+27 more)
-
-### Community 15 - "Schema: Final/Primary Plan defs"
-Cohesion: 0.08
-Nodes (28): minLength, type, $ref, pattern, type, $ref, FinalPlan, PrimaryPlan (+20 more)
-
-### Community 16 - "Scaffold Tests"
-Cohesion: 0.14
-Nodes (16): FastAPI, hardened_run_command(), ScaffoldTests, TP22DeploymentTests, create_app(), _bool(), ConfigurationError, ValueError (+8 more)
-
-### Community 17 - "Frontend tsconfig"
+### Community 20 - "Community 20"
 Cohesion: 0.08
 Nodes (24): compilerOptions, allowJs, allowSyntheticDefaultImports, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib (+16 more)
 
-### Community 18 - "Schema: Safety Finding"
-Cohesion: 0.12
-Nodes (16): SafetyFinding, $ref, $ref, $ref, minLength, type, detectedAt, findingId (+8 more)
-
-### Community 19 - "Finalization Versioning Tests"
-Cohesion: 0.22
-Nodes (11): primary_plan(), RecordingPort, ConcurrentPort, ContextProvider, HighAlertPort, TP17FinalizationVersioningTests, InMemoryPlanEditStore, PlanEditLedger (+3 more)
-
-### Community 20 - "Contract Checker Scripts"
-Cohesion: 0.21
-Nodes (14): check_compatibility(), ContractError, lint_openapi(), load(), _pointer(), Path, ValueError, Offline TP-05 JSON Schema, example, compatibility, and OpenAPI conformance. (+6 more)
-
-### Community 21 - "Schema: Root & defs"
-Cohesion: 0.11
-Nodes (18): $defs, Instant, PlanEdit, Uuid, Version, $id, format, type (+10 more)
-
-### Community 22 - "Schema: Plan Edit"
-Cohesion: 0.09
-Nodes (22): $ref, $ref, $ref, enum, type, pattern, type, properties (+14 more)
-
-### Community 23 - "Schema: Instrument/Interpretation"
-Cohesion: 0.09
-Nodes (22): minLength, type, minLength, type, instrument, interpretation, score, severity (+14 more)
-
-### Community 24 - "Frontend Review Workspace"
-Cohesion: 0.17
-Nodes (18): App(), reviewCase, clonePlan(), compare(), Comparison, createReviewWorkspace(), Dose, fields (+10 more)
-
-### Community 25 - "Governance Scope Matrix Schema"
-Cohesion: 0.11
-Nodes (20): items, minLength, type, items, pattern, properties, type, minLength (+12 more)
-
-### Community 26 - "Prototype Lifecycle"
-Cohesion: 0.21
-Nodes (11): main(), Run: python prototype/run_lifecycle.py (synthetic walkthrough only)., initial_state(), ValueError, THROWAWAY TP-04 lifecycle prototype. Not for clinical use or production import., Return a new state for one action; never mutate ``state``., reduce(), _require() (+3 more)
-
-### Community 27 - "FastAPI App Boot"
-Cohesion: 0.17
-Nodes (12): LogRecord, configure_logging(), JsonFormatter, Any, _safe_fields(), PHI-safe operational observability and security audit events (TP-20)., AuthenticationUnavailable, Capability (+4 more)
-
-### Community 28 - "Safety Policy Module"
-Cohesion: 0.22
-Nodes (17): CompletedProcess, RuntimeError, build(), clinical_release_gates(), main(), Path, Cross-platform release image build, SBOM, scan, and human-gated promotion., run() (+9 more)
-
-### Community 29 - "Schema: Problem Details"
-Cohesion: 0.11
-Nodes (18): $ref, ProblemDetails, minLength, type, pattern, type, additionalProperties, properties (+10 more)
-
-### Community 30 - "Governance Schema Required"
-Cohesion: 0.15
-Nodes (13): schemaVersion, required, approvals, clinicalScope, clinicalValidation, clinicalWorkflow, decisionGates, documentId (+5 more)
-
-### Community 31 - "Schema: Audit Provenance"
-Cohesion: 0.12
-Nodes (17): minLength, type, additionalProperties, properties, type, AuditProvenance, minLength, type (+9 more)
-
-### Community 32 - "Governance Schema Types"
+### Community 21 - "Community 21"
 Cohesion: 0.08
 Nodes (25): type, type, minLength, type, type, type, type, properties (+17 more)
 
-### Community 34 - "Schema: Allergies/Conditions"
+### Community 22 - "Community 22"
+Cohesion: 0.18
+Nodes (10): SecurityTests, AccessDenied, AuthenticationPort, AuthenticationUnavailable, Capability, datetime, Enum, Protocol (+2 more)
+
+### Community 23 - "Community 23"
+Cohesion: 0.08
+Nodes (24): enum, type, $ref, $ref, minLength, type, $ref, minLength (+16 more)
+
+### Community 24 - "Community 24"
+Cohesion: 0.09
+Nodes (23): PlanEdit, $ref, $ref, enum, type, pattern, type, additionalProperties (+15 more)
+
+### Community 25 - "Community 25"
+Cohesion: 0.21
+Nodes (14): check_compatibility(), ContractError, lint_openapi(), load(), _pointer(), Path, ValueError, Offline TP-05 JSON Schema, example, compatibility, and OpenAPI conformance. (+6 more)
+
+### Community 26 - "Community 26"
+Cohesion: 0.15
+Nodes (6): ScaffoldTests, _bool(), ConfigurationError, ValueError, main(), InMemoryRepository
+
+### Community 27 - "Community 27"
+Cohesion: 0.09
+Nodes (22): minLength, type, minLength, type, instrument, interpretation, score, severity (+14 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.17
+Nodes (18): App(), reviewCase, clonePlan(), compare(), Comparison, createReviewWorkspace(), Dose, fields (+10 more)
+
+### Community 29 - "Community 29"
+Cohesion: 0.22
+Nodes (11): main(), Run: python prototype/run_lifecycle.py (synthetic walkthrough only)., initial_state(), ValueError, THROWAWAY TP-04 lifecycle prototype. Not for clinical use or production import., Return a new state for one action; never mutate ``state``., reduce(), _require() (+3 more)
+
+### Community 30 - "Community 30"
+Cohesion: 0.11
+Nodes (20): items, minLength, type, items, pattern, properties, type, minLength (+12 more)
+
+### Community 31 - "Community 31"
+Cohesion: 0.11
+Nodes (19): compose.release.yaml (hardened release compose), read_only + no-new-privileges + cap_drop ALL hardening, deployment/compose.unified.yaml (unified-image topology fragment), authentication-session-url secret mount (TP-07 integration), Treatment Plan rollback procedure, Image-only rollback; never auto down-migrate immutable clinical records, INSIGHT Treatment Plan Handoff, BnEvaluationOrchestrator (TP-10 seam) (+11 more)
+
+### Community 32 - "Community 32"
+Cohesion: 0.11
+Nodes (19): status, const, enum, minimum, type, acknowledged, confirmed, editing (+11 more)
+
+### Community 33 - "Community 33"
+Cohesion: 0.20
+Nodes (7): RetentionPolicy, RetentionResult, RuntimeRecord, Connection, datetime, Path, SQLiteRepository
+
+### Community 34 - "Community 34"
+Cohesion: 0.12
+Nodes (17): pattern, type, SourceReference, minLength, type, type, contentHash, etag (+9 more)
+
+### Community 35 - "Community 35"
+Cohesion: 0.12
+Nodes (15): $defs, Instant, ProblemDetails, Uuid, Version, $id, format, type (+7 more)
+
+### Community 36 - "Community 36"
+Cohesion: 0.14
+Nodes (16): required, required, required, action, actorId, code, codeSystem, correlationId (+8 more)
+
+### Community 37 - "Community 37"
+Cohesion: 0.30
+Nodes (10): EditLedgerRouteTests, EditLedgerTests, ledger(), primary_plan(), EditCategory, PolicyBound, str, A trusted policy constraint for one exact JSON Pointer. (+2 more)
+
+### Community 38 - "Community 38"
 Cohesion: 0.13
 Nodes (15): items, type, uniqueItems, items, type, uniqueItems, additionalProperties, properties (+7 more)
 
-### Community 35 - "Schema: Follow-up Delta"
+### Community 39 - "Community 39"
 Cohesion: 0.13
 Nodes (15): minItems, type, FollowUpDelta, $ref, additionalProperties, properties, type, $ref (+7 more)
 
-### Community 36 - "Schema: Required fields"
-Cohesion: 0.16
-Nodes (15): required, required, required, capturedAt, changes, currentMedications, deltaId, encounterId (+7 more)
-
-### Community 37 - "Schema: Source Reference"
-Cohesion: 0.12
-Nodes (17): SourceReference, minLength, type, type, etag, module, resourceId, retrievedAt (+9 more)
-
-### Community 38 - "Schema: Status enum"
-Cohesion: 0.13
-Nodes (15): enum, acknowledged, confirmed, editing, evaluating, gathering-inputs, generated, generation-failed (+7 more)
-
-### Community 39 - "Edit Ledger Route Tests"
-Cohesion: 0.24
-Nodes (11): EditLedgerRouteTests, EditLedgerTests, ledger(), primary_plan(), PolicyBound, A trusted policy constraint for one exact JSON Pointer., ReasonRequired, InMemoryAuthenticationAdapter (+3 more)
-
-### Community 40 - "Context Map Modules"
+### Community 40 - "Community 40"
 Cohesion: 0.16
 Nodes (14): Add New Patient module, Assessment entity, Authentication module, BN Manager module, DDI Checker module, Diagnosis module, Encounter entity, Final Plan entity (+6 more)
 
-### Community 41 - "Schema: Code field"
-Cohesion: 0.14
-Nodes (14): minLength, pattern, type, enum, type, properties, code, codeSystem (+6 more)
+### Community 41 - "Community 41"
+Cohesion: 0.15
+Nodes (13): minLength, pattern, type, enum, type, additionalProperties, properties, type (+5 more)
 
-### Community 42 - "Schema: Final Plan required"
-Cohesion: 0.17
-Nodes (13): required, schemaVersion, required, attestation, contentHash, finalizedAt, finalizedBy, module (+5 more)
+### Community 42 - "Community 42"
+Cohesion: 0.15
+Nodes (13): schemaVersion, required, approvals, clinicalScope, clinicalValidation, clinicalWorkflow, decisionGates, documentId (+5 more)
 
-### Community 43 - "Schema: PlanEdit/PrimaryPlan required"
-Cohesion: 0.17
-Nodes (13): required, required, after, before, content, createdAt, editedAt, editId (+5 more)
-
-### Community 44 - "Governance: Approvals/Decision Gates"
-Cohesion: 0.17
-Nodes (12): type, type, approvals, clinicalValidation, maxItems, minItems, owners, regulatoryAssessment (+4 more)
-
-### Community 45 - "Governance: Items & Status"
-Cohesion: 0.18
-Nodes (11): required, id, status, behavior, case, decision, name, role (+3 more)
-
-### Community 46 - "Audit Event: action/id"
+### Community 43 - "Community 43"
 Cohesion: 0.17
 Nodes (12): format, type, format, type, properties, correlationId, id, recorded (+4 more)
 
-### Community 47 - "Audit Event: required/actor"
-Cohesion: 0.29
-Nodes (7): action, correlationId, id, required, outcome, recorded, resourceType
+### Community 44 - "Community 44"
+Cohesion: 0.17
+Nodes (12): type, type, approvals, clinicalValidation, maxItems, minItems, owners, regulatoryAssessment (+4 more)
 
-### Community 49 - "Audit Event: agent"
+### Community 45 - "Community 45"
+Cohesion: 0.18
+Nodes (12): Clinical Context Assembly, CONTEXT-MAP.md, FastAPI backend, Idempotent Finalization, MigrationRunner, PostgreSQLRepository, React review workspace, Repository Protocol (+4 more)
+
+### Community 47 - "Community 47"
+Cohesion: 0.18
+Nodes (11): required, id, status, behavior, case, decision, name, role (+3 more)
+
+### Community 49 - "Community 49"
+Cohesion: 0.20
+Nodes (10): DdiMedicationChecker (TP-13 seam), PlanEditLedger (TP-15 seam), PlanSuperseder (TP-18 seam), PrimaryPlanSynthesizer (TP-12 seam), review-workspace.ts state core (TP-14 UI seam), graphify query: TP-14 Build psychiatrist review and structured editing UI, DdiCheckResult (treatment_plan/ddi_check.py), PlanEdit (treatment-plan schema) (+2 more)
+
+### Community 50 - "Community 50"
 Cohesion: 0.20
 Nodes (10): additionalProperties, properties, required, type, agent, who, additionalProperties, properties (+2 more)
 
-### Community 50 - "Governance: Owners & Role"
-Cohesion: 0.39
-Nodes (8): required, role, enum, clinicalSafetyOfficer, privacy, product, psychiatrist, regulatory
+### Community 52 - "Community 52"
+Cohesion: 0.22
+Nodes (9): SafetyFinding, additionalProperties, required, type, category, detectedAt, findingId, severity (+1 more)
 
-### Community 51 - "Migration TP19 Provenance"
-Cohesion: 0.13
-Nodes (14): 1. Development Mode (Recommended for UI work), 2. Production-like Mode, Architecture, Core Capabilities, Development Roadmap, Getting Started, INSIGHT Treatment Plan, Overview (+6 more)
+### Community 54 - "Community 54"
+Cohesion: 0.25
+Nodes (8): ClinicalContextAssembler (TP-08 seam), MigrationRunner reversible migrations (TP-19 seam), requirements.txt (Python runtime deps), fastapi>=0.115,<1, httpx>=0.27,<1, psycopg[binary]>=3.2,<4 (PostgreSQLRepository driver), pydantic>=2.10,<3, uvicorn[standard]>=0.30,<1
 
-### Community 52 - "Schema: Diagnosis required"
-Cohesion: 0.14
-Nodes (16): required, required, action, correlationId, status, required, actorId, code (+8 more)
-
-### Community 53 - "Audit Event: entity"
+### Community 55 - "Community 55"
 Cohesion: 0.25
 Nodes (8): items, type, additionalProperties, properties, required, type, entity, what
 
-### Community 54 - "Schema: SafetyFindings/Sources"
-Cohesion: 0.25
-Nodes (8): $ref, safetyFindings, sources, items, type, items, minItems, type
+### Community 56 - "Community 56"
+Cohesion: 0.39
+Nodes (8): required, role, enum, clinicalSafetyOfficer, privacy, product, psychiatrist, regulatory
 
-### Community 55 - "Schema: module enum"
+### Community 57 - "Community 57"
 Cohesion: 0.29
-Nodes (7): enum, add-new-patient, bn-manager, ddi-checker, diagnosis, medical-history, medicalHistory
+Nodes (7): action, correlationId, id, required, outcome, recorded, resourceType
 
-### Community 56 - "Audit Event: what"
+### Community 58 - "Community 58"
 Cohesion: 0.29
 Nodes (7): what, additionalProperties, properties, required, type, required, identifier
 
-### Community 57 - "Governance: status enum"
-Cohesion: 0.14
-Nodes (14): $ref, RecommendationRun, $ref, $ref, completedAt, policyVersion, primaryPlanId, requestedAt (+6 more)
-
-### Community 58 - "Identifiers contract"
+### Community 59 - "Community 59"
 Cohesion: 0.33
 Nodes (6): encounterId UUID, Idempotency-Key, TP-03 identifier contract, patientCode alias, patientId UUID, Schema versioning contract
 
-### Community 59 - "Audit Event: identifier"
+### Community 60 - "Community 60"
 Cohesion: 0.33
 Nodes (6): additionalProperties, properties, required, type, identifier, value
 
-### Community 60 - "Schema: SafetyFinding required"
-Cohesion: 0.33
-Nodes (6): required, category, detectedAt, findingId, severity, summary
-
-### Community 62 - "BN Eval Store/Orchestrator"
-Cohesion: 0.25
-Nodes (8): enum, type, category, allergy, contraindication, data-quality, interaction, urgent-risk
-
-### Community 63 - "Frontend Public Assets"
+### Community 62 - "Community 62"
 Cohesion: 0.40
 Nodes (5): Clinical Decision Support, INSIGHT Logo, Neural Network Graph Visual, Open Door / Gateway Visual, Schizophrenia Care
 
-### Community 64 - "Audit Event: root"
+### Community 63 - "Community 63"
 Cohesion: 0.40
 Nodes (4): additionalProperties, $id, $schema, type
 
-### Community 65 - "Audit Event: outcome"
+### Community 64 - "Community 64"
 Cohesion: 0.40
 Nodes (5): enum, outcome, denied, failure, success
 
-### Community 67 - "Security Authentication Port"
+### Community 65 - "Community 65"
 Cohesion: 0.40
 Nodes (4): $id, $schema, title, type
 
-### Community 68 - "Context Map ownership"
-Cohesion: 0.50
-Nodes (4): CONTEXT-MAP, Entity ownership rule, Prohibited cross-module coupling, Sole ownership rule
-
-### Community 69 - "Audit Provenance Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 70 - "ClinicalInputSnapshot Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 71 - "Final Plan Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 72 - "Follow-up Delta Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 73 - "Plan Edit Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 74 - "Primary Plan Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 75 - "Problem Details Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 76 - "Recommendation Run Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 77 - "Safety Finding Schema"
-Cohesion: 0.50
-Nodes (3): $id, $ref, $schema
-
-### Community 78 - "Governance: decision field"
-Cohesion: 0.50
-Nodes (4): type, decision, null, string
-
-### Community 79 - "Context Ownership Checker"
-Cohesion: 0.67
-Nodes (3): evaluate(), main(), Validate unique ownership and REST-only cross-module relationship rules.
-
-### Community 80 - "Identifier Contract Checker"
-Cohesion: 0.67
-Nodes (3): evaluate(), main(), Validate the shared TP-03 identifier and transport contract.
-
-### Community 81 - "Release Gate Checker"
-Cohesion: 0.67
-Nodes (3): evaluate(), main(), Fail-closed TP-01 clinical release gate. Uses only the Python standard library.
-
-### Community 82 - "Audit Event: correlationId"
+### Community 66 - "Community 66"
 Cohesion: 0.40
 Nodes (5): enum, behavior, informational_only, reject_generation, safety_escalation
 
-### Community 83 - "ADR TP04"
+### Community 68 - "Community 68"
+Cohesion: 0.50
+Nodes (4): CONTEXT-MAP, Entity ownership rule, Prohibited cross-module coupling, Sole ownership rule
+
+### Community 69 - "Community 69"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 70 - "Community 70"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 71 - "Community 71"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 72 - "Community 72"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 73 - "Community 73"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 74 - "Community 74"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 75 - "Community 75"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 76 - "Community 76"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 77 - "Community 77"
+Cohesion: 0.50
+Nodes (3): $id, $ref, $schema
+
+### Community 78 - "Community 78"
+Cohesion: 0.50
+Nodes (4): type, decision, null, string
+
+### Community 79 - "Community 79"
 Cohesion: 0.67
-Nodes (3): ADR TP-04 disposable lifecycle prototype, ADR TP-04 disposable reduce(state,action) reducer, ADR TP-04 psychiatrist agreement pending
+Nodes (3): evaluate(), main(), Validate unique ownership and REST-only cross-module relationship rules.
 
-### Community 84 - "Governance: signedAt"
+### Community 80 - "Community 80"
 Cohesion: 0.67
-Nodes (3): signedAt, format, type
+Nodes (3): evaluate(), main(), Validate the shared TP-03 identifier and transport contract.
 
-### Community 85 - "Governance TP01"
+### Community 81 - "Community 81"
 Cohesion: 0.67
-Nodes (3): TP-01 scope and release gates, TP-01 clinical release BLOCKED, TP-01 eight decision gates
+Nodes (3): evaluate(), main(), Fail-closed TP-01 clinical release gate. Uses only the Python standard library.
 
-### Community 86 - "Governance TP10"
+### Community 82 - "Community 82"
 Cohesion: 0.67
-Nodes (3): TP-10 BN mapping coverage, TP-10 four BN model vocabularies, TP-10 synthetic candidate (pending approval)
+Nodes (3): ANP vs Medical-History suicide-risk vocabulary mismatch (no fabricated mapping), GenerationEligibilityPolicy (TP-09 seam), SuicideRiskResolution MH-04 seam (CONTRADICT/SOLE_SOURCE/AGREE)
 
-### Community 87 - "BN Evaluation Bundle hash"
-Cohesion: 0.40
-Nodes (4): Answer, Outcome, Q: TP-14 — Build psychiatrist review and structured editing UI, Source Nodes
-
-### Community 108 - "Migration 0002 down"
+### Community 83 - "Community 83"
 Cohesion: 0.67
 Nodes (3): pattern, type, action
 
+### Community 84 - "Community 84"
+Cohesion: 0.67
+Nodes (3): ADR TP-04 disposable lifecycle prototype, ADR TP-04 disposable reduce(state,action) reducer, ADR TP-04 psychiatrist agreement pending
+
+### Community 85 - "Community 85"
+Cohesion: 0.67
+Nodes (3): signedAt, format, type
+
+### Community 86 - "Community 86"
+Cohesion: 0.67
+Nodes (3): TP-01 scope and release gates, TP-01 clinical release BLOCKED, TP-01 eight decision gates
+
 ## Knowledge Gaps
-- **510 isolated node(s):** `$schema`, `$id`, `type`, `additionalProperties`, `resourceType` (+505 more)
+- **497 isolated node(s):** `$schema`, `$id`, `type`, `additionalProperties`, `resourceType` (+492 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `current_observability()` connect `Clinical Context Tests` to `Safety Policy Tests`, `Plan Edit Ledger`, `Bayesian Net Eval Tests`, `Edit Ledger Route Tests`, `Safety Policy Tests v2`, `FastAPI App Boot`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Why does `SQLiteRepository` connect `Repository Adapter Contracts` to `Safety Policy Tests`, `Supersession Tests`, `Edit Ledger Route Tests`, `Scaffold Tests`, `Finalization Versioning Tests`, `FastAPI App Boot`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `ContextProvider` connect `Finalization Versioning Tests` to `Safety Policy Tests`, `Repository Adapter Contracts`, `Edit Ledger Route Tests`, `Safety Policy Tests v2`, `Migration 0001 down`, `Scaffold Tests`, `Contract Checker Scripts`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `SQLiteRepository` connect `Community 33` to `Community 0`, `Community 2`, `Community 37`, `Community 6`, `Community 7`, `Community 19`, `Community 26`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Why does `current_observability()` connect `Community 13` to `Community 0`, `Community 1`, `Community 4`, `Community 11`, `Community 12`, `Community 18`, `Community 22`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+- **Why does `BnModel` connect `Community 1` to `Community 0`, `Community 19`, `Community 53`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **Are the 28 inferred relationships involving `DdiMedicationChecker` (e.g. with `RecordingDdiPort` and `TP13DdiCheckTests`) actually correct?**
   _`DdiMedicationChecker` has 28 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 30 inferred relationships involving `PlanEditLedger` (e.g. with `EditLedgerRouteTests` and `EditLedgerTests`) actually correct?**
   _`PlanEditLedger` has 30 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 22 inferred relationships involving `PlanFinalizer` (e.g. with `BlockingPort` and `RecordingPort`) actually correct?**
-  _`PlanFinalizer` has 22 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 22 inferred relationships involving `SQLiteRepository` (e.g. with `ScaffoldTests` and `EditLedgerRouteTests`) actually correct?**
-  _`SQLiteRepository` has 22 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 18 inferred relationships involving `SQLiteRepository` (e.g. with `ScaffoldTests` and `EditLedgerRouteTests`) actually correct?**
+  _`SQLiteRepository` has 18 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 16 inferred relationships involving `PlanFinalizer` (e.g. with `BlockingPort` and `RecordingPort`) actually correct?**
+  _`PlanFinalizer` has 16 INFERRED edges - model-reasoned connections that need verification._

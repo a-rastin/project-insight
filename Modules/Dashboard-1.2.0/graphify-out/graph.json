@@ -3730,668 +3730,668 @@
       "confidence_score": 1.0
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Backup_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Bayesian_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "Dashboard verifies an Authentication session over REST.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Authentication_Module"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "All HTTP errors return { \"error\": \"<code>\" }.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Error_Envelope"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "Dashboard is a workspace router \u2014 a thin, embeddable FastAPI app.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::FastAPI_Backend"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "Backend: Python FastAPI.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::FastAPI_Library"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "Dashboard exposes one primary INSIGHT contract: an authenticated workspace shell with role-scoped module links.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::INSIGHT_Workspace_Concept"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "Boundary rule (inviolable): internal REST only.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Internal_REST_Boundary"
     },
     {
-      "relationship": "references",
       "confidence": "EXTRACTED",
       "excerpt": "This is a hard-cut rewrite from a Node.js server (server.mjs) to a Python FastAPI backend.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Legacy_Node_Server"
     },
     {
-      "relationship": "references",
       "confidence": "EXTRACTED",
       "excerpt": "Production should swap in the Postgres adapter promised by the DatabaseAdapter Protocol.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Postgres_Upgrade_Path"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "Dashboard is a ... FastAPI app with SQLite persistence behind a repository/DB adapter layer.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::SQLite_Database"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "npm start shells out to uvicorn.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "HANDOFF.md::Uvicorn_Server"
     },
     {
-      "relationship": "documents",
       "confidence": "EXTRACTED",
       "excerpt": "dataset-schema.md \u2014 Dashboard-local persistence + workspace strings.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Dashboard_Module",
       "target": "dataset-schema.md::Dataset_Schema_Doc"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Guideline_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Logs_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Patient_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Setting_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Treatment_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "INFERRED",
       "excerpt": "Downstream modules at /modules/{moduleId}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::User_Management_Module_Downstream",
       "target": "HANDOFF.md::Dashboard_Module"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "Authentication REST client.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::dashboard_backend_auth",
       "target": "HANDOFF.md::Authentication_Module"
     },
     {
-      "relationship": "references",
       "confidence": "EXTRACTED",
       "excerpt": "origin/main \u2014 the old Node server.mjs version. No Python backend exists on the remote.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::FastAPI_Backend",
       "target": "HANDOFF.md::Legacy_Node_Server"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "The exception handler at main.py:50 unwraps HTTPException(detail={\"error\": ...}).",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::Error_Envelope"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "mock_auth_session ... MOCK_AUTH_USERS dict.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::MOCK_AUTH_USERS"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "MODULE_BUTTONS + workspace_buttons.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::MODULE_BUTTONS"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "mock_auth_session, keyed off X-Demo-Auth-User.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::Mock_Auth_System"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "main.py \u2014 workspace model.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::Workspace_Model"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "mock_auth_session, keyed off X-Demo-Auth-User.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::X_Demo_Auth_User_Header"
     },
     {
-      "relationship": "imports",
       "confidence": "INFERRED",
       "excerpt": "FastAPI app, routes, mock-auth dev endpoint, workspace model.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::dashboard_backend_auth"
     },
     {
-      "relationship": "imports",
       "confidence": "INFERRED",
       "excerpt": "config.py \u2014 env-driven Settings.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::dashboard_backend_config"
     },
     {
-      "relationship": "imports",
       "confidence": "INFERRED",
       "excerpt": "DashboardRepository \u2014 owns all SQL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::dashboard_backend_repository"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "Every protected endpoint routes through require_session (Depends).",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::dashboard_backend_main",
       "target": "HANDOFF.md::require_session"
     },
     {
-      "relationship": "imports",
       "confidence": "EXTRACTED",
       "excerpt": "server.py \u2014 one line: from dashboard_backend.main import app (uvicorn entry)",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::server_py",
       "target": "HANDOFF.md::dashboard_backend_main"
     },
     {
-      "relationship": "imports",
       "confidence": "EXTRACTED",
       "excerpt": "test_dashboard_backend.py \u2014 unittest integration suite, spins up uvicorn in-process.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::test_dashboard_backend",
       "target": "HANDOFF.md::dashboard_backend_main"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "Auth transport failures \u2192 AuthSessionError \u2192 HTTP 502.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_auth",
       "target": "HANDOFF.md::AuthSessionError"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "auth.py:146 normalize_auth_identity.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_auth",
       "target": "HANDOFF.md::normalize_auth_identity"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "db.py \u2014 DatabaseAdapter Protocol + SQLiteAdapter + DDL",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_db",
       "target": "HANDOFF.md::DatabaseAdapter_Protocol"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "Schema DDL on db.py:8-34 creates exactly two tables: dashboard_sessions and workspace_events.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_db",
       "target": "dataset-schema.md::dashboard_sessions_Table"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "Schema DDL on db.py:8-34 creates exactly two tables: dashboard_sessions and workspace_events.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_db",
       "target": "dataset-schema.md::workspace_events_Table"
     },
     {
-      "relationship": "imports",
       "confidence": "INFERRED",
       "excerpt": "DashboardRepository \u2014 owns all SQL. DatabaseAdapter Protocol + SQLiteAdapter + DDL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_repository",
       "target": "HANDOFF.md::dashboard_backend_db"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "config.py \u2014 env-driven Settings.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::dashboard_backend_config",
       "target": "HANDOFF.md::Settings_Config"
     },
     {
-      "relationship": "calls",
       "confidence": "EXTRACTED",
       "excerpt": "npm start shells out to uvicorn.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "calls",
       "source": "HANDOFF.md::npm_start_command",
       "target": "HANDOFF.md::server_py"
     },
     {
-      "relationship": "imports",
       "confidence": "EXTRACTED",
       "excerpt": "<script src=\"./dashboard.js\" type=\"module\"></script>",
       "source_file": "index.html",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "index.html::Index_Html",
       "target": "HANDOFF.md::dashboard_js"
     },
     {
-      "relationship": "imports",
       "confidence": "EXTRACTED",
       "excerpt": "<link rel=\"stylesheet\" href=\"./styles.css\">",
       "source_file": "index.html",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "index.html::Index_Html",
       "target": "HANDOFF.md::styles_css"
     },
     {
-      "relationship": "references",
       "confidence": "EXTRACTED",
       "excerpt": "test_dashboard_frontend.mjs \u2014 node assert-based render suite.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::test_dashboard_frontend",
       "target": "HANDOFF.md::dashboard_js"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "package.json \u2014 npm start shells out to uvicorn.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::package_json",
       "target": "HANDOFF.md::npm_start_command"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "package.json \u2014 test runs unittest + node.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::package_json",
       "target": "HANDOFF.md::npm_test_command"
     },
     {
-      "relationship": "calls",
       "confidence": "EXTRACTED",
       "excerpt": "npm test runs python unittest + node frontend suite.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "calls",
       "source": "HANDOFF.md::npm_test_command",
       "target": "HANDOFF.md::test_dashboard_backend"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "use DashboardServer (boots uvicorn in-thread) and MockAuthenticationServer for auth.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::test_dashboard_backend",
       "target": "HANDOFF.md::DashboardServer"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "use DashboardServer (boots uvicorn in-thread) and MockAuthenticationServer for auth.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::test_dashboard_backend",
       "target": "HANDOFF.md::MockAuthenticationServer"
     },
     {
-      "relationship": "calls",
       "confidence": "EXTRACTED",
       "excerpt": "npm test runs python unittest + node frontend suite.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "calls",
       "source": "HANDOFF.md::npm_test_command",
       "target": "HANDOFF.md::test_dashboard_frontend"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "DashboardRepository \u2014 owns all SQL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::DashboardRepository",
       "target": "dataset-schema.md::dashboard_sessions_Table"
     },
     {
-      "relationship": "references",
       "confidence": "EXTRACTED",
       "excerpt": "dashboard_session_id, fk",
       "source_file": "dataset-schema.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "dataset-schema.md::workspace_events_Table",
       "target": "dataset-schema.md::dashboard_sessions_Table"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "DashboardRepository \u2014 owns all SQL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::DashboardRepository",
       "target": "dataset-schema.md::workspace_events_Table"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "Route handlers depend on DashboardRepository, not SQLite directly. SQL access is isolated behind DatabaseAdapter.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::DashboardRepository",
       "target": "HANDOFF.md::DatabaseAdapter_Protocol"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "Promised by the DatabaseAdapter Protocol.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Postgres_Upgrade_Path",
       "target": "HANDOFF.md::DatabaseAdapter_Protocol"
     },
     {
-      "relationship": "implements",
       "confidence": "EXTRACTED",
       "excerpt": "SQLite only, behind a DatabaseAdapter Protocol so a Postgres adapter can drop in.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "implements",
       "source": "HANDOFF.md::SQLiteAdapter",
       "target": "HANDOFF.md::DatabaseAdapter_Protocol"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "SQLiteAdapter + DDL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::SQLiteAdapter",
       "target": "HANDOFF.md::SQLite_Database"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "AUTH_BASE_URL \u2014 Base URL; Dashboard appends /api/auth/session.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::AUTH_BASE_URL"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "AUTH_SESSION_TIMEOUT_MS \u2014 Outbound auth request timeout.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::AUTH_SESSION_TIMEOUT_MS"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "AUTH_SESSION_URL \u2014 Exact Authentication session URL.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::AUTH_SESSION_URL"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "DASHBOARD_DB_PATH \u2014 SQLite path.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::DASHBOARD_DB_PATH"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "DASHBOARD_MOCK_AUTH \u2014 1 enables mock auth; 0 disables.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::DASHBOARD_MOCK_AUTH"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "PORT \u2014 4173 \u2014 Settings field.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Settings_Config",
       "target": "HANDOFF.md::PORT_Config"
     },
     {
-      "relationship": "calls",
       "confidence": "INFERRED",
       "excerpt": "auth.py:146 normalize_auth_identity. Every protected endpoint routes through require_session (Depends), which runs require_auth_identity.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "calls",
       "source": "HANDOFF.md::require_auth_identity",
       "target": "HANDOFF.md::normalize_auth_identity"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "require_session (Depends), which runs require_auth_identity and enforces user.id == session.userId.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::require_session",
       "target": "HANDOFF.md::require_auth_identity"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "admin-1 admin 'Ari Morgan'",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Mock_Auth_System",
       "target": "HANDOFF.md::Ari_Morgan"
     },
     {
-      "relationship": "depends_on",
       "confidence": "EXTRACTED",
       "excerpt": "If neither AUTH_SESSION_URL nor AUTH_BASE_URL is set, DASHBOARD_MOCK_AUTH defaults to on.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Mock_Auth_System",
       "target": "HANDOFF.md::DASHBOARD_MOCK_AUTH"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "Mock auth state is in-memory (MOCK_AUTH_SESSIONS dict).",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Mock_Auth_System",
       "target": "HANDOFF.md::MOCK_AUTH_SESSIONS"
     },
     {
-      "relationship": "uses",
       "confidence": "EXTRACTED",
       "excerpt": "MOCK_AUTH_USERS \u2014 keyed off X-Demo-Auth-User.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "conceptually_related_to",
       "source": "HANDOFF.md::Mock_Auth_System",
       "target": "HANDOFF.md::MOCK_AUTH_USERS"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "psy-1 psychiatrist 'Mina Rahimi'",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Mock_Auth_System",
       "target": "HANDOFF.md::Mina_Rahimi"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "Only PSYCHIATRIST responses include requiresDisclaimer and disclaimer.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Workspace_Model",
       "target": "HANDOFF.md::Disclaimer_Concept"
     },
     {
-      "relationship": "defines",
       "confidence": "EXTRACTED",
       "excerpt": "Each button carries routeDiscovery metadata.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "references",
       "source": "HANDOFF.md::Workspace_Model",
       "target": "HANDOFF.md::Module_Route_Placeholders"
     },
     {
-      "relationship": "defines",
       "confidence": "INFERRED",
       "excerpt": "Returns INSIGHT workspace metadata: workspace.{kind,title,buttons}.",
       "source_file": "HANDOFF.md",
       "confidence_score": 0.5,
+      "relation": "references",
       "source": "HANDOFF.md::Workspace_Model",
       "target": "HANDOFF.md::Workspace_Button_Contracts"
     },
     {
-      "relationship": "calls",
       "confidence": "EXTRACTED",
       "excerpt": "npm start shells out to uvicorn.",
       "source_file": "HANDOFF.md",
       "confidence_score": 1.0,
+      "relation": "calls",
       "source": "HANDOFF.md::npm_start_command",
       "target": "HANDOFF.md::Uvicorn_Server"
     },
@@ -8697,5 +8697,5 @@
       "source_file": "api-contract.md"
     }
   ],
-  "built_at_commit": "7ae7db9abd0b4beccf7ca874df4a53fccccd624a"
+  "built_at_commit": "60bad19ff28eb9114101d203c6141127559eebed"
 }

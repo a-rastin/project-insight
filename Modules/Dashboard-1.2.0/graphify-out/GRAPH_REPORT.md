@@ -10,20 +10,20 @@
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- Community 0
-- Community 1
-- Community 2
-- Community 3
-- Community 4
-- Community 5
-- Community 6
-- Community 7
-- Community 8
-- Community 9
-- Community 10
-- Community 12
-- Community 13
-- Community 14
+- Authentication and Config
+- Backend Test Coverage
+- API Route Handlers
+- Persistence Layer
+- Frontend UI
+- Architecture and Modules
+- API Contract and Security
+- Auth Adapter
+- Module Discovery
+- Module Documentation
+- Package Metadata
+- Backend Package
+- Session Header
+- Runtime Dependencies
 
 ## God Nodes (most connected - your core abstractions)
 1. `DashboardServer` - 24 edges
@@ -58,47 +58,47 @@
 
 ## Communities (15 total, 3 thin omitted)
 
-### Community 0 - "Community 0"
+### Community 0 - "Authentication and Config"
 Cohesion: 0.06
 Nodes (40): AUTH_BASE_URL (Env Config), AUTH_SESSION_TIMEOUT_MS (Env Config), AUTH_SESSION_URL (Env Config), Ari Morgan (Mock Admin), AuthSessionError Exception, Authentication Module (External), DASHBOARD_DB_PATH (Env Config), DASHBOARD_MOCK_AUTH (Env Config) (+32 more)
 
-### Community 1 - "Community 1"
+### Community 1 - "Backend Test Coverage"
 Cohesion: 0.15
 Nodes (10): auth_payload(), create_session(), DashboardBackendTest, DashboardServer, free_port(), future_iso(), MockAuthenticationServer, MockModuleServer (+2 more)
 
-### Community 2 - "Community 2"
+### Community 2 - "API Route Handlers"
 Cohesion: 0.18
 Nodes (30): accept_disclaimer(), canonical_uuid(), create_dashboard_session(), create_workflow_context(), dashboard_index(), dashboard_spa_fallback(), delete_dashboard_session(), discover_registered_module() (+22 more)
 
-### Community 3 - "Community 3"
+### Community 3 - "Persistence Layer"
 Cohesion: 0.10
 Nodes (9): Connection, DatabaseAdapter, SQLite adapter. Repository owns SQL, so Postgres can replace adapter later., SQLiteAdapter, DashboardRepository, now_iso(), Any, session_row() (+1 more)
 
-### Community 4 - "Community 4"
+### Community 4 - "Frontend UI"
 Cohesion: 0.15
 Nodes (28): acceptDisclaimer(), activateDevRole(), api, app, buttonMeta(), clearUrl(), escapeHtml(), fmtDate() (+20 more)
 
-### Community 5 - "Community 5"
+### Community 5 - "Architecture and Modules"
 Cohesion: 0.11
 Nodes (23): Backup Module (Downstream), Bayesian Module (Downstream), DashboardRepository, Dashboard Module (v1.2.0), DatabaseAdapter Protocol, FastAPI Backend (dashboard_backend/), FastAPI Framework, Guideline Module (Downstream) (+15 more)
 
-### Community 6 - "Community 6"
+### Community 6 - "API Contract and Security"
 Cohesion: 0.12
 Nodes (22): ADMIN Role, Authentication Session Endpoint, authentication_session_mismatch Error, authentication_session_required Error, authentication_session_unavailable Error, Dashboard Configuration, Dashboard Local Session, Create Dashboard Session Endpoint (+14 more)
 
-### Community 7 - "Community 7"
+### Community 7 - "Auth Adapter"
 Cohesion: 0.26
 Nodes (12): auth_session_url(), AuthSessionError, fetch_auth_identity(), _fetch_json(), forwarded_auth_headers(), normalize_auth_identity(), _parse_expiry(), Any (+4 more)
 
-### Community 8 - "Community 8"
+### Community 8 - "Module Discovery"
 Cohesion: 0.42
 Nodes (6): Settings, discover_module(), ModuleRegistration, Any, ready_url_for(), _request_json()
 
-### Community 9 - "Community 9"
+### Community 9 - "Module Documentation"
 Cohesion: 0.22
 Nodes (8): Dashboard Module, Files, Health, Module Interface, Postgres Upgrade Path, Run, Test, Workspace Rules
 
-### Community 10 - "Community 10"
+### Community 10 - "Package Metadata"
 Cohesion: 0.25
 Nodes (7): name, private, scripts, start, test, type, version
 
@@ -110,9 +110,9 @@ Nodes (7): name, private, scripts, start, test, type, version
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `DashboardRepository` connect `Community 3` to `Community 1`, `Community 2`, `Community 7`?**
+- **Why does `DashboardRepository` connect `Persistence Layer` to `Backend Test Coverage`, `API Route Handlers`, `Auth Adapter`?**
   _High betweenness centrality (0.077) - this node is a cross-community bridge._
-- **Why does `SQLiteAdapter` connect `Community 3` to `Community 1`, `Community 2`, `Community 7`?**
+- **Why does `SQLiteAdapter` connect `Persistence Layer` to `Backend Test Coverage`, `API Route Handlers`, `Auth Adapter`?**
   _High betweenness centrality (0.051) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `DashboardServer` (e.g. with `SQLiteAdapter` and `DashboardRepository`) actually correct?**
   _`DashboardServer` has 2 INFERRED edges - model-reasoned connections that need verification._

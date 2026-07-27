@@ -1,0 +1,896 @@
+{
+  "nodes": [
+    {
+      "id": "_handoff",
+      "label": "INSIGHT Treatment Plan Handoff",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_release_gate_blocked",
+      "label": "Clinical Release Blocked gate (TP-01)",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_repository_protocol",
+      "label": "Repository Protocol persistence abstraction (TP-06 seam)",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:87",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_clinical_context_assembler",
+      "label": "ClinicalContextAssembler (TP-08 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:88",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_security_seam",
+      "label": "treatment_plan.security.Security (TP-07 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:90",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_eligibility_policy",
+      "label": "GenerationEligibilityPolicy (TP-09 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:91",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_bn_orchestrator",
+      "label": "BnEvaluationOrchestrator (TP-10 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:92",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_safety_policy",
+      "label": "SafetyPolicy (TP-11 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:93",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_primary_plan_synthesizer",
+      "label": "PrimaryPlanSynthesizer (TP-12 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:94",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_ddi_checker",
+      "label": "DdiMedicationChecker (TP-13 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:95",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_review_workspace",
+      "label": "review-workspace.ts state core (TP-14 UI seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:96",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_plan_edit_ledger",
+      "label": "PlanEditLedger (TP-15 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:97",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_plan_finalizer",
+      "label": "PlanFinalizer (TP-16/TP-17 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:98",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_plan_superseder",
+      "label": "PlanSuperseder (TP-18 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:99",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_migration_runner",
+      "label": "MigrationRunner reversible migrations (TP-19 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:100",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_retention_policy",
+      "label": "RetentionPolicy approval-gated PHI redaction (TP-19 seam)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:100",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_suicide_risk_resolution",
+      "label": "SuicideRiskResolution MH-04 seam (CONTRADICT/SOLE_SOURCE/AGREE)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:101",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_immutable_finalized_plans",
+      "label": "Immutable finalized_plans DB-level protection (SQLite triggers / PG privileges)",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_handoff_concept_anp_mh_vocab_mismatch",
+      "label": "ANP vs Medical-History suicide-risk vocabulary mismatch (no fabricated mapping)",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:108",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_compose_release",
+      "label": "compose.release.yaml (hardened release compose)",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/compose.release.yaml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_compose_release_concept_read_only_root",
+      "label": "read_only + no-new-privileges + cap_drop ALL hardening",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/compose.release.yaml",
+      "source_location": "compose.release.yaml:13-16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_deployment_rollback",
+      "label": "Treatment Plan rollback procedure",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_deployment_rollback_rationale_image_only_rollback",
+      "label": "Image-only rollback; never auto down-migrate immutable clinical records",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md",
+      "source_location": "ROLLBACK.md:3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_deployment_compose_unified",
+      "label": "deployment/compose.unified.yaml (unified-image topology fragment)",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/compose.unified.yaml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_deployment_compose_unified_concept_authentication_session_url_secret",
+      "label": "authentication-session-url secret mount (TP-07 integration)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/compose.unified.yaml",
+      "source_location": "compose.unified.yaml:10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage",
+      "label": "TP-10 BN evidence mapping coverage",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_concept_mapping_coverage",
+      "label": "MappingCoverage runtime coverage report (expected/mapped/missing/unsupported/ratio)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_rationale_no_freetext_derivation",
+      "label": "Mapper consumes only normalized snapshot facts; no free-text/score/med-name derivation",
+      "file_type": "rationale",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_concept_unsupported_evidence_state",
+      "label": "unsupported-evidence-state typed finding",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_model_treatment_setting",
+      "label": "BN model: treatment-setting (5 nodes, 20 states)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_model_pharmacotherapy",
+      "label": "BN model: pharmacotherapy (4 nodes, 12 states)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_model_involuntary_treatment",
+      "label": "BN model: involuntary-treatment-considerations (5 nodes, 18 states)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "governance_tp_10_bn_mapping_coverage_model_clozapine_suicide_risk",
+      "label": "BN model: clozapine-suicide-risk (4 nodes, 12 states)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "graphify_out_memory_query_20260714_163112_tp_14",
+      "label": "graphify query: TP-14 Build psychiatrist review and structured editing UI",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": "2026-07-14T16:31:12.480574+00:00",
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260714_163112_tp_14_concept_primary_treatment_plan",
+      "label": "PrimaryTreatmentPlan (treatment_plan/primary_plan.py)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:22",
+      "source_url": null,
+      "captured_at": "2026-07-14T16:31:12.480574+00:00",
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_recommendation",
+      "label": "PlanRecommendation (treatment_plan/primary_plan.py)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:23",
+      "source_url": null,
+      "captured_at": "2026-07-14T16:31:12.480574+00:00",
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260714_163112_tp_14_concept_ddi_check_result",
+      "label": "DdiCheckResult (treatment_plan/ddi_check.py)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:24",
+      "source_url": null,
+      "captured_at": "2026-07-14T16:31:12.480574+00:00",
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_edit",
+      "label": "PlanEdit (treatment-plan schema)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:25",
+      "source_url": null,
+      "captured_at": "2026-07-14T16:31:12.480574+00:00",
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "requirements",
+      "label": "requirements.txt (Python runtime deps)",
+      "file_type": "document",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "requirements_dep_fastapi",
+      "label": "fastapi>=0.115,<1",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "requirements_dep_httpx",
+      "label": "httpx>=0.27,<1",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:2",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "requirements_dep_psycopg_binary",
+      "label": "psycopg[binary]>=3.2,<4 (PostgreSQLRepository driver)",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "requirements_dep_pydantic",
+      "label": "pydantic>=2.10,<3",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:4",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "requirements_dep_uvicorn_standard",
+      "label": "uvicorn[standard]>=0.30,<1",
+      "file_type": "concept",
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_handoff_concept_release_gate_blocked",
+      "target": "_handoff",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:43",
+      "weight": 1
+    },
+    {
+      "source": "_handoff_concept_immutable_finalized_plans",
+      "target": "_handoff",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:46",
+      "weight": 1
+    },
+    {
+      "source": "_handoff_concept_anp_mh_vocab_mismatch",
+      "target": "_handoff_concept_suicide_risk_resolution",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:108",
+      "weight": 1
+    },
+    {
+      "source": "_handoff_concept_plan_superseder",
+      "target": "_handoff_concept_plan_edit_ledger",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:99",
+      "weight": 1
+    },
+    {
+      "source": "_handoff",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:27,92",
+      "weight": 1
+    },
+    {
+      "source": "_handoff_concept_bn_orchestrator",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:92",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_concept_mapping_coverage",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:15",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_rationale_no_freetext_derivation",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:6",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_concept_unsupported_evidence_state",
+      "target": "governance_tp_10_bn_mapping_coverage_concept_mapping_coverage",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:6",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_model_treatment_setting",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:10",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_model_pharmacotherapy",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:11",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_model_involuntary_treatment",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:12",
+      "weight": 1
+    },
+    {
+      "source": "governance_tp_10_bn_mapping_coverage_model_clozapine_suicide_risk",
+      "target": "governance_tp_10_bn_mapping_coverage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md",
+      "source_location": "TP-10-BN-MAPPING-COVERAGE.md:13",
+      "weight": 1
+    },
+    {
+      "source": "_compose_release_concept_read_only_root",
+      "target": "_compose_release",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/compose.release.yaml",
+      "source_location": "compose.release.yaml:13-16",
+      "weight": 1
+    },
+    {
+      "source": "_compose_release",
+      "target": "_handoff_concept_security_seam",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/compose.release.yaml",
+      "source_location": "compose.release.yaml:20,22",
+      "weight": 1
+    },
+    {
+      "source": "_deployment_rollback_rationale_image_only_rollback",
+      "target": "_deployment_rollback",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md",
+      "source_location": "ROLLBACK.md:3",
+      "weight": 1
+    },
+    {
+      "source": "_deployment_rollback",
+      "target": "_handoff_concept_immutable_finalized_plans",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md",
+      "source_location": "ROLLBACK.md:3",
+      "weight": 1
+    },
+    {
+      "source": "_deployment_rollback",
+      "target": "_compose_release",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/ROLLBACK.md",
+      "source_location": "ROLLBACK.md:4",
+      "weight": 1
+    },
+    {
+      "source": "_deployment_compose_unified_concept_authentication_session_url_secret",
+      "target": "_handoff_concept_security_seam",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/compose.unified.yaml",
+      "source_location": "compose.unified.yaml:10",
+      "weight": 1
+    },
+    {
+      "source": "_deployment_compose_unified",
+      "target": "_compose_release",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/deployment/compose.unified.yaml",
+      "source_location": "compose.unified.yaml:1-2",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14",
+      "target": "_handoff_concept_review_workspace",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:4",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_primary_treatment_plan",
+      "target": "graphify_out_memory_query_20260714_163112_tp_14",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:14,22",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_recommendation",
+      "target": "graphify_out_memory_query_20260714_163112_tp_14",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:23",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_ddi_check_result",
+      "target": "graphify_out_memory_query_20260714_163112_tp_14",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:24",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_edit",
+      "target": "graphify_out_memory_query_20260714_163112_tp_14",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:25",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_primary_treatment_plan",
+      "target": "_handoff_concept_primary_plan_synthesizer",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:14",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_ddi_check_result",
+      "target": "_handoff_concept_ddi_checker",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:14,24",
+      "weight": 1
+    },
+    {
+      "source": "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_edit",
+      "target": "_handoff_concept_plan_edit_ledger",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md",
+      "source_location": "query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md:14,25",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_psycopg_binary",
+      "target": "requirements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:3",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_psycopg_binary",
+      "target": "_handoff_concept_migration_runner",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:3",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_fastapi",
+      "target": "requirements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:1",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_httpx",
+      "target": "_handoff_concept_clinical_context_assembler",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:2",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_pydantic",
+      "target": "requirements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:4",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_uvicorn_standard",
+      "target": "requirements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:5",
+      "weight": 1
+    },
+    {
+      "source": "requirements_dep_httpx",
+      "target": "requirements",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/requirements.txt",
+      "source_location": "requirements.txt:2",
+      "weight": 1
+    },
+    {
+      "source": "_handoff_concept_eligibility_policy",
+      "target": "_handoff_concept_suicide_risk_resolution",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md",
+      "source_location": "HANDOFF.md:101",
+      "weight": 1
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "tp_clinical_safety_gates",
+      "label": "TP clinical safety gate chain (finalization immutability + image-only rollback)",
+      "nodes": [
+        "_handoff_concept_immutable_finalized_plans",
+        "_deployment_rollback_rationale_image_only_rollback",
+        "_handoff_concept_plan_finalizer"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/HANDOFF.md"
+    },
+    {
+      "id": "bn_evidence_mapping_models",
+      "label": "TP-10 BN evidence mapping model set",
+      "nodes": [
+        "governance_tp_10_bn_mapping_coverage_model_treatment_setting",
+        "governance_tp_10_bn_mapping_coverage_model_pharmacotherapy",
+        "governance_tp_10_bn_mapping_coverage_model_involuntary_treatment",
+        "governance_tp_10_bn_mapping_coverage_model_clozapine_suicide_risk"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/governance/TP-10-BN-MAPPING-COVERAGE.md"
+    },
+    {
+      "id": "tp14_review_workspace_surface",
+      "label": "TP-14 review workspace minimal implementation surface (primary plan + recommendation + DDI + edit) consumed by React UI",
+      "nodes": [
+        "graphify_out_memory_query_20260714_163112_tp_14_concept_primary_treatment_plan",
+        "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_recommendation",
+        "graphify_out_memory_query_20260714_163112_tp_14_concept_ddi_check_result",
+        "graphify_out_memory_query_20260714_163112_tp_14_concept_plan_edit",
+        "_handoff_concept_review_workspace"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/root/projects/insight/Modules/Treatment-Plan/graphify-out/memory/query_20260714_163112_tp_14___build_psychiatrist_review_and_structured_e.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
