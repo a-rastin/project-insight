@@ -216,6 +216,68 @@ def ensure_patient_code(data: dict[str, Any]) -> dict[str, Any]:
     return {**data, "patientCode": code}
 
 
+def workflow_owner(identity: dict[str, Any]) -> tuple[str, str]:
+    return identity["user"]["id"], identity["authSessionId"]
+
+
+@app.post("/api/add-new-patient/v1/workflow-drafts")
+async def create_workflow_draft(
+    identity: dict[str, Any] = Depends(require_psychiatrist_session),
+) -> JSONResponse:
+    owner_user_id, owner_session_id = workflow_owner(identity)
+    draft = repo.create_workflow_draft(owner_user_id, owner_session_id)
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=canonical_response(workflowDraft=draft))
+
+
+@app.get("/api/add-new-patient/v1/workflow-drafts/{draft_id}")
+async def get_workflow_draft(
+    draft_id: str,
+    identity: dict[str, Any] = Depends(require_authenticated_session),
+) -> JSONResponse:
+    owner_user_id, owner_session_id = workflow_owner(identity)
+    draft = repo.get_workflow_draft(draft_id, owner_user_id, owner_session_id)
+    if not draft:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "workflow_draft_not_found"})
+    return JSONResponse(content=canonical_response(workflowDraft=draft))
+
+
+@app.delete("/api/add-new-patient/v1/workflow-drafts/{draft_id}")
+async def cancel_workflow_draft(
+    draft_id: str,
+    identity: dict[str, Any] = Depends(require_psychiatrist_session),
+) -> JSONResponse:
+    owner_user_id, owner_session_id = workflow_owner(identity)
+    draft = repo.cancel_workflow_draft(draft_id, owner_user_id, owner_session_id)
+    if not draft:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "workflow_draft_not_found"})
+    return JSONResponse(content=canonical_response(workflowDraft=draft))
+
+
+@app.get("/api/patients/lookup")
+async def lookup_patient_for_diagnosis(
+    code: str,
+    identity: dict[str, Any] = Depends(require_authenticated_session),
+) -> JSONResponse:
+    normalized = code.strip().upper()
+    if not PATIENT_CODE_PATTERN.fullmatch(normalized):
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "patient_alias_not_found"})
+    owner_user_id, owner_session_id = workflow_owner(identity)
+    workflow_patient = repo.resolve_workflow_patient(normalized, owner_user_id, owner_session_id)
+    if workflow_patient:
+        return JSONResponse(content=workflow_patient)
+    try:
+        patient = repo.resolve_patient(normalized)
+    except PatientAliasCollision:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"error": "patient_alias_collision"})
+    if not patient:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "patient_alias_not_found"})
+    return JSONResponse(content={
+        "id": patient["patientId"],
+        "patient_code": patient["patientCode"],
+        "display_name": None,
+    })
+
+
 @app.post("/api/add-new-patient/v1/patients")
 async def create_canonical_patient(
     payload: CanonicalPatientCreate,

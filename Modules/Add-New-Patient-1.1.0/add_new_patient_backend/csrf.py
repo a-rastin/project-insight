@@ -11,7 +11,7 @@ from .config import settings
 
 CSRF_COOKIE_NAME = "add_new_patient_csrf"
 CSRF_HEADER_NAME = "x-csrf-token"
-CSRF_WRITE_METHODS = {"POST", "PATCH"}
+CSRF_WRITE_METHODS = {"POST", "PATCH", "DELETE"}
 
 
 def generate_csrf_token() -> str:

@@ -333,6 +333,89 @@ class AddNewPatientBackendTest(unittest.TestCase):
         self.assertEqual(ready_status, 200)
         self.assertEqual(ready, {"status": "ready"})
 
+    def test_workflow_draft_reserves_identity_and_expires_safely(self) -> None:
+        server = AddNewPatientServer()
+        with server as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            status, created = request_json(
+                base,
+                "/api/add-new-patient/v1/workflow-drafts",
+                method="POST",
+                headers=headers,
+            )
+            self.assertEqual(status, 201)
+            draft = created["workflowDraft"]
+            self.assertEqual(draft["phase"], "diagnosis")
+            self.assertRegex(draft["id"], r"^[0-9a-f-]{36}$")
+            self.assertIsNotNone(UUID(draft["patientId"]))
+            self.assertRegex(draft["patientCode"], r"^[A-Z0-9]{6}$")
+            self.assertIn("expiresAt", draft)
+            self.assertIsNone(draft["retentionUntil"])
+
+            status, resumed = request_json(
+                base,
+                f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(resumed["workflowDraft"], draft)
+
+            status, resolution = request_json(
+                base,
+                f"/api/patients/lookup?code={draft['patientCode']}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(resolution["id"], draft["patientId"])
+            self.assertEqual(resolution["patient_code"], draft["patientCode"])
+
+            with sqlite3.connect(server.db_path) as conn:
+                conn.execute(
+                    "UPDATE workflow_drafts SET expires_at = '2000-01-01T00:00:00Z' WHERE id = ?",
+                    (draft["id"],),
+                )
+            status, expired = request_json(
+                base,
+                f"/api/add-new-patient/v1/workflow-drafts/{draft['id']}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(expired["workflowDraft"]["phase"], "expired")
+            self.assertIsNotNone(expired["workflowDraft"]["retentionUntil"])
+            status, _ = request_json(
+                base,
+                f"/api/patients/lookup?code={draft['patientCode']}",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 404)
+
+    def test_workflow_draft_cancellation_requires_psychiatrist_and_csrf(self) -> None:
+        with AddNewPatientServer() as base:
+            headers = csrf_headers(base, PSY_HEADER)
+            _, created = request_json(
+                base,
+                "/api/add-new-patient/v1/workflow-drafts",
+                method="POST",
+                headers=headers,
+            )
+            draft_id = created["workflowDraft"]["id"]
+            status, _ = request_json(
+                base,
+                f"/api/add-new-patient/v1/workflow-drafts/{draft_id}",
+                method="DELETE",
+                headers=PSY_HEADER,
+            )
+            self.assertEqual(status, 403)
+            status, cancelled = request_json(
+                base,
+                f"/api/add-new-patient/v1/workflow-drafts/{draft_id}",
+                method="DELETE",
+                headers=headers,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(cancelled["workflowDraft"]["phase"], "cancelled")
+            self.assertIsNotNone(cancelled["workflowDraft"]["retentionUntil"])
+
     def test_versioned_intake_api_creates_lists_and_resolves_patients(self) -> None:
         with AddNewPatientServer() as base:
             headers = csrf_headers(base, PSY_HEADER)

@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -12,6 +12,29 @@ from .models import SCHEMA_VERSION, generate_patient_code
 
 def now_iso() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def years_from_now(years: int) -> str:
+    now = datetime.now(UTC)
+    try:
+        future = now.replace(year=now.year + years)
+    except ValueError:
+        future = now.replace(year=now.year + years, day=28)
+    return future.isoformat().replace("+00:00", "Z")
+
+
+def workflow_draft_row(row: Any) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "patientId": row["patient_id"],
+        "patientCode": row["patient_code"],
+        "phase": row["phase"],
+        "diagnosisDecision": row["diagnosis_decision"],
+        "expiresAt": row["expires_at"],
+        "retentionUntil": row["retention_until"],
+        "createdAt": row["created_at"],
+        "updatedAt": row["updated_at"],
+    }
 
 
 def json_list(value: str | None) -> list[str]:
@@ -157,6 +180,112 @@ class PatientRepository:
             )
         except sqlite3.IntegrityError as exc:
             raise PatientCodeAlreadyExists from exc
+
+    @staticmethod
+    def _expire_workflow_draft(conn: Any, row: Any) -> Any:
+        if row["phase"] not in {"diagnosis", "patient-information"} or row["expires_at"] > now_iso():
+            return row
+        now = now_iso()
+        conn.execute(
+            """
+            UPDATE workflow_drafts
+            SET phase = 'expired', retention_until = ?, updated_at = ?
+            WHERE id = ? AND phase IN ('diagnosis', 'patient-information')
+            """,
+            (years_from_now(7), now, row["id"]),
+        )
+        return conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (row["id"],)).fetchone()
+
+    def create_workflow_draft(self, owner_user_id: str, owner_session_id: str) -> dict[str, Any]:
+        now = now_iso()
+        with self.adapter.connect() as conn:
+            existing_codes = {
+                row["patient_code"]
+                for row in conn.execute("SELECT patient_code FROM patient_code_reservations").fetchall()
+            }
+            patient_code = generate_patient_code()
+            while patient_code in existing_codes:
+                patient_code = generate_patient_code()
+            draft_id = str(uuid4())
+            patient_id = str(uuid4())
+            self._reserve_patient_code(conn, patient_code, patient_id, now)
+            conn.execute(
+                """
+                INSERT INTO workflow_drafts
+                  (id, patient_id, patient_code, owner_user_id, owner_session_id, phase,
+                   expires_at, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 'diagnosis', ?, ?, ?)
+                """,
+                (draft_id, patient_id, patient_code, owner_user_id, owner_session_id,
+                 (datetime.now(UTC) + timedelta(days=365)).isoformat().replace("+00:00", "Z"), now, now),
+            )
+            row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
+        return workflow_draft_row(row)
+
+    def get_workflow_draft(
+        self, draft_id: str, owner_user_id: str, owner_session_id: str
+    ) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM workflow_drafts
+                WHERE id = ? AND owner_user_id = ? AND owner_session_id = ?
+                """,
+                (draft_id, owner_user_id, owner_session_id),
+            ).fetchone()
+            if row is None:
+                return None
+            row = self._expire_workflow_draft(conn, row)
+        return workflow_draft_row(row)
+
+    def cancel_workflow_draft(
+        self, draft_id: str, owner_user_id: str, owner_session_id: str
+    ) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM workflow_drafts
+                WHERE id = ? AND owner_user_id = ? AND owner_session_id = ?
+                """,
+                (draft_id, owner_user_id, owner_session_id),
+            ).fetchone()
+            if row is None:
+                return None
+            row = self._expire_workflow_draft(conn, row)
+            if row["phase"] in {"diagnosis", "patient-information"}:
+                now = now_iso()
+                conn.execute(
+                    """
+                    UPDATE workflow_drafts
+                    SET phase = 'cancelled', cancelled_at = ?, retention_until = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (now, years_from_now(7), now, draft_id),
+                )
+                row = conn.execute("SELECT * FROM workflow_drafts WHERE id = ?", (draft_id,)).fetchone()
+        return workflow_draft_row(row)
+
+    def resolve_workflow_patient(
+        self, patient_code: str, owner_user_id: str, owner_session_id: str
+    ) -> dict[str, Any] | None:
+        with self.adapter.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM workflow_drafts
+                WHERE UPPER(patient_code) = ? AND owner_user_id = ? AND owner_session_id = ?
+                """,
+                (patient_code.upper(), owner_user_id, owner_session_id),
+            ).fetchone()
+            if row is None:
+                return None
+            row = self._expire_workflow_draft(conn, row)
+            if row["phase"] not in {"diagnosis", "patient-information"}:
+                return None
+            return {
+                "id": row["patient_id"],
+                "patient_code": row["patient_code"],
+                "display_name": None,
+            }
 
     def list_patients(self) -> list[dict[str, Any]]:
         with self.adapter.connect() as conn:

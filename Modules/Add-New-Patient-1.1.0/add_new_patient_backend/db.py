@@ -32,6 +32,25 @@ CREATE TABLE IF NOT EXISTS patient_code_reservations (
   reserved_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS workflow_drafts (
+  id TEXT PRIMARY KEY,
+  patient_id TEXT NOT NULL UNIQUE,
+  patient_code TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  owner_user_id TEXT NOT NULL,
+  owner_session_id TEXT NOT NULL,
+  phase TEXT NOT NULL CHECK (phase IN ('diagnosis', 'patient-information', 'completed', 'cancelled', 'expired')),
+  diagnosis_decision TEXT CHECK (diagnosis_decision IN ('confirmed', 'definite')),
+  expires_at TEXT NOT NULL,
+  retention_until TEXT,
+  cancelled_at TEXT,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_drafts_owner
+  ON workflow_drafts(owner_user_id, owner_session_id);
+
 CREATE TABLE IF NOT EXISTS patient_intake_records (
   id TEXT PRIMARY KEY,
   patient_id TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
@@ -178,10 +197,9 @@ class SQLiteAdapter:
                 )
                 """
             )
-            conn.execute("DELETE FROM patient_code_reservations")
             conn.execute(
                 """
-                INSERT INTO patient_code_reservations
+                INSERT OR IGNORE INTO patient_code_reservations
                   (patient_code, patient_id, reserved_at)
                 SELECT patient_code, id, created_at FROM patients
                 """
