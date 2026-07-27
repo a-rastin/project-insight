@@ -260,8 +260,8 @@
      *   - CSRF header stamped on every PUT/POST via csrfHeaders();
      *     token read from <meta name="csrf-token"> stamped by the page
      *     seam on serve (HANDOFF §9.8).
-      *   - Diagnosis action sends the clinician override (decision:
-      *     "definite") and stays available regardless of checklist state.
+      *   - Next Step explicitly confirms server-met criteria ("confirmed").
+      *     Diagnosis is clear remains clinician override ("definite").
      * =================================================================== */
     function createDiagnosisModule(opts) {
       const root = (opts && opts.root) || document.body;
@@ -287,6 +287,10 @@
                     symptom_threshold: 2, core_threshold: 1 };
       let lastDecision = null;
       let workflowId = "";
+      let serverEvaluationMet = false;
+      let workflowPhase = "diagnosis";
+      let transitionInFlight = false;
+      let saveVersion = 0;
       let csrfToken = "";
       let saveTimer = null;
       let destroyed = false;
@@ -453,18 +457,23 @@
         if (ss) { ss.textContent = message; ss.className = "save-state error"; }
       }
 
-      function updateNext(data) {
+      function updateNextState() {
+        const completed =
+          ["confirmed", "definite"].includes(lastDecision) &&
+          workflowPhase === "patient-information";
+        const canConfirmNormally =
+          serverEvaluationMet && workflowPhase === "diagnosis";
         const next = $("next-btn");
-        if (next) next.disabled = !workflowId || !(
-          data.decision === "definite" &&
-          data.workflow && data.workflow.id === workflowId &&
-          data.workflow.phase === "patient-information"
-        );
+        if (next) {
+          next.disabled = !workflowId || transitionInFlight ||
+            !(canConfirmNormally || completed);
+        }
       }
 
       async function onChange() {
         if (destroyed) return;
         if (saveTimer) clearTimeout(saveTimer);
+        const version = ++saveVersion;
         const ids = checkedIds();
         renderLocalEvaluation(ids);   // instant feedback, optimistic
         ["decision-btn", "next-btn"].forEach(id => {
@@ -482,11 +491,12 @@
               body: JSON.stringify({
                 checked: ids,
                 decision: lastDecision,
-                workflowId: lastDecision ? workflowId || null : null
+                workflowId: null
               })
             });
             if (!r.ok) throw new Error(r.status);
             const data = await r.json();
+            if (version !== saveVersion) return;
             renderServer(data);
             const action = $("decision-btn");
             if (action) action.disabled = false;
@@ -494,6 +504,7 @@
             const s2 = $("save-state");
             if (s2) { s2.textContent = "Saved just now"; s2.className = "save-state saved"; }
           } catch (e) {
+            if (version !== saveVersion) return;
             const action = $("decision-btn");
             if (action) action.disabled = false;
             const s2 = $("save-state");
@@ -540,6 +551,8 @@
 
       function renderServer(data) {
         const e = data.evaluation || { failures: [], reason: "", checked: [] };
+        serverEvaluationMet = data.evaluation?.met === true;
+        if (data.workflow?.phase) workflowPhase = data.workflow.phase;
         // guardsMet dead-branch (|| e.met === true) is always truthy
         // here — kept for byte-parity with the prior standalone page;
         // updateBadge drives the visible badge state (HANDOFF §10).
@@ -555,7 +568,12 @@
         const ds = $("decision-state");
         if (ds) ds.textContent = data.decision || "None";
         const ud = $("updated");
-        if (ud) ud.textContent = data.updated_at ? new Date(data.updated_at * 1000).toLocaleTimeString() : "—";
+        if (ud) {
+          const parsed = data.updated_at ? new Date(data.updated_at) : null;
+          ud.textContent = parsed && !Number.isNaN(parsed.getTime())
+            ? parsed.toLocaleTimeString()
+            : "—";
+        }
 
         // re-apply checked state from server (in case of reload)
         const rl = $("criteria-root");
@@ -565,7 +583,7 @@
           });
         }
         lastDecision = data.decision;
-        updateNext(data);
+        updateNextState();
       }
 
       function updateBadge(aMet, guardsMet) {
@@ -626,13 +644,19 @@
           const action = $("decision-btn");
           if (action) action.disabled = false;
           renderLocalEvaluation((data.evaluation || {}).checked || []);
-          return true;
+          return data;
         } catch (error) {
           const action = $("decision-btn");
           if (action) action.disabled = false;
           const ss = $("save-state");
-          if (ss) { ss.textContent = error.message + ". Retry Diagnosis is clear."; ss.className = "save-state error"; }
-          return false;
+          if (ss) {
+            ss.textContent = error.message + (decision === "confirmed"
+              ? ". Retry Next Step."
+              : ". Retry Diagnosis is clear.");
+            ss.className = "save-state error";
+          }
+          updateNextState();
+          return null;
         }
       }
 
@@ -646,11 +670,9 @@
         if (!draft.patientCode || !["diagnosis", "patient-information"].includes(draft.phase)) {
           throw new Error("Workflow is not ready for diagnosis");
         }
+        workflowPhase = draft.phase;
         await loadSession(draft.patientCode);
-        updateNext({
-          decision: lastDecision,
-          workflow: { id: workflowId, phase: draft.phase }
-        });
+        updateNextState();
       }
 
       function _historyParam(name) {
@@ -700,7 +722,6 @@
                 "Clinician-confirmed bypass — psychiatrist authority over checklist."
               );
               if (!saved) return;
-              updateBadge(true, true);
             }
           };
           action.addEventListener("click", onDecision);
@@ -709,20 +730,34 @@
         const next = $("next-btn");
         if (next) {
           const onNext = async () => {
-            if (!next.disabled && workflowId) {
-              next.disabled = true;
-              try {
-                const response = await fetch("/api/add-new-patient/v1/workflow-drafts/" + encodeURIComponent(workflowId));
-                const data = await response.json();
-                if (!response.ok || data.workflowDraft?.phase !== "patient-information") {
+            if (next.disabled || !workflowId || transitionInFlight) return;
+            transitionInFlight = true;
+            updateNextState();
+            try {
+              if (workflowPhase === "diagnosis") {
+                if (!serverEvaluationMet) throw new Error("Diagnosis criteria are not met");
+                const result = await sendDecision(
+                  "confirmed",
+                  "Criteria met and explicitly confirmed by psychiatrist."
+                );
+                if (!result) return;
+                if (result.workflow?.phase !== "patient-information") {
                   throw new Error("Workflow transition is not complete");
                 }
-                location.assign("/modules/add-new-patient/?workflow=" + encodeURIComponent(workflowId));
-              } catch (error) {
-                next.disabled = false;
-                const ss = $("save-state");
-                if (ss) { ss.textContent = error.message + ". Retry Next Step."; ss.className = "save-state error"; }
               }
+              const response = await fetch("/api/add-new-patient/v1/workflow-drafts/" + encodeURIComponent(workflowId));
+              const data = await response.json();
+              if (!response.ok || data.workflowDraft?.phase !== "patient-information") {
+                throw new Error("Workflow transition is not complete");
+              }
+              workflowPhase = data.workflowDraft.phase;
+              location.assign("/modules/add-new-patient/?workflow=" + encodeURIComponent(workflowId));
+            } catch (error) {
+              const ss = $("save-state");
+              if (ss) { ss.textContent = error.message + ". Retry Next Step."; ss.className = "save-state error"; }
+            } finally {
+              transitionInFlight = false;
+              updateNextState();
             }
           };
           next.addEventListener("click", onNext);
