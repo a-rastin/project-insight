@@ -839,6 +839,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        console.error("Suicide Risk request failed", { endpoint: "/api/suicide-risk/v1/activate", status: response.status });
         throw suicideRiskRequestError(response, data, "Could not open the Suicide Risk module.");
       }
       return data;
@@ -848,7 +849,7 @@
       if (!patientCode) throw new Error("No active patient is available.");
       const activation = await createSuicideRiskActivation(patientCode);
       const code = activation.code || patientCode.toUpperCase();
-      window.location.assign(`/modules/suicide-risk?code=${encodeURIComponent(code)}`);
+      window.location.assign(`/modules/suicide-risk/?code=${encodeURIComponent(code)}`);
     }
 
     async function startSuicideRiskTransition(patientCode, assessmentSaved = false) {

@@ -5,7 +5,7 @@ import vm from "node:vm";
 const html = fs.readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].at(-1)[1];
 
-function loadWorkflow(fetchImpl) {
+function loadWorkflow(fetchImpl, consoleImpl = console) {
   const location = {
     href: "https://gateway.test/modules/severity?patient_code=E98PQ5",
     search: "?patient_code=E98PQ5",
@@ -16,7 +16,7 @@ function loadWorkflow(fetchImpl) {
     URL,
     URLSearchParams,
     confirm: () => true,
-    console,
+    console: consoleImpl,
     fetch: fetchImpl,
     localStorage: { getItem: () => null, setItem: () => {} },
     setTimeout: () => 0,
@@ -47,14 +47,14 @@ const workflow = loadWorkflow(async (url, options = {}) => {
   return { ok: true, json: async () => ({ code: "E98PQ5" }) };
 });
 
-await workflow.continueToMedicalHistory("E98PQ5");
+await workflow.continueToSuicideRisk("E98PQ5");
 assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
   {
-    url: "/api/internal/medical-history/csrf",
+    url: "/api/suicide-risk/v1/csrf",
     options: { credentials: "same-origin", headers: { Accept: "application/json" } }
   },
   {
-    url: "/api/internal/medical-history/activate",
+    url: "/api/suicide-risk/v1/activate",
     options: {
       method: "POST",
       credentials: "same-origin",
@@ -67,17 +67,22 @@ assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     }
   }
 ]);
-assert.equal(workflow.location.assigned, "/modules/medical-history?code=E98PQ5");
+assert.equal(workflow.location.assigned, "/modules/suicide-risk/?code=E98PQ5");
 
+const loggedErrors = [];
 const failedActivationWorkflow = loadWorkflow(async (url) => {
   if (url.endsWith("/csrf")) return { ok: true, json: async () => ({ token: "csrf-token" }) };
   return { ok: false, status: 422, json: async () => ({ error: { message: "Code must contain six alphanumeric characters." } }) };
-});
+}, { ...console, error: (...args) => loggedErrors.push(args) });
 await assert.rejects(
-  () => failedActivationWorkflow.continueToMedicalHistory("E98PQ5"),
+  () => failedActivationWorkflow.continueToSuicideRisk("E98PQ5"),
   /Code must contain six alphanumeric characters/
 );
 assert.equal(failedActivationWorkflow.location.assigned, null);
+assert.deepEqual(JSON.parse(JSON.stringify(loggedErrors)), [[
+  "Suicide Risk request failed",
+  { endpoint: "/api/suicide-risk/v1/activate", status: 422 }
+]]);
 
 for (const status of ["completed", "passed"]) {
   const persistenceCalls = [];
@@ -85,12 +90,12 @@ for (const status of ["completed", "passed"]) {
     persistenceCalls.push({ url, options });
     if (url === "/api/v1/csrf") return { ok: true, json: async () => ({ token: "severity-csrf" }) };
     if (url.startsWith("/api/severity/")) return { ok: true, json: async () => ({ success: true }) };
-    if (url.endsWith("/csrf")) return { ok: true, json: async () => ({ token: "medical-history-csrf" }) };
+    if (url.endsWith("/csrf")) return { ok: true, json: async () => ({ token: "suicide-risk-csrf" }) };
     return { ok: true, json: async () => ({ code: "E98PQ5" }) };
   });
   vm.runInContext('currentPatientCode = "E98PQ5"', persistenceWorkflow);
   await persistenceWorkflow.submitAssessment(status);
-  assert.deepEqual(JSON.parse(JSON.stringify(persistenceCalls.slice(0, 2))), [
+  assert.deepEqual(JSON.parse(JSON.stringify(persistenceCalls)), [
     {
       url: "/api/v1/csrf",
       options: { credentials: "same-origin", headers: { Accept: "application/json" } }
@@ -108,10 +113,27 @@ for (const status of ["completed", "passed"]) {
           ? { status, scores: { total: 0, positive: 0, negative: 0, general: 0 }, items: {} }
           : { status })
       }
+    },
+    {
+      url: "/api/suicide-risk/v1/csrf",
+      options: { credentials: "same-origin", headers: { Accept: "application/json" } }
+    },
+    {
+      url: "/api/suicide-risk/v1/activate",
+      options: {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "suicide-risk-csrf"
+        },
+        body: JSON.stringify({ code: "E98PQ5", requestedByModule: "severity", returnUrl: "/dashboard/" })
+      }
     }
   ]);
   assert.equal(vm.runInContext("currentPatientCode", persistenceWorkflow), "E98PQ5");
-  assert.equal(persistenceWorkflow.location.assigned, "/modules/medical-history?code=E98PQ5");
+  assert.equal(persistenceWorkflow.location.assigned, "/modules/suicide-risk/?code=E98PQ5");
 }
 
 const failedPersistenceCalls = [];
@@ -128,10 +150,10 @@ assert.equal(failedPersistenceWorkflow.location.assigned, null);
 
 const missingCodeCalls = [];
 const missingCodeWorkflow = loadWorkflow(async (...args) => missingCodeCalls.push(args));
-await assert.rejects(() => missingCodeWorkflow.continueToMedicalHistory(), /No active patient is available/);
+await assert.rejects(() => missingCodeWorkflow.continueToSuicideRisk(), /No active patient is available/);
 assert.deepEqual(missingCodeCalls, []);
 
-assert.match(html, /onclick="startMedicalHistoryTransition\(currentPatientCode\)"/);
-assert.match(html, />\s*Continue to Medical History\s*</);
+assert.match(html, /onclick="startSuicideRiskTransition\(currentPatientCode\)"/);
+assert.match(html, />\s*Continue to Suicide Risk\s*</);
 
 console.log("severity workflow navigation ok");
