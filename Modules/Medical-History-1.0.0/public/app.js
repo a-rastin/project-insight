@@ -3,6 +3,7 @@
   returnUrl: "/dashboard"
 };
 let csrfToken;
+let medicationRowNumber = 0;
 
 const elements = {
   status: document.querySelector("#status-pill"),
@@ -90,10 +91,16 @@ function addMedicationRow(value = {}) {
   if (elements.medicationList.children.length >= 20) { showError("A maximum of 20 drugs can be added."); return; }
   const row = document.createElement("div");
   row.className = "medication-row";
+  const rowNumber = ++medicationRowNumber;
+  const inputId = `medication-name-${rowNumber}`;
+  const listId = `medication-suggestions-${rowNumber}`;
+  const statusId = `medication-suggestion-status-${rowNumber}`;
   row.innerHTML = `
     <div>
-      <label>Drug</label>
-      <input class="med-name" type="text" maxlength="160" placeholder="Drug name" value="${escapeAttribute(value.name || "")}">
+      <label for="${inputId}">Drug</label>
+      <input id="${inputId}" class="med-name" type="text" maxlength="160" placeholder="Drug name" value="${escapeAttribute(value.name || "")}" list="${listId}" aria-describedby="${statusId}" autocomplete="off">
+      <datalist id="${listId}" class="med-suggestions"></datalist>
+      <span id="${statusId}" class="med-suggestion-status" role="status" aria-live="polite"></span>
     </div>
     <div>
       <label>Dose</label>
@@ -109,6 +116,11 @@ function addMedicationRow(value = {}) {
     </div>
     <button class="remove-medication" type="button" aria-label="Remove medication">x</button>
   `;
+  MedicationAutocomplete.attachMedicationAutocomplete({
+    input: row.querySelector(".med-name"),
+    datalist: row.querySelector(".med-suggestions"),
+    status: row.querySelector(".med-suggestion-status")
+  });
   row.querySelector(".remove-medication").addEventListener("click", () => { row.remove(); elements.addMedication.disabled = false; });
   elements.medicationList.appendChild(row);
   elements.addMedication.disabled = elements.medicationList.children.length >= 20;
@@ -124,11 +136,10 @@ function getSelectedPastMedicalHistory() {
 
 function getMedications() {
   return Array.from(elements.medicationList.querySelectorAll(".medication-row"))
-    .map((row) => ({
-      name: row.querySelector(".med-name").value.trim(),
-      dose: row.querySelector(".med-dose").value.trim(),
-      route: row.querySelector(".med-route").value.trim(),
-      frequency: row.querySelector(".med-frequency").value.trim()
+    .map((row) => MedicationAutocomplete.medicationValue(row.querySelector(".med-name"), {
+      dose: row.querySelector(".med-dose").value,
+      route: row.querySelector(".med-route").value,
+      frequency: row.querySelector(".med-frequency").value
     }))
     .filter((medication) => medication.name || medication.dose || medication.route || medication.frequency);
 }
@@ -257,4 +268,3 @@ elements.historyForm.addEventListener("submit", async (event) => {
 loadOptions()
   .then(restoreActivationFromUrl)
   .catch((error) => showError(error.message));
-

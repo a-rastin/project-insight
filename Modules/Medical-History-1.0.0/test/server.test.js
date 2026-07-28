@@ -125,6 +125,10 @@ test("Medical History browser client keeps module base path and sends CSRF token
   assert.doesNotMatch(client, /window\.location\.assign\("\/"\)/);
   assert.doesNotMatch(html, /Substantial suicide risk/);
   assert.doesNotMatch(client, /substantialSuicideRisk/);
+  assert.match(html, /medication-autocomplete\.js/);
+  assert.match(client, /attachMedicationAutocomplete/);
+  assert.match(client, /medicationValue/);
+  assert.doesNotMatch(client, /localhost|127\.0\.0\.1|ddi\.internal/);
 });
 
 test("rejects deprecated suicide-risk field on new writes", async () => {
