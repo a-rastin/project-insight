@@ -810,6 +810,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.token) {
+        console.error("Suicide Risk request failed", { endpoint: "/api/suicide-risk/v1/csrf", status: response.status });
         throw suicideRiskRequestError(response, data, "Could not initialize the Suicide Risk session.");
       }
       return data.token;
@@ -871,7 +872,8 @@
           assessmentSaved
             ? `The PANSS evaluation was saved, but the Suicide Risk module could not be opened. Retry opening Suicide Risk. ${err.message}`
             : err.message,
-          "urgent"
+          "urgent",
+          true
         );
       }
     }
@@ -900,7 +902,7 @@
     }
 
     // Custom notification banner helper
-    function showNotification(title, message, type = "normal") {
+    function showNotification(title, message, type = "normal", persistent = false) {
       const el = document.getElementById("notification");
       const icon = document.getElementById("notification-icon");
       const titleEl = document.getElementById("notification-title");
@@ -926,12 +928,14 @@
       el.classList.remove("hidden");
       
       // Auto hide
-      setTimeout(() => {
-        el.className += " opacity-0 translate-y-2 pointer-events-none";
+      if (!persistent) {
         setTimeout(() => {
-          el.classList.add("hidden");
-        }, 300);
-      }, 4000);
+          el.className += " opacity-0 translate-y-2 pointer-events-none";
+          setTimeout(() => {
+            el.classList.add("hidden");
+          }, 300);
+        }, 4000);
+      }
     }
   </script>
 </body>

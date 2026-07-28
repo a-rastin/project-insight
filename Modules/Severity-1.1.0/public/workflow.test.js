@@ -5,12 +5,26 @@ import vm from "node:vm";
 const html = fs.readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].at(-1)[1];
 
-function loadWorkflow(fetchImpl, consoleImpl = console) {
+function loadWorkflow(fetchImpl, consoleImpl = console, assignImpl) {
+  const elements = new Map();
+  const element = (id) => {
+    if (!elements.has(id)) elements.set(id, {
+      classList: { add: () => {}, remove: () => {} },
+      style: {},
+      removeAttribute: () => {},
+      setAttribute: () => {}
+    });
+    return elements.get(id);
+  };
+  const timers = [];
   const location = {
     href: "https://gateway.test/modules/severity?patient_code=E98PQ5",
     search: "?patient_code=E98PQ5",
     assigned: null,
-    assign(url) { this.assigned = url; }
+    assign(url) {
+      if (assignImpl) assignImpl(url);
+      this.assigned = url;
+    }
   };
   const context = {
     URL,
@@ -19,24 +33,19 @@ function loadWorkflow(fetchImpl, consoleImpl = console) {
     console: consoleImpl,
     fetch: fetchImpl,
     localStorage: { getItem: () => null, setItem: () => {} },
-    setTimeout: () => 0,
+    setTimeout: (callback) => timers.push(callback),
     window: {
       location,
       history: { pushState: () => {} },
       addEventListener: () => {}
     },
-    document: {
-      getElementById: () => ({
-        classList: { add: () => {}, remove: () => {} },
-        style: {},
-        removeAttribute: () => {},
-        setAttribute: () => {}
-      })
-    }
+    document: { getElementById: element }
   };
   vm.createContext(context);
   vm.runInContext(script, context);
   context.location = location;
+  context.elements = elements;
+  context.timers = timers;
   return context;
 }
 
@@ -69,20 +78,40 @@ assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
 ]);
 assert.equal(workflow.location.assigned, "/modules/suicide-risk/?code=E98PQ5");
 
-const loggedErrors = [];
-const failedActivationWorkflow = loadWorkflow(async (url) => {
+for (const failure of [
+  { endpoint: "/api/suicide-risk/v1/csrf", status: 401, message: "Your session has expired. Please sign in again." },
+  { endpoint: "/api/suicide-risk/v1/activate", status: 403, message: "You are not authorized to open Suicide Risk." },
+  { endpoint: "/api/suicide-risk/v1/activate", status: 422, message: "Code must contain six alphanumeric characters." },
+  { endpoint: "/api/suicide-risk/v1/activate", status: 502, message: "Could not open the Suicide Risk module." }
+]) {
+  const loggedErrors = [];
+  const failedWorkflow = loadWorkflow(async (url) => {
+    if (url !== failure.endpoint) return { ok: true, json: async () => ({ token: "csrf-token" }) };
+    const body = failure.status === 422 ? { error: { message: failure.message } } : {};
+    return { ok: false, status: failure.status, json: async () => body };
+  }, { ...console, error: (...args) => loggedErrors.push(args) });
+  await failedWorkflow.startSuicideRiskTransition("E98PQ5");
+  assert.equal(failedWorkflow.location.assigned, null);
+  for (const id of ["btn-submit", "btn-pass", "btn-continue"]) {
+    assert.equal(failedWorkflow.elements.get(id).disabled, false);
+  }
+  assert.equal(failedWorkflow.elements.get("notification-title").textContent, "Could Not Open Suicide Risk");
+  assert.equal(failedWorkflow.elements.get("notification-message").textContent, failure.message);
+  assert.equal(failedWorkflow.timers.length, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(loggedErrors)), [[
+    "Suicide Risk request failed",
+    { endpoint: failure.endpoint, status: failure.status }
+  ]]);
+}
+
+const interruptedWorkflow = loadWorkflow(async (url) => {
   if (url.endsWith("/csrf")) return { ok: true, json: async () => ({ token: "csrf-token" }) };
-  return { ok: false, status: 422, json: async () => ({ error: { message: "Code must contain six alphanumeric characters." } }) };
-}, { ...console, error: (...args) => loggedErrors.push(args) });
-await assert.rejects(
-  () => failedActivationWorkflow.continueToSuicideRisk("E98PQ5"),
-  /Code must contain six alphanumeric characters/
-);
-assert.equal(failedActivationWorkflow.location.assigned, null);
-assert.deepEqual(JSON.parse(JSON.stringify(loggedErrors)), [[
-  "Suicide Risk request failed",
-  { endpoint: "/api/suicide-risk/v1/activate", status: 422 }
-]]);
+  return { ok: true, json: async () => ({ code: "E98PQ5" }) };
+}, console, () => { throw new Error("Navigation interrupted"); });
+await interruptedWorkflow.startSuicideRiskTransition("E98PQ5");
+assert.equal(interruptedWorkflow.location.assigned, null);
+assert.match(interruptedWorkflow.elements.get("notification-message").textContent, /Navigation interrupted/);
+assert.equal(interruptedWorkflow.elements.get("btn-continue").disabled, false);
 
 for (const status of ["completed", "passed"]) {
   const persistenceCalls = [];
