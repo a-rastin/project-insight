@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from check_deployment import DeploymentContractError, check_deployment, load_manifest
+from verify_unified_deployment import MODULE_SMOKE
 
 
 ROOT = Path(__file__).parents[1]
@@ -33,6 +35,33 @@ class DeploymentContractTests(unittest.TestCase):
         self.assertEqual("/api/suicide-risk/v1", module["basePath"])
         self.assertEqual("/modules/suicide-risk", module["proxyPrefix"])
         self.assertEqual("/var/lib/insight/suicide-risk", module["volume"]["mountPath"])
+
+    def test_severity_browser_targets_are_deployed(self):
+        source = (ROOT / "Modules" / "Severity-1.1.0" / "public" / "index.html").read_text(encoding="utf-8")
+        target_ids = set(re.findall(r"/modules/([a-z0-9-]+)", source))
+        target_ids.update(re.findall(r"/api/([a-z0-9-]+)/v\d+", source))
+        self.assertEqual({"suicide-risk"}, target_ids)
+
+        modules = {module["moduleId"]: module for module in load_manifest(MANIFEST)["modules"]}
+        nginx = (ROOT / "deployment" / "nginx.conf").read_text(encoding="utf-8")
+        dockerfile = (ROOT / "deployment" / "Dockerfile").read_text(encoding="utf-8")
+        compose = (ROOT / "deployment" / "compose.unified.yaml").read_text(encoding="utf-8")
+        for module_id in target_ids:
+            module = modules[module_id]
+            self.assertIn(f"location {module['basePath']}", nginx)
+            self.assertIn(f"location /modules/{module_id}/", nginx)
+            self.assertRegex(dockerfile, rf"COPY Modules/\S+ /opt/modules/{module_id}\b")
+            self.assertIn(f"{module['volume']['name']}:{module['volume']['mountPath']}", compose)
+            self.assertIn(module_id, MODULE_SMOKE)
+
+    def test_nginx_canonicalizes_suicide_risk_route_and_preserves_query(self):
+        nginx = (ROOT / "deployment" / "nginx.conf").read_text(encoding="utf-8")
+        self.assertIn(
+            "location = /modules/suicide-risk {\n"
+            "            return 308 /modules/suicide-risk/$is_args$args;\n"
+            "        }",
+            nginx,
+        )
 
     def test_manifest_requires_startup_migration_and_recovery_contracts(self):
         manifest = load_manifest(MANIFEST)
