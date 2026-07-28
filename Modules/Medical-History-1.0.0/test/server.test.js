@@ -14,6 +14,17 @@ async function request(url, options) {
   return { status: response.status, etag: response.headers.get("etag"), body: await response.json() };
 }
 
+async function withServer(options, callback) {
+  const instance = createServer({ repository: createMemoryMedicalHistoryRepository(), ...options });
+  await new Promise((resolve) => instance.listen(0, "127.0.0.1", resolve));
+  const instanceBase = `http://127.0.0.1:${instance.address().port}`;
+  try {
+    await callback(instanceBase);
+  } finally {
+    await new Promise((resolve, reject) => instance.close((error) => error ? reject(error) : resolve()));
+  }
+}
+
 test.before(async () => {
   server = createServer({ repository: createMemoryMedicalHistoryRepository() });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -30,6 +41,60 @@ test("options expose diseases, antipsychotics, and exact clozapine contraindicat
   assert.ok(result.body.pastMedicalHistory.includes("Hypertension"));
   assert.ok(result.body.antipsychotics.includes("Clozapine"));
   assert.deepEqual(result.body.clozapineContraindications, ["Severe neutropenia", "Clozapine-induced myocarditis", "Unmanaged seizure disorder"]);
+});
+
+test("drug suggestions normalize and forward only query parameters to DDI", async () => {
+  let downstream;
+  await withServer({
+    ddiServiceUrl: "http://ddi.internal/base/",
+    ddiFetch: async (url, options) => {
+      downstream = { url: String(url), options };
+      return new Response(JSON.stringify({
+        query: "SERT",
+        knowledgeBaseVersion: "active-test",
+        items: [{ id: "drug-1", name: "Canonical Drug", aliases: ["Alias"], rxcui: "code-1", identityStatus: "approved", extra: "discard" }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  }, async (instanceBase) => {
+    const response = await fetch(`${instanceBase}/api/internal/medical-history/drug-suggestions?q=%20SERT%20&limit=7`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      query: "SERT",
+      knowledgeBaseVersion: "active-test",
+      items: [{ id: "drug-1", name: "Canonical Drug", rxcui: "code-1", identityStatus: "approved" }],
+    });
+  });
+  assert.equal(downstream.url, "http://ddi.internal/base/api/ddi-checker/v1/medications/suggestions?q=SERT&limit=7");
+  assert.equal(downstream.options.method, "GET");
+  assert.equal(downstream.options.body, undefined);
+  assert.doesNotMatch(JSON.stringify(downstream), /patient|encounter|history/i);
+});
+
+test("drug suggestions reject short queries and excessive limits before calling DDI", async () => {
+  let calls = 0;
+  await withServer({
+    ddiServiceUrl: "http://ddi.internal",
+    ddiFetch: async () => { calls += 1; },
+  }, async (instanceBase) => {
+    for (const query of ["q=x", "q=valid&limit=21"]) {
+      const response = await fetch(`${instanceBase}/api/internal/medical-history/drug-suggestions?${query}`);
+      assert.equal(response.status, 400);
+    }
+  });
+  assert.equal(calls, 0);
+});
+
+test("drug suggestions return controlled service-unavailable responses on failure and timeout", async () => {
+  for (const ddiFetch of [
+    async () => { throw new Error("offline"); },
+    async (_url, { signal }) => new Promise((resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason))),
+  ]) {
+    await withServer({ ddiServiceUrl: "http://ddi.internal", ddiFetch, ddiTimeoutMs: 5 }, async (instanceBase) => {
+      const response = await fetch(`${instanceBase}/api/internal/medical-history/drug-suggestions?q=test`);
+      assert.equal(response.status, 503);
+      assert.match((await response.json()).error.message, /temporarily unavailable/i);
+    });
+  }
 });
 
 test("activation launches through the gateway Medical History route", async () => {

@@ -215,6 +215,9 @@ function createServer(options = {}) {
     authConfigured: security.authConfigured,
     csrfConfigured: security.csrfConfigured,
   });
+  const ddiServiceUrl = options.ddiServiceUrl || process.env.DDI_CHECKER_SERVICE_URL;
+  const ddiFetch = options.ddiFetch || globalThis.fetch;
+  const ddiTimeoutMs = options.ddiTimeoutMs || 1500;
 
   async function sendSubmission(req, res, submission, status = 200) {
     if (!submission) {
@@ -383,6 +386,49 @@ function createServer(options = {}) {
     await sendSubmission(req, res, await submissionStore.findById(id));
   }
 
+  async function getDrugSuggestions(req, res, url) {
+    const query = String(url.searchParams.get("q") || "").trim().replace(/\s+/g, " ");
+    const rawLimit = url.searchParams.get("limit") || "20";
+    if (query.length < 2 || query.length > 160 || !/^\d+$/.test(rawLimit) || Number(rawLimit) < 1 || Number(rawLimit) > 20) {
+      sendError(res, req, 400, "q must contain 2 to 160 characters and limit must be an integer from 1 to 20.");
+      return;
+    }
+    if (!ddiServiceUrl || typeof ddiFetch !== "function") {
+      sendError(res, req, 503, "Medication suggestions are temporarily unavailable.");
+      return;
+    }
+    try {
+      const endpoint = new URL("api/ddi-checker/v1/medications/suggestions", `${ddiServiceUrl.replace(/\/+$/, "")}/`);
+      endpoint.searchParams.set("q", query);
+      endpoint.searchParams.set("limit", rawLimit);
+      const response = await ddiFetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(ddiTimeoutMs),
+      });
+      if (!response.ok) throw new Error(`DDI service returned ${response.status}`);
+      const body = await response.json();
+      if (!body || !Array.isArray(body.items)) throw new Error("DDI service returned an invalid response");
+      const items = body.items
+        .filter((item) => item && typeof item.id === "string" && typeof item.name === "string")
+        .slice(0, Number(rawLimit))
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          rxcui: typeof item.rxcui === "string" ? item.rxcui : null,
+          identityStatus: typeof item.identityStatus === "string" ? item.identityStatus : "unknown",
+        }));
+      sendJson(res, req, 200, {
+        query,
+        items,
+        knowledgeBaseVersion: typeof body.knowledgeBaseVersion === "string" ? body.knowledgeBaseVersion : null,
+      });
+    } catch (error) {
+      console.warn(`Medication suggestion service unavailable: ${error?.message || "request failed"}`);
+      sendError(res, req, 503, "Medication suggestions are temporarily unavailable.");
+    }
+  }
+
   async function serveStatic(req, res, url) {
     const requestedPath = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
     const filePath = path.normalize(path.join(PUBLIC_DIR, requestedPath));
@@ -451,6 +497,11 @@ function createServer(options = {}) {
 
     if (req.method === "GET" && url.pathname === "/api/internal/medical-history/options") {
       sendJson(res, req, 200, { pastMedicalHistory: COMORBIDITY_OPTIONS, antipsychotics: ANTIPSYCHOTIC_OPTIONS, clozapineContraindications: CLOZAPINE_CONTRAINDICATION_OPTIONS });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/internal/medical-history/drug-suggestions") {
+      await getDrugSuggestions(req, res, url);
       return;
     }
 
