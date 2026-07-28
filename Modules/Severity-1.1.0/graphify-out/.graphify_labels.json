@@ -1,9 +1,1 @@
-{
-  "0": "package.json",
-  "1": "server.js",
-  "2": "Severity Module",
-  "3": "HANDOFF — `severity` module",
-  "4": "test_api.js",
-  "5": "4. Backend — `server.js` (149 lines, the whole thing)",
-  "6": "5. Frontend — `public/index.html` (830 lines, single file)"
-}
+{"0": "Severity Module Overview", "1": "Auth & Server Infrastructure", "2": "Severity Assessment Engine", "3": "Package Dependencies", "4": "Auth Adapter & Testing", "5": "Assessment Repository", "6": "Workflow Tests", "7": "Risk & UI Integration", "8": "API Tests", "9": "Workflow JS Tests"}

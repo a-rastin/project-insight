@@ -1,88 +1,106 @@
-# Graph Report - Severity-1.1.0  (2026-07-22)
+# Graph Report - .  (2026-07-28)
 
 ## Corpus Check
-- 7 files · ~8,886 words
-- Verdict: corpus is large enough that graph structure adds value.
+- Corpus is ~13,672 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 71 nodes · 71 edges · 7 communities
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
-- Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `e60a821a`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
+- 105 nodes · 152 edges · 10 communities (8 shown, 2 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.95)
+- Token cost: 156,419 input · 4,595 output
 
 ## Community Hubs (Navigation)
-- package.json
-- server.js
-- Severity Module
-- HANDOFF — `severity` module
-- 4. Backend — `server.js` (149 lines, the whole thing)
-- 5. Frontend — `public/index.html` (830 lines, single file)
+- Severity Module Overview
+- Auth & Server Infrastructure
+- Severity Assessment Engine
+- Package Dependencies
+- Auth Adapter & Testing
+- Assessment Repository
+- Workflow Tests
+- Risk & UI Integration
+- API Tests
+- Workflow JS Tests
 
 ## God Nodes (most connected - your core abstractions)
-1. `HANDOFF — `severity` module` - 13 edges
-2. `Severity Module` - 9 edges
-3. `5. Frontend — `public/index.html` (830 lines, single file)` - 7 edges
-4. `4. Backend — `server.js` (149 lines, the whole thing)` - 5 edges
-5. `4.3 Routes — only two exist` - 4 edges
-6. `Run` - 4 edges
-7. `createMemoryAssessmentStore()` - 3 edges
-8. `createApp()` - 3 edges
-9. `API contract` - 3 edges
-10. `scripts` - 2 edges
+1. `Severity Module` - 13 edges
+2. `createApp()` - 8 edges
+3. `createMemoryAssessmentStore()` - 5 edges
+4. `migrateAssessmentsJson()` - 5 edges
+5. `computePanssScores()` - 5 edges
+6. `applyPanssScores()` - 5 edges
+7. `Ponytail Philosophy` - 5 edges
+8. `assertMap()` - 4 edges
+9. `createJsonAssessmentStore()` - 4 edges
+10. `createSqliteAssessmentStore()` - 4 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Severity Module` --references--> `Suicide Risk Module`  [EXTRACTED]
+  HANDOFF.md → README.md
+- `createApp()` --calls--> `computePanssScores()`  [EXTRACTED]
+  server.js → severity-assessment.js
 - `withServer()` --calls--> `createApp()`  [EXTRACTED]
   server.test.js → server.js
+- `Severity Module` --references--> `API Contract`  [EXTRACTED]
+  HANDOFF.md → README.md
+- `Severity Module` --references--> `Insight Platform`  [EXTRACTED]
+  HANDOFF.md → README.md
 
 ## Import Cycles
 - None detected.
 
-## Communities (7 total, 0 thin omitted)
+## Hyperedges (group relationships)
+- **Severity Module Core Architecture** — modules_severity_1_1_0_handoff_severity_module, modules_severity_1_1_0_handoff_server_js, modules_severity_1_1_0_handoff_index_html, modules_severity_1_1_0_handoff_test_api_js, modules_severity_1_1_0_handoff_json_persistence [EXTRACTED 1.00]
+- **Clinical Decision Support Flow** — modules_severity_1_1_0_handoff_clinical_interpretation, modules_severity_1_1_0_public_index_update_realtime_calculations, modules_severity_1_1_0_public_index_severity_bands, modules_severity_1_1_0_readme_suicide_risk_module, modules_severity_1_1_0_public_index_suicide_risk_integration [INFERRED 0.85]
+- **Ponytail Design Governance** — modules_severity_1_1_0_handoff_ponytail_philosophy, modules_severity_1_1_0_handoff_deferred_ledger, modules_severity_1_1_0_handoff_sharp_edges, modules_severity_1_1_0_handoff_test_api_js [INFERRED 0.85]
 
-### Community 0 - "package.json"
+## Communities (10 total, 2 thin omitted)
+
+### Community 0 - "Severity Module Overview"
+Cohesion: 0.15
+Nodes (19): Clinical Interpretation Logic, Intentionally Deferred Ponytail Ledger, Design Contract (DESIGN.md), public/index.html Frontend, JSON File Persistence, PANSS (Positive and Negative Syndrome Scale), Ponytail Philosophy, server.js Backend (+11 more)
+
+### Community 1 - "Auth & Server Infrastructure"
+Cohesion: 0.17
+Nodes (11): createHttpAuthAdapter(), createReadinessProbe(), asSecret(), createSecurity(), app, createApp(), DEFAULT_DATA_DIR, __dirname (+3 more)
+
+### Community 2 - "Severity Assessment Engine"
+Cohesion: 0.24
+Nodes (12): applyPanssScores(), AssessmentError, clone(), computePanssScores(), PANSS_ITEM_CODES, requireUtcTimestamp(), requireUuid(), scoresForItems() (+4 more)
+
+### Community 3 - "Package Dependencies"
 Cohesion: 0.14
 Nodes (13): express, author, dependencies, express, description, keywords, license, main (+5 more)
 
-### Community 1 - "server.js"
-Cohesion: 0.22
-Nodes (9): app, clone(), createApp(), createJsonAssessmentStore(), createMemoryAssessmentStore(), DEFAULT_DATA_DIR, __dirname, __filename (+1 more)
-
-### Community 2 - "Severity Module"
-Cohesion: 0.13
-Nodes (14): API contract, As a sub-module, Design compliance, Features, File layout, GET `/api/severity/:patient_code`, Intentionally deferred (ponytail ledger), PUT `/api/severity/:patient_code` (+6 more)
-
-### Community 3 - "HANDOFF — `severity` module"
-Cohesion: 0.17
-Nodes (11): 10. The "ponytail" philosophy (context, not legal), 11. How to verify your change, 12. If you only read three things, 1. What this module is, 2. Repo layout (only 4 source files matter), 3. Stack & runtime, 6. Data model, 7. API contract (cheat sheet) (+3 more)
-
-### Community 5 - "4. Backend — `server.js` (149 lines, the whole thing)"
+### Community 4 - "Auth Adapter & Testing"
 Cohesion: 0.25
-Nodes (8): 4.1 Boot sequence, 4.2 Helpers, 4.3 Routes — only two exist, 4.4 Where to make changes, 4. Backend — `server.js` (149 lines, the whole thing), Catch-all  (`server.js:134`), `GET /api/severity/:patient_code`  (`server.js:60`), `PUT /api/severity/:patient_code`  (`server.js:88`)
+Nodes (6): createMemoryAuthAdapter(), parseCanonicalSession(), assessmentMetadata, panssItems, canonical, memory
 
-### Community 6 - "5. Frontend — `public/index.html` (830 lines, single file)"
-Cohesion: 0.29
-Nodes (7): 5.1 Page structure (top → bottom of body), 5.2 Constants, 5.3 State (module-scope `let`s, line 357), 5.4 Key functions, 5.5 `updateRealtimeCalculations()` — read this twice, 5.6 Where to make changes, 5. Frontend — `public/index.html` (830 lines, single file)
+### Community 5 - "Assessment Repository"
+Cohesion: 0.31
+Nodes (8): assertMap(), clone(), createJsonAssessmentStore(), createMemoryAssessmentStore(), createSqliteAssessmentStore(), migrateAssessmentsJson(), SQLITE_SCRIPT, createDefaultAssessmentStore()
+
+### Community 6 - "Workflow Tests"
+Cohesion: 0.20
+Nodes (8): calls, failedPersistenceCalls, failedPersistenceWorkflow, html, interruptedWorkflow, missingCodeCalls, missingCodeWorkflow, workflow
+
+### Community 7 - "Risk & UI Integration"
+Cohesion: 0.67
+Nodes (4): CSRF Token Handling, submitAssessment Function, Suicide Risk Integration Functions, Suicide Risk Module
 
 ## Knowledge Gaps
-- **47 isolated node(s):** `name`, `version`, `description`, `type`, `main` (+42 more)
+- **35 isolated node(s):** `name`, `version`, `description`, `type`, `main` (+30 more)
   These have ≤1 connection - possible missing edges or undocumented components.
+- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `HANDOFF — `severity` module` connect `HANDOFF — `severity` module` to `4. Backend — `server.js` (149 lines, the whole thing)`, `5. Frontend — `public/index.html` (830 lines, single file)`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
-- **Why does `4. Backend — `server.js` (149 lines, the whole thing)` connect `4. Backend — `server.js` (149 lines, the whole thing)` to `HANDOFF — `severity` module`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
-- **Why does `5. Frontend — `public/index.html` (830 lines, single file)` connect `5. Frontend — `public/index.html` (830 lines, single file)` to `HANDOFF — `severity` module`?**
-  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Why does `Severity Module` connect `Severity Module Overview` to `Risk & UI Integration`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Why does `Suicide Risk Module` connect `Risk & UI Integration` to `Severity Module Overview`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `createApp()` connect `Auth & Server Infrastructure` to `Severity Assessment Engine`, `Auth Adapter & Testing`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _47 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `package.json` be split into smaller, more focused modules?**
+  _35 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Package Dependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
-- **Should `Severity Module` be split into smaller, more focused modules?**
-  _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
