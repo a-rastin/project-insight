@@ -104,6 +104,7 @@ test("canonical routes /health /ready /contract /openapi.json /schemas/{version}
   assert.equal(contractBody.interfaceVersion, "1.0.0");
   assert.ok(contractBody.capabilities.includes("ddi.interaction-check"));
   assert.ok(contractBody.capabilities.includes("ddi.medication-resolve"));
+  assert.ok(contractBody.capabilities.includes("ddi.medication-suggest"));
   assert.ok(contractBody.capabilities.includes("ddi.knowledge-base.read"));
   assert.equal(contractBody.auth.required, true);
   assert.ok(contractBody.auth.schemes.includes("session"));
@@ -113,6 +114,7 @@ test("canonical routes /health /ready /contract /openapi.json /schemas/{version}
   const openapiJson = await asJson(openapi);
   assert.ok(openapiJson.openapi);
   assert.ok(openapiJson.paths["/api/ddi-checker/v1/medications/resolve"]);
+  assert.ok(openapiJson.paths["/api/ddi-checker/v1/medications/suggestions"]);
   assert.ok(openapiJson.paths["/api/ddi-checker/v1/interaction-checks"]);
   assert.ok(openapiJson.paths["/api/ddi-checker/v1/knowledge-bases/{version}"]);
 

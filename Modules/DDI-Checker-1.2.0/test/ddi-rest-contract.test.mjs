@@ -51,6 +51,58 @@ const fixtureKb = {
   ],
 };
 
+test("medication suggestions rank canonical and alias matches and preserve identity metadata", async () => {
+  const kb = structuredClone(fixtureKb);
+  kb.drugs = [
+    { id: "exact", name: "Test Drug", aliases: [], rxcui: "100", identityStatus: "approved" },
+    { id: "canonical-prefix", name: "Test Drug Extended", aliases: [], rxcui: "101", identityStatus: "approved" },
+    { id: "alias-prefix", name: "Canonical Alias Match", aliases: ["test drug alias"], rxcui: null, identityStatus: "pending_rxnorm_review" },
+    { id: "substring", name: "A Test Drug Substring", aliases: [], rxcui: "102", identityStatus: "approved" },
+    { id: "alias-substring", name: "Canonical Alias Substring", aliases: ["a test drug alias"], rxcui: null, identityStatus: "unknown" },
+    { id: "exact", name: "Duplicate Identity", aliases: ["test drug"], rxcui: "999", identityStatus: "unknown" },
+  ];
+  const server = createDdiServer({
+    knowledgeStore: { async load() { return kb; } },
+    activeVersion: "ikb-test",
+  });
+
+  const response = await call(server, "GET", "/api/ddi-checker/v1/medications/suggestions?q=%20TEST%20%20DRUG%20&limit=10");
+  assert.equal(response.status, 200);
+  const body = await asJson(response);
+  assert.equal(body.query, "TEST DRUG");
+  assert.equal(body.knowledgeBaseVersion, "ikb-test");
+  assert.deepEqual(body.items.map((item) => item.id), [
+    "exact",
+    "canonical-prefix",
+    "alias-prefix",
+    "substring",
+    "alias-substring",
+  ]);
+  assert.deepEqual(body.items[0], {
+    id: "exact",
+    name: "Test Drug",
+    aliases: [],
+    rxcui: "100",
+    identityStatus: "approved",
+  });
+  assert.equal(body.items[2].identityStatus, "pending_rxnorm_review");
+});
+
+test("medication suggestions enforce query and safe result limits", async () => {
+  const server = startServer();
+  const shortQuery = await call(server, "GET", "/api/ddi-checker/v1/medications/suggestions?q=p");
+  assert.equal(shortQuery.status, 400);
+  assert.equal((await asJson(shortQuery)).code, "INVALID_QUERY");
+
+  const limited = await call(server, "GET", "/api/ddi-checker/v1/medications/suggestions?q=pi&limit=999");
+  assert.equal(limited.status, 400);
+  assert.equal((await asJson(limited)).code, "INVALID_QUERY");
+
+  const response = await call(server, "GET", "/api/ddi-checker/v1/medications/suggestions?q=pi&limit=1");
+  assert.equal(response.status, 200);
+  assert.equal((await asJson(response)).items.length, 1);
+});
+
 function memoryStorage() {
   const store = new Map([["ikb-test", structuredClone(fixtureKb)]]);
   return {

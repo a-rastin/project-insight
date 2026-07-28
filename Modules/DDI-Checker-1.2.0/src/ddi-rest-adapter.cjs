@@ -72,6 +72,7 @@ function ddiContractPayload() {
     capabilities: [
       "ddi.interaction-check",
       "ddi.medication-resolve",
+      "ddi.medication-suggest",
       "ddi.knowledge-base.read",
       "ddi.knowledge-base.admin",
     ],
@@ -97,6 +98,13 @@ function ddiContractPayload() {
 
 function buildOpenapiDocument() {
   const paths = {
+    [`${BASE_PATH}/medications/suggestions`]: {
+      get: {
+        summary: "Suggest medication identities from the active knowledge base",
+        operationId: "suggestMedications",
+        responses: { "200": { description: "ranked medication identities" }, "400": { description: "invalid query" } },
+      },
+    },
     [`${BASE_PATH}/medications/resolve`]: {
       post: {
         summary: "Resolve one medication identity against a knowledge-base version",
@@ -218,6 +226,36 @@ function knowledgeBaseShape(kb) {
 function resolveMedication(input, kb) {
   const index = engine.buildIndex(kb);
   return engine.resolveDrug(input, index);
+}
+
+function suggestMedications(kb, query, limit) {
+  const normalized = engine.normalizeName(query);
+  const matches = new Map();
+  for (const drug of Array.isArray(kb.drugs) ? kb.drugs : []) {
+    if (!drug?.id || !drug?.name) continue;
+    const name = engine.normalizeName(drug.name);
+    const aliases = Array.isArray(drug.aliases) ? drug.aliases.filter((alias) => typeof alias === "string") : [];
+    const normalizedAliases = aliases.map((alias) => engine.normalizeName(alias));
+    const score = name === normalized ? 0
+      : name.startsWith(normalized) ? 1
+      : normalizedAliases.some((alias) => alias.startsWith(normalized)) ? 2
+      : name.includes(normalized) || normalizedAliases.some((alias) => alias.includes(normalized)) ? 3
+      : 99;
+    if (score === 99) continue;
+    const item = {
+      id: drug.id,
+      name: drug.name,
+      aliases,
+      rxcui: drug.rxcui ?? null,
+      identityStatus: drug.identityStatus || "unknown",
+    };
+    const previous = matches.get(drug.id);
+    if (!previous || score < previous.score) matches.set(drug.id, { item, score });
+  }
+  return [...matches.values()]
+    .sort((left, right) => left.score - right.score || left.item.name.localeCompare(right.item.name) || String(left.item.id).localeCompare(String(right.item.id)))
+    .slice(0, limit)
+    .map(({ item }) => item);
 }
 
 // DDI-02 request/response contract helpers.
@@ -485,6 +523,9 @@ function createDdiServer(options = {}) {
     if (canonicalPath === `${BASE_PATH}/medications/resolve` && request.method === "POST") {
       return handleResolve(request);
     }
+    if (canonicalPath === `${BASE_PATH}/medications/suggestions` && request.method === "GET") {
+      return handleMedicationSuggestions(request);
+    }
     if (canonicalPath === `${BASE_PATH}/interaction-checks` && request.method === "POST") {
       return handleInteractionChecks(request);
     }
@@ -526,6 +567,26 @@ function createDdiServer(options = {}) {
     if (!kb) return pivotalProblem(request, 404, "KNOWLEDGE_BASE_NOT_FOUND", `Unknown knowledge-base version: ${body.knowledgeBaseVersion || activeVersion || ""}`);
     const resolution = resolveMedication(body.input, kb);
     return ok(request, resolution, 200);
+  }
+
+  async function handleMedicationSuggestions(request) {
+    const url = new URL(request.url);
+    const query = String(url.searchParams.get("q") || "").trim().replace(/\s+/g, " ");
+    const rawLimit = url.searchParams.get("limit") || "20";
+    if (query.length < 2 || query.length > 160 || !/^\d+$/.test(rawLimit)) {
+      return pivotalProblem(request, 400, "INVALID_QUERY", "q must contain 2 to 160 characters and limit must be an integer from 1 to 50.");
+    }
+    const limit = Number(rawLimit);
+    if (limit < 1 || limit > 50) {
+      return pivotalProblem(request, 400, "INVALID_QUERY", "q must contain 2 to 160 characters and limit must be an integer from 1 to 50.");
+    }
+    const kb = await loadActiveKb(activeVersion);
+    if (!kb) return pivotalProblem(request, 503, "KNOWLEDGE_BASE_UNAVAILABLE", "No active knowledge base is loaded.");
+    return ok(request, {
+      query,
+      items: suggestMedications(kb, query, limit),
+      knowledgeBaseVersion: kb.version,
+    });
   }
 
   async function handleInteractionChecks(request) {
@@ -637,6 +698,7 @@ module.exports = {
   buildOpenapiDocument,
   interactionCheck,
   resolveMedication,
+  suggestMedications,
   knowledgeBaseShape,
   SCHEMA_VERSION,
   INTERFACE_VERSION,
