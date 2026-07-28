@@ -54,6 +54,13 @@ class DeploymentContractTests(unittest.TestCase):
             self.assertIn(f"{module['volume']['name']}:{module['volume']['mountPath']}", compose)
             self.assertIn(module_id, MODULE_SMOKE)
 
+    def test_medical_history_receives_ddi_service_url(self):
+        modules = {module["moduleId"]: module for module in load_manifest(MANIFEST)["modules"]}
+        self.assertEqual(
+            f"http://127.0.0.1:{modules['ddi-checker']['internalPort']}",
+            modules["medical-history"]["environment"].get("DDI_CHECKER_SERVICE_URL"),
+        )
+
     def test_nginx_canonicalizes_suicide_risk_route_and_preserves_query(self):
         nginx = (ROOT / "deployment" / "nginx.conf").read_text(encoding="utf-8")
         self.assertIn(

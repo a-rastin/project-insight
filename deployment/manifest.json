@@ -90,7 +90,7 @@
       "shutdown": {"signal": "SIGTERM", "timeoutSeconds": 30},
       "workingDirectory": "/opt/modules/medical-history",
       "command": ["node", "server.js"],
-      "environment": {"PORT": "8106", "MEDICAL_HISTORY_DATA_DIR": "/var/lib/insight/medical-history", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session"},
+      "environment": {"PORT": "8106", "MEDICAL_HISTORY_DATA_DIR": "/var/lib/insight/medical-history", "AUTH_SESSION_URL": "http://127.0.0.1:8101/api/auth/session", "DDI_CHECKER_SERVICE_URL": "http://127.0.0.1:8107"},
       "databasePath": "/var/lib/insight/medical-history/medical-history.sqlite3"
     },
     {
